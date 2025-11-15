@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="sidebar(activePage)" class="sidebar" id="sidebar">
+        <div class="logo">
+            <i class="bi bi-heart-pulse-fill" style="font-size: 2.5rem;"></i>
+            <h5 class="mt-2 mb-0">Healio</h5>
+            <small>Pharmacy Management</small>
+        </div>
+        <nav class="nav flex-column">
+            <a class="nav-link" th:classappend="${activePage == 'dashboard'} ? 'active'" href="/dashboard">
+                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+            </a>
+            <a class="nav-link" th:classappend="${activePage == 'products'} ? 'active'" href="/products">
+                <i class="bi bi-capsule me-2"></i>Products
+            </a>
+            <a class="nav-link" th:classappend="${activePage == 'sales'} ? 'active'" href="/sales">
+                <i class="bi bi-cart me-2"></i>Sales
+            </a>
+            <a class="nav-link" th:classappend="${activePage == 'stock-in'} ? 'active'" href="/stock-in">
+                <i class="bi bi-box-arrow-in-down me-2"></i>Stock In
+            </a>
+            <a class="nav-link" th:classappend="${activePage == 'customers'} ? 'active'" href="/customers">
+                <i class="bi bi-people me-2"></i>Customers
+            </a>
+            <a class="nav-link" th:classappend="${activePage == 'suppliers'} ? 'active'" href="/suppliers">
+                <i class="bi bi-truck me-2"></i>Suppliers
+            </a>
+            <a class="nav-link" th:classappend="${activePage == 'users'} ? 'active'" href="/users">
+                <i class="bi bi-person-gear me-2"></i>Users
+            </a>
+        </nav>
+    </div>
+</body>
+</html>
+

@@ -60,7 +60,49 @@ public class ProductController {
 
     @PostMapping("/save")
     public String saveProduct(@ModelAttribute Product product, RedirectAttributes redirectAttributes) {
-        productRepository.save(product);
+        if (product.getId() != null) {
+            Product existing = productRepository.findById(product.getId())
+                    .orElseThrow(() -> new RuntimeException("Product not found"));
+            // Preserve existing relationships if not provided
+            if (product.getProductCategory() != null && product.getProductCategory().getId() != null) {
+                existing.setProductCategory(categoryRepository.findById(product.getProductCategory().getId()).orElse(null));
+            }
+            if (product.getManufacturer() != null && product.getManufacturer().getId() != null) {
+                existing.setManufacturer(manufacturerRepository.findById(product.getManufacturer().getId()).orElse(null));
+            }
+            if (product.getMedicineType() != null && product.getMedicineType().getId() != null) {
+                existing.setMedicineType(medicineTypeRepository.findById(product.getMedicineType().getId()).orElse(null));
+            }
+            if (product.getDosageForm() != null && product.getDosageForm().getId() != null) {
+                existing.setDosageForm(dosageFormRepository.findById(product.getDosageForm().getId()).orElse(null));
+            }
+            if (product.getGeneric() != null && product.getGeneric().getId() != null) {
+                existing.setGeneric(genericRepository.findById(product.getGeneric().getId()).orElse(null));
+            }
+            existing.setName(product.getName());
+            existing.setStrength(product.getStrength());
+            existing.setDescription(product.getDescription());
+            existing.setRequiresPrescription(product.getRequiresPrescription());
+            productRepository.save(existing);
+        } else {
+            // Load full entities for new product
+            if (product.getProductCategory() != null && product.getProductCategory().getId() != null) {
+                product.setProductCategory(categoryRepository.findById(product.getProductCategory().getId()).orElse(null));
+            }
+            if (product.getManufacturer() != null && product.getManufacturer().getId() != null) {
+                product.setManufacturer(manufacturerRepository.findById(product.getManufacturer().getId()).orElse(null));
+            }
+            if (product.getMedicineType() != null && product.getMedicineType().getId() != null) {
+                product.setMedicineType(medicineTypeRepository.findById(product.getMedicineType().getId()).orElse(null));
+            }
+            if (product.getDosageForm() != null && product.getDosageForm().getId() != null) {
+                product.setDosageForm(dosageFormRepository.findById(product.getDosageForm().getId()).orElse(null));
+            }
+            if (product.getGeneric() != null && product.getGeneric().getId() != null) {
+                product.setGeneric(genericRepository.findById(product.getGeneric().getId()).orElse(null));
+            }
+            productRepository.save(product);
+        }
         redirectAttributes.addFlashAttribute("success", "Product saved successfully!");
         return "redirect:/products";
     }

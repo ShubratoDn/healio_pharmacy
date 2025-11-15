@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -15,16 +16,20 @@ import java.util.Optional;
 public interface SaleRepository extends JpaRepository<Sale, Long> {
     Optional<Sale> findBySaleNumber(String saleNumber);
     
-    @Query("SELECT s FROM Sale s WHERE DATE(s.saleDate) = CURRENT_DATE")
+    @Query(value = "SELECT * FROM sale WHERE DATE(sale_date) = CURRENT_DATE", nativeQuery = true)
     Page<Sale> findTodaySales(Pageable pageable);
     
-    @Query("SELECT COALESCE(SUM(s.totalAmount), 0) FROM Sale s WHERE DATE(s.saleDate) = CURRENT_DATE AND s.saleStatus = 'COMPLETED'")
+    @Query(value = "SELECT COALESCE(SUM(total_amount), 0) FROM sale WHERE DATE(sale_date) = CURRENT_DATE AND sale_status = 'COMPLETED'", nativeQuery = true)
     Double getTodayTotalSales();
     
-    @Query("SELECT COUNT(s) FROM Sale s WHERE DATE(s.saleDate) = CURRENT_DATE AND s.saleStatus = 'COMPLETED'")
+    @Query(value = "SELECT COUNT(*) FROM sale WHERE DATE(sale_date) = CURRENT_DATE AND sale_status = 'COMPLETED'", nativeQuery = true)
     Long countTodaySales();
     
-    Page<Sale> findBySaleDateBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
+    @Query("SELECT s FROM Sale s WHERE s.saleDate >= :startDate AND s.saleDate < :endDate")
+    Page<Sale> findBySaleDateBetween(@Param("startDate") LocalDateTime startDate, 
+                                      @Param("endDate") LocalDateTime endDate, 
+                                      Pageable pageable);
+    
     Page<Sale> findAllByOrderBySaleDateDesc(Pageable pageable);
 }
 

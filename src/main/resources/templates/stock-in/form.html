@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Stock In - Healio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/sidebar :: sidebar(activePage='stock-in')}"></div>
+    <div class="main-content">
+        <nav class="navbar">
+            <div class="container-fluid">
+                <button class="btn btn-link d-md-none" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+                <span class="navbar-brand mb-0 h1">New Stock In</span>
+                <div class="d-flex align-items-center">
+                    <span class="me-3"><i class="bi bi-person-circle me-2"></i><span sec:authentication="name"></span></span>
+                    <form th:action="@{/logout}" method="post"><button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</button></form>
+                </div>
+            </div>
+        </nav>
+
+        <div class="page-header">
+            <h4><i class="bi bi-box-arrow-in-down me-2"></i>New Stock In</h4>
+        </div>
+
+        <div class="content-card">
+            <form th:action="@{/stock-in/save}" th:object="${stockIn}" method="post">
+                <input type="hidden" th:field="*{id}"/>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Stock In Number</label>
+                        <input type="text" th:field="*{stockInNumber}" class="form-control" placeholder="Auto-generated if empty">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Supplier</label>
+                        <select name="supplierId" class="form-select">
+                            <option value="">Select Supplier</option>
+                            <option th:each="supplier : ${suppliers}" th:value="${supplier.id}" th:text="${supplier.name}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Stock In Date <span class="text-danger">*</span></label>
+                        <input type="date" th:field="*{stockInDate}" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Received Date</label>
+                        <input type="date" th:field="*{receivedDate}" class="form-control">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Total Amount <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" th:field="*{totalAmount}" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Discount Amount</label>
+                        <input type="number" step="0.01" th:field="*{discountAmount}" class="form-control" value="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Tax Amount</label>
+                        <input type="number" step="0.01" th:field="*{taxAmount}" class="form-control" value="0">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Final Amount <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" th:field="*{finalAmount}" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Payment Status</label>
+                        <select th:field="*{paymentStatus}" class="form-select">
+                            <option value="PENDING">Pending</option>
+                            <option value="PARTIAL">Partial</option>
+                            <option value="PAID">Paid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Payment Method</label>
+                        <select th:field="*{paymentMethod}" class="form-select">
+                            <option value="">Select Payment Method</option>
+                            <option value="CASH">Cash</option>
+                            <option value="BANK_TRANSFER">Bank Transfer</option>
+                            <option value="CHEQUE">Cheque</option>
+                            <option value="CREDIT">Credit</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Notes</label>
+                    <textarea th:field="*{notes}" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/stock-in" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Stock In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script>
+        // Auto-calculate final amount
+        document.addEventListener('DOMContentLoaded', function() {
+            const totalAmount = document.querySelector('input[name="totalAmount"]');
+            const discountAmount = document.querySelector('input[name="discountAmount"]');
+            const taxAmount = document.querySelector('input[name="taxAmount"]');
+            const finalAmount = document.querySelector('input[name="finalAmount"]');
+            
+            function calculateFinal() {
+                if (totalAmount && discountAmount && taxAmount && finalAmount) {
+                    const total = parseFloat(totalAmount.value) || 0;
+                    const discount = parseFloat(discountAmount.value) || 0;
+                    const tax = parseFloat(taxAmount.value) || 0;
+                    const final = total - discount + tax;
+                    finalAmount.value = final.toFixed(2);
+                }
+            }
+            
+            if (totalAmount) totalAmount.addEventListener('input', calculateFinal);
+            if (discountAmount) discountAmount.addEventListener('input', calculateFinal);
+            if (taxAmount) taxAmount.addEventListener('input', calculateFinal);
+        });
+    </script>
+</body>
+</html>
+

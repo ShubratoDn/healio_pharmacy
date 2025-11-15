@@ -6,87 +6,11 @@
     <title>Dashboard - Healio Pharmacy Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-        }
-        body {
-            background-color: #f8f9fa;
-        }
-        .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            padding-top: 20px;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .sidebar .logo {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            margin-bottom: 20px;
-        }
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            margin: 5px 10px;
-            border-radius: 8px;
-            transition: all 0.3s;
-        }
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-        }
-        .navbar {
-            background: white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-        .stat-card {
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s;
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        .stat-card.primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .stat-card.success {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-        }
-        .stat-card.warning {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-        .stat-card.info {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-        }
-        .stat-icon {
-            font-size: 3rem;
-            opacity: 0.8;
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="logo">
             <i class="bi bi-heart-pulse-fill" style="font-size: 2.5rem;"></i>
             <h5 class="mt-2 mb-0">Healio</h5>
@@ -96,20 +20,23 @@
             <a class="nav-link active" href="/dashboard">
                 <i class="bi bi-speedometer2 me-2"></i>Dashboard
             </a>
-            <a class="nav-link" href="#">
+            <a class="nav-link" href="/products">
                 <i class="bi bi-capsule me-2"></i>Products
             </a>
-            <a class="nav-link" href="#">
+            <a class="nav-link" href="/sales">
                 <i class="bi bi-cart me-2"></i>Sales
             </a>
-            <a class="nav-link" href="#">
+            <a class="nav-link" href="/stock-in">
                 <i class="bi bi-box-arrow-in-down me-2"></i>Stock In
             </a>
-            <a class="nav-link" href="#">
+            <a class="nav-link" href="/customers">
                 <i class="bi bi-people me-2"></i>Customers
             </a>
-            <a class="nav-link" href="#">
+            <a class="nav-link" href="/suppliers">
                 <i class="bi bi-truck me-2"></i>Suppliers
+            </a>
+            <a class="nav-link" href="/users">
+                <i class="bi bi-person-gear me-2"></i>Users
             </a>
             <a class="nav-link" href="#">
                 <i class="bi bi-bar-chart me-2"></i>Reports
@@ -125,6 +52,9 @@
         <!-- Navbar -->
         <nav class="navbar navbar-expand-lg navbar-light">
             <div class="container-fluid">
+                <button class="btn btn-link d-md-none" type="button" onclick="toggleSidebar()">
+                    <i class="bi bi-list"></i>
+                </button>
                 <span class="navbar-brand mb-0 h1">Dashboard</span>
                 <div class="d-flex align-items-center">
                     <span class="me-3">
@@ -153,45 +83,45 @@
 
         <!-- Statistics Cards -->
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-3 col-sm-6 mb-3">
                 <div class="stat-card primary">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Total Products</h6>
-                            <h2 class="mb-0">0</h2>
+                            <h2 class="mb-0" th:text="${totalProducts}">0</h2>
                         </div>
                         <i class="bi bi-capsule stat-icon"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 col-sm-6 mb-3">
                 <div class="stat-card success">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Today's Sales</h6>
-                            <h2 class="mb-0">৳ 0</h2>
+                            <h2 class="mb-0">৳<span th:text="${#numbers.formatDecimal(todaySales, 0, 0)}">0</span></h2>
                         </div>
                         <i class="bi bi-cart-check stat-icon"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 col-sm-6 mb-3">
                 <div class="stat-card warning">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Low Stock</h6>
-                            <h2 class="mb-0">0</h2>
+                            <h2 class="mb-0" th:text="${lowStockCount}">0</h2>
                         </div>
                         <i class="bi bi-exclamation-triangle stat-icon"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 col-sm-6 mb-3">
                 <div class="stat-card info">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Total Customers</h6>
-                            <h2 class="mb-0">0</h2>
+                            <h2 class="mb-0" th:text="${totalCustomers}">0</h2>
                         </div>
                         <i class="bi bi-people stat-icon"></i>
                     </div>
@@ -201,35 +131,36 @@
 
         <!-- Recent Activity -->
         <div class="row mt-4">
-            <div class="col-md-6">
+            <div class="col-md-6 mb-3">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Sales</h5>
+                        <a href="/sales" class="btn btn-sm btn-primary">View All</a>
                     </div>
                     <div class="card-body">
                         <p class="text-muted text-center py-4">No recent sales</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 mb-3">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Quick Actions</h5>
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <button class="btn btn-primary">
+                            <a href="/sales/new" class="btn btn-primary">
                                 <i class="bi bi-plus-circle me-2"></i>New Sale
-                            </button>
-                            <button class="btn btn-success">
+                            </a>
+                            <a href="/stock-in/new" class="btn btn-success">
                                 <i class="bi bi-box-arrow-in-down me-2"></i>Stock In
-                            </button>
-                            <button class="btn btn-info">
+                            </a>
+                            <a href="/products/new" class="btn btn-info">
                                 <i class="bi bi-capsule me-2"></i>Add Product
-                            </button>
-                            <button class="btn btn-warning">
+                            </a>
+                            <a href="/customers/new" class="btn btn-warning">
                                 <i class="bi bi-person-plus me-2"></i>Add Customer
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -238,6 +169,10 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+        }
+    </script>
 </body>
 </html>
-

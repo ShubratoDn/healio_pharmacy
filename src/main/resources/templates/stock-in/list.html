@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock In - Healio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/sidebar :: sidebar(activePage='stock-in')}"></div>
+    <div class="main-content">
+        <nav class="navbar">
+            <div class="container-fluid">
+                <button class="btn btn-link d-md-none" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+                <span class="navbar-brand mb-0 h1">Stock In</span>
+                <div class="d-flex align-items-center">
+                    <span class="me-3"><i class="bi bi-person-circle me-2"></i><span sec:authentication="name"></span></span>
+                    <form th:action="@{/logout}" method="post"><button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</button></form>
+                </div>
+            </div>
+        </nav>
+
+        <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+            <h4 class="mb-0"><i class="bi bi-box-arrow-in-down me-2"></i>Stock In</h4>
+            <a href="/stock-in/new" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>New Stock In</a>
+        </div>
+
+        <div class="content-card">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Stock In #</th>
+                            <th>Date</th>
+                            <th>Supplier</th>
+                            <th>Total Amount</th>
+                            <th>Payment Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="stockIn : ${stockIns.content}">
+                            <td th:text="${stockIn.stockInNumber}"></td>
+                            <td th:text="${#temporals.format(stockIn.stockInDate, 'yyyy-MM-dd')}"></td>
+                            <td th:text="${stockIn.supplier?.name}"></td>
+                            <td>৳<span th:text="${#numbers.formatDecimal(stockIn.finalAmount, 0, 0)}"></span></td>
+                            <td><span class="badge" th:classappend="${stockIn.paymentStatus == 'PAID'} ? 'bg-success' : 'bg-warning'" th:text="${stockIn.paymentStatus}"></span></td>
+                            <td>
+                                <a th:href="@{/stock-in/{id}(id=${stockIn.id})}" class="btn btn-sm btn-info"><i class="bi bi-eye"></i></a>
+                            </td>
+                        </tr>
+                        <tr th:if="${stockIns.content.isEmpty()}">
+                            <td colspan="6" class="text-center text-muted py-4">No stock in records found</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <nav th:if="${stockIns.totalPages > 1}">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link" th:href="@{/stock-in(page=${currentPage - 1})}">Previous</a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, stockIns.totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/stock-in(page=${i})}" th:text="${i + 1}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == stockIns.totalPages - 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/stock-in(page=${currentPage + 1})}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/common.js}"></script>
+</body>
+</html>
+

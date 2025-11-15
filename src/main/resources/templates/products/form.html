@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${product.id != null} ? 'Edit Product' : 'Add Product'">Product Form - Healio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/sidebar :: sidebar(activePage='products')}"></div>
+    <div class="main-content">
+        <nav class="navbar">
+            <div class="container-fluid">
+                <button class="btn btn-link d-md-none" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+                <span class="navbar-brand mb-0 h1" th:text="${product.id != null} ? 'Edit Product' : 'Add Product'">Product Form</span>
+                <div class="d-flex align-items-center">
+                    <span class="me-3"><i class="bi bi-person-circle me-2"></i><span sec:authentication="name"></span></span>
+                    <form th:action="@{/logout}" method="post"><button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</button></form>
+                </div>
+            </div>
+        </nav>
+
+        <div class="page-header">
+            <h4><i class="bi bi-capsule me-2"></i><span th:text="${product.id != null} ? 'Edit Product' : 'Add New Product'"></span></h4>
+        </div>
+
+        <div class="content-card">
+            <form th:action="@{/products/save}" th:object="${product}" method="post">
+                <input type="hidden" th:field="*{id}"/>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                        <input type="text" th:field="*{name}" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Product Category <span class="text-danger">*</span></label>
+                        <select th:field="*{productCategory.id}" class="form-select" required>
+                            <option value="">Select Category</option>
+                            <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Manufacturer</label>
+                        <select th:field="*{manufacturer.id}" class="form-select">
+                            <option value="">Select Manufacturer</option>
+                            <option th:each="mfg : ${manufacturers}" th:value="${mfg.id}" th:text="${mfg.name}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Medicine Type</label>
+                        <select th:field="*{medicineType.id}" class="form-select">
+                            <option value="">Select Type</option>
+                            <option th:each="type : ${medicineTypes}" th:value="${type.id}" th:text="${type.name}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Dosage Form</label>
+                        <select th:field="*{dosageForm.id}" class="form-select">
+                            <option value="">Select Dosage Form</option>
+                            <option th:each="form : ${dosageForms}" th:value="${form.id}" th:text="${form.name}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Generic</label>
+                        <select th:field="*{generic.id}" class="form-select">
+                            <option value="">Select Generic</option>
+                            <option th:each="gen : ${generics}" th:value="${gen.id}" th:text="${gen.name}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Strength</label>
+                        <input type="text" th:field="*{strength}" class="form-control" placeholder="e.g., 500 mg">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Requires Prescription</label>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" th:field="*{requiresPrescription}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea th:field="*{description}" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/products" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/common.js}"></script>
+</body>
+</html>
+
