@@ -55,6 +55,7 @@ public class Product extends BaseEntity {
     private String description;
 
     @Column(name = "requires_prescription", nullable = false)
+    @Builder.Default
     private Boolean requiresPrescription = false;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
