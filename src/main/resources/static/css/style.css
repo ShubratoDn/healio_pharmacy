@@ -278,8 +278,9 @@ body {
 .navbar-search-container {
     position: relative;
     min-width: 300px;
-    max-width: 500px;
+    max-width: 600px;
     flex: 1;
+    width: 100%;
 }
 
 .navbar-search-form {
@@ -424,20 +425,115 @@ body {
     font-size: 0.8rem;
 }
 
+/* Navbar right section */
+.navbar-right-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.navbar-user-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+.navbar-user-name {
+    white-space: nowrap;
+}
+
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     .navbar-search-container {
-        min-width: 200px;
-        max-width: 100%;
+        max-width: 400px;
+        min-width: 250px;
     }
     
+    .navbar-right-section {
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar-right-section {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    
+    .navbar-search-container {
+        width: 100%;
+        max-width: 100%;
+        min-width: 100%;
+        order: 1;
+    }
+
     .search-input-wrapper {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+    }
+    
+    .navbar-search-input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .search-submit-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+    
+    .navbar-user-section {
+        width: 100%;
+        justify-content: space-between;
+        order: 2;
+    }
+    
+    .navbar-user-name {
+        display: inline !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar-search-container {
+        width: 100%;
+    }
+    
+    .navbar-search-input {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.4rem 0.4rem 2.25rem;
+    }
+    
+    .search-icon {
+        left: 10px;
+        font-size: 1rem;
     }
     
     .search-submit-btn {
-        width: 100%;
-        margin-top: 0.25rem;
+        font-size: 0.85rem;
+        padding: 0.4rem 0.75rem;
+    }
+    
+    .search-btn-text {
+        display: none;
+    }
+    
+    .search-submit-btn .bi-search {
+        margin: 0 !important;
+    }
+    
+    .navbar-user-name {
+        font-size: 0.9rem;
+    }
+    
+    .navbar-user-section .btn {
+        font-size: 0.85rem;
+        padding: 0.35rem 0.65rem;
     }
 }
 
