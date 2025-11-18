@@ -273,6 +273,175 @@ body {
 }
 
 /* ============================================
+   Navbar Search Styles
+   ============================================ */
+.navbar-search-container {
+    position: relative;
+    min-width: 300px;
+    max-width: 500px;
+    flex: 1;
+}
+
+.navbar-search-form {
+    position: relative;
+    width: 100%;
+}
+
+.search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.search-input-wrapper:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    color: #6c757d;
+    font-size: 1.1rem;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.navbar-search-input {
+    flex: 1;
+    border: none;
+    padding: 0.5rem 0.5rem 0.5rem 2.5rem;
+    font-size: 0.95rem;
+    background: transparent;
+    outline: none;
+}
+
+.navbar-search-input:focus {
+    box-shadow: none;
+    border: none;
+}
+
+.search-clear-btn {
+    padding: 0.25rem 0.5rem;
+    color: #6c757d;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: color 0.2s;
+    margin-right: 0.25rem;
+}
+
+.search-clear-btn:hover {
+    color: #dc3545;
+}
+
+.search-submit-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 2px;
+}
+
+.suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.suggestion-item.highlighted {
+    background-color: #e7f3ff;
+    border-left: 3px solid #667eea;
+}
+
+.suggestion-item.no-results {
+    cursor: default;
+    color: #6c757d;
+    text-align: center;
+    padding: 1rem;
+}
+
+.suggestion-item.no-results:hover {
+    background-color: transparent;
+}
+
+.suggestion-item-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.suggestion-item-header strong {
+    color: #212529;
+    font-size: 0.95rem;
+}
+
+.suggestion-item-details {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+.suggestion-item-details .badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.suggestion-item-details .text-muted {
+    font-size: 0.8rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .navbar-search-container {
+        min-width: 200px;
+        max-width: 100%;
+    }
+    
+    .search-input-wrapper {
+        flex-wrap: wrap;
+    }
+    
+    .search-submit-btn {
+        width: 100%;
+        margin-top: 0.25rem;
+    }
+}
+
+/* ============================================
    Badge Styles
    ============================================ */
 .badge {

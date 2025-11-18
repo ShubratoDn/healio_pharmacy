@@ -11,16 +11,7 @@
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='users')}"></div>
     <div class="main-content">
-        <nav class="navbar">
-            <div class="container-fluid">
-                <button class="btn btn-link d-md-none" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
-                <span class="navbar-brand mb-0 h1" th:text="${user.id != null} ? 'Edit User' : 'Add User'">User Form</span>
-                <div class="d-flex align-items-center">
-                    <span class="me-3"><i class="bi bi-person-circle me-2"></i><span sec:authentication="name"></span></span>
-                    <form th:action="@{/logout}" method="post"><button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</button></form>
-                </div>
-            </div>
-        </nav>
+        <div th:replace="~{fragments/navbar :: navbar(pageTitle=${user.id != null ? 'Edit User' : 'Add User'})}"></div>
 
         <div class="page-header">
             <h4><i class="bi bi-person-plus me-2"></i><span th:text="${user.id != null} ? 'Edit User' : 'Add New User'"></span></h4>

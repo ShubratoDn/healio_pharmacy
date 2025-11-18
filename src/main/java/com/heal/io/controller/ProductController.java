@@ -6,13 +6,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/products")
@@ -204,6 +208,33 @@ public class ProductController {
         productRepository.save(product);
         redirectAttributes.addFlashAttribute("success", "Product deleted successfully!");
         return "redirect:/products";
+    }
+
+    @GetMapping("/api/search")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> searchProducts(@RequestParam String q) {
+        if (q == null || q.trim().isEmpty()) {
+            return ResponseEntity.ok(List.of());
+        }
+        
+        Pageable pageable = PageRequest.of(0, 10); // Limit to 10 results for dropdown
+        Page<Product> products = productRepository.searchProducts(q.trim(), pageable);
+        
+        List<Map<String, Object>> results = products.getContent().stream()
+                .map(product -> {
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("id", product.getId());
+                    result.put("name", product.getName());
+                    result.put("category", product.getProductCategory() != null ? product.getProductCategory().getName() : "");
+                    result.put("manufacturer", product.getManufacturer() != null ? product.getManufacturer().getName() : "");
+                    result.put("generic", product.getGeneric() != null ? product.getGeneric().getName() : "");
+                    result.put("dosageForm", product.getDosageForm() != null ? product.getDosageForm().getName() : "");
+                    result.put("strength", product.getStrength() != null ? product.getStrength() : "");
+                    return result;
+                })
+                .collect(Collectors.toList());
+        
+        return ResponseEntity.ok(results);
     }
 }
 

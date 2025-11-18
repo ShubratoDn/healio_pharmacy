@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+    <nav th:fragment="navbar(pageTitle)" class="navbar">
+        <div class="container-fluid">
+            <button class="btn btn-link d-md-none" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <span class="navbar-brand mb-0 h1" th:text="${pageTitle}">Page Title</span>
+            <div class="d-flex align-items-center flex-grow-1 justify-content-end gap-3">
+                <!-- Comprehensive Search Bar -->
+                <div class="navbar-search-container">
+                    <form method="get" action="/products" class="navbar-search-form" id="productSearchForm">
+                        <div class="search-input-wrapper">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" 
+                                   name="search" 
+                                   id="productSearchInput"
+                                   class="form-control navbar-search-input" 
+                                   placeholder="Search products by name, category, manufacturer, generic..." 
+                                   autocomplete="off"
+                                   th:value="${search != null ? search : ''}"
+                                   onkeyup="handleSearchInput(this)">
+                            <button type="button" 
+                                    class="btn btn-link search-clear-btn" 
+                                    id="searchClearBtn"
+                                    onclick="clearSearch()"
+                                    style="display: none;">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                            <button type="submit" class="btn btn-primary search-submit-btn">
+                                <i class="bi bi-search me-1"></i>Search
+                            </button>
+                        </div>
+                        <!-- Search Suggestions Dropdown -->
+                        <div class="search-suggestions" id="searchSuggestions" style="display: none;"></div>
+                    </form>
+                </div>
+                
+                <span class="me-3 d-none d-md-block"><i class="bi bi-person-circle me-2"></i><span sec:authentication="name"></span></span>
+                <form th:action="@{/logout}" method="post"><button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right me-1"></i>Logout</button></form>
+            </div>
+        </div>
+    </nav>
+</body>
+</html>
+
