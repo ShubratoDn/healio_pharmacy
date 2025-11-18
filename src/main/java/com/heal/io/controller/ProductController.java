@@ -11,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Controller
@@ -24,6 +25,7 @@ public class ProductController {
     private final DosageFormRepository dosageFormRepository;
     private final GenericRepository genericRepository;
     private final MedicineTypeRepository medicineTypeRepository;
+    private final ProductPackageRepository productPackageRepository;
 
     @GetMapping
     public String listProducts(
@@ -43,6 +45,8 @@ public class ProductController {
         model.addAttribute("products", products);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", products.getTotalPages());
+        model.addAttribute("pageSize", size);
+        model.addAttribute("totalElements", products.getTotalElements());
         model.addAttribute("search", search);
         return "products/list";
     }
@@ -55,11 +59,24 @@ public class ProductController {
         model.addAttribute("dosageForms", dosageFormRepository.findAll());
         model.addAttribute("generics", genericRepository.findAll());
         model.addAttribute("medicineTypes", medicineTypeRepository.findAll());
+        model.addAttribute("packages", List.of()); // Empty list for new product
         return "products/form";
     }
 
     @PostMapping("/save")
-    public String saveProduct(@ModelAttribute Product product, RedirectAttributes redirectAttributes) {
+    public String saveProduct(
+            @ModelAttribute Product product,
+            @RequestParam(value = "packageIds", required = false) List<Long> packageIds,
+            @RequestParam(value = "packageDescriptions", required = false) List<String> packageDescriptions,
+            @RequestParam(value = "packageSizes", required = false) List<String> packageSizes,
+            @RequestParam(value = "unitPrices", required = false) List<String> unitPrices,
+            @RequestParam(value = "packagePrices", required = false) List<String> packagePrices,
+            @RequestParam(value = "quantities", required = false) List<String> quantities,
+            @RequestParam(value = "units", required = false) List<String> units,
+            @RequestParam(value = "isDefaults", required = false) List<String> isDefaults,
+            RedirectAttributes redirectAttributes) {
+        
+        Product savedProduct;
         if (product.getId() != null) {
             Product existing = productRepository.findById(product.getId())
                     .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -83,7 +100,17 @@ public class ProductController {
             existing.setStrength(product.getStrength());
             existing.setDescription(product.getDescription());
             existing.setRequiresPrescription(product.getRequiresPrescription());
-            productRepository.save(existing);
+            savedProduct = productRepository.save(existing);
+            
+            // Delete existing packages that are not in the submitted list
+            List<ProductPackage> existingPackages = productPackageRepository.findByProductId(savedProduct.getId());
+            if (packageIds != null) {
+                existingPackages.stream()
+                    .filter(pkg -> !packageIds.contains(pkg.getId()))
+                    .forEach(productPackageRepository::delete);
+            } else {
+                existingPackages.forEach(productPackageRepository::delete);
+            }
         } else {
             // Load full entities for new product
             if (product.getProductCategory() != null && product.getProductCategory().getId() != null) {
@@ -101,8 +128,56 @@ public class ProductController {
             if (product.getGeneric() != null && product.getGeneric().getId() != null) {
                 product.setGeneric(genericRepository.findById(product.getGeneric().getId()).orElse(null));
             }
-            productRepository.save(product);
+            savedProduct = productRepository.save(product);
         }
+        
+        // Save packages
+        if (packageDescriptions != null && !packageDescriptions.isEmpty()) {
+            for (int i = 0; i < packageDescriptions.size(); i++) {
+                String description = packageDescriptions.get(i);
+                if (description != null && !description.trim().isEmpty()) {
+                    ProductPackage productPackage;
+                    if (packageIds != null && i < packageIds.size() && packageIds.get(i) != null) {
+                        // Update existing package
+                        productPackage = productPackageRepository.findById(packageIds.get(i))
+                                .orElse(new ProductPackage());
+                    } else {
+                        // Create new package
+                        productPackage = new ProductPackage();
+                    }
+                    
+                    productPackage.setProduct(savedProduct);
+                    productPackage.setPackageDescription(description.trim());
+                    productPackage.setPackageSize((packageSizes != null && i < packageSizes.size()) ? packageSizes.get(i) : null);
+                    
+                    try {
+                        if (unitPrices != null && i < unitPrices.size() && unitPrices.get(i) != null && !unitPrices.get(i).trim().isEmpty()) {
+                            productPackage.setUnitPrice(new BigDecimal(unitPrices.get(i).trim()));
+                        }
+                        if (packagePrices != null && i < packagePrices.size() && packagePrices.get(i) != null && !packagePrices.get(i).trim().isEmpty()) {
+                            productPackage.setPackagePrice(new BigDecimal(packagePrices.get(i).trim()));
+                        }
+                        if (quantities != null && i < quantities.size() && quantities.get(i) != null && !quantities.get(i).trim().isEmpty()) {
+                            productPackage.setQuantityPerPackage(Integer.parseInt(quantities.get(i).trim()));
+                        }
+                        if (units != null && i < units.size() && units.get(i) != null && !units.get(i).trim().isEmpty()) {
+                            productPackage.setUnitOfMeasure(units.get(i).trim());
+                        }
+                        if (isDefaults != null && i < isDefaults.size()) {
+                            productPackage.setIsDefault("on".equals(isDefaults.get(i)) || "true".equals(isDefaults.get(i)));
+                        } else {
+                            productPackage.setIsDefault(false);
+                        }
+                    } catch (Exception e) {
+                        // Log error but continue
+                        redirectAttributes.addFlashAttribute("error", "Error saving package: " + e.getMessage());
+                    }
+                    
+                    productPackageRepository.save(productPackage);
+                }
+            }
+        }
+        
         redirectAttributes.addFlashAttribute("success", "Product saved successfully!");
         return "redirect:/products";
     }
@@ -117,6 +192,7 @@ public class ProductController {
         model.addAttribute("dosageForms", dosageFormRepository.findAll());
         model.addAttribute("generics", genericRepository.findAll());
         model.addAttribute("medicineTypes", medicineTypeRepository.findAll());
+        model.addAttribute("packages", productPackageRepository.findByProductId(id));
         return "products/form";
     }
 

@@ -165,7 +165,7 @@ public class MedicineCsvImportService {
                     
                     // Parse and create Product Packages
                     if (!packageContainer.isEmpty()) {
-                        List<PackageInfo> packages = parsePackageInfo(packageContainer, packageSize);
+                        List<PackageInfo> packages = parsePackageInfo(packageContainer, packageSize, dosageFormName);
                         for (PackageInfo pkgInfo : packages) {
                             ProductPackage productPackage = ProductPackage.builder()
                                     .product(product)
@@ -219,42 +219,168 @@ public class MedicineCsvImportService {
         return values.toArray(new String[0]);
     }
     
-    private List<PackageInfo> parsePackageInfo(String packageContainer, String packageSize) {
+    private List<PackageInfo> parsePackageInfo(String packageContainer, String packageSize, String dosageForm) {
         List<PackageInfo> packages = new ArrayList<>();
+        Set<String> seenDescriptions = new HashSet<>(); // To avoid duplicates
         
-        // Pattern to extract price: "100 ml bottle: ৳ 40.12"
-        Pattern pricePattern = Pattern.compile("([^:]+):\\s*৳\\s*([\\d,]+(?:\\.\\d+)?)");
-        Matcher matcher = pricePattern.matcher(packageContainer);
+        if (packageContainer == null || packageContainer.trim().isEmpty()) {
+            return packages;
+        }
         
-        while (matcher.find()) {
-            String description = matcher.group(1).trim();
-            String priceStr = matcher.group(2).replace(",", "");
-            
+        // Clean up the package container string - remove extra commas and parentheses
+        String cleaned = packageContainer.replaceAll(",\\s*,+", ",").trim();
+        
+        // Pattern 1: "Unit Price: ৳ X.XX" - explicit unit price entry
+        Pattern unitPricePattern = Pattern.compile("Unit\\s+Price:\\s*৳\\s*([\\d,]+(?:\\.\\d+)?)", Pattern.CASE_INSENSITIVE);
+        Matcher unitPriceMatcher = unitPricePattern.matcher(cleaned);
+        
+        BigDecimal unitPriceValue = null;
+        while (unitPriceMatcher.find()) {
+            String priceStr = unitPriceMatcher.group(1).replace(",", "");
             try {
-                BigDecimal price = new BigDecimal(priceStr);
-                
-                // Try to extract quantity from description (e.g., "100's pack", "100 ml")
-                Integer quantity = extractQuantity(description);
-                String unit = extractUnit(description);
-                
-                PackageInfo pkgInfo = new PackageInfo();
-                pkgInfo.description = description;
-                pkgInfo.size = packageSize;
-                pkgInfo.unitPrice = quantity != null && quantity > 1 ? price.divide(new BigDecimal(quantity), 2, RoundingMode.HALF_UP) : price;
-                pkgInfo.packagePrice = price;
-                pkgInfo.quantity = quantity;
-                pkgInfo.unit = unit;
-                
-                packages.add(pkgInfo);
+                unitPriceValue = new BigDecimal(priceStr);
+                // Create a unit price entry with quantity = 1
+                String description = "Unit Price";
+                if (!seenDescriptions.contains(description)) {
+                    PackageInfo pkgInfo = new PackageInfo();
+                    pkgInfo.description = description;
+                    pkgInfo.size = packageSize;
+                    pkgInfo.unitPrice = unitPriceValue;
+                    pkgInfo.packagePrice = unitPriceValue;
+                    pkgInfo.quantity = 1;
+                    pkgInfo.unit = "pieces";
+                    packages.add(pkgInfo);
+                    seenDescriptions.add(description);
+                }
             } catch (Exception e) {
-                log.warn("Could not parse price from: {}", description);
+                log.warn("Could not parse unit price: {}", priceStr);
             }
         }
         
-        // If no matches, create a simple package
-        if (packages.isEmpty() && !packageContainer.isEmpty()) {
+        // Pattern 2: "(N's pack: ৳ X.XX)" - pack entries
+        Pattern packPattern = Pattern.compile("\\(\\s*(\\d+)\\s*['']?s?\\s*pack:\\s*৳\\s*([\\d,]+(?:\\.\\d+)?)\\s*\\)", Pattern.CASE_INSENSITIVE);
+        Matcher packMatcher = packPattern.matcher(cleaned);
+        
+        while (packMatcher.find()) {
+            int quantity = Integer.parseInt(packMatcher.group(1));
+            String priceStr = packMatcher.group(2).replace(",", "");
+            
+            try {
+                BigDecimal packagePrice = new BigDecimal(priceStr);
+                BigDecimal calculatedUnitPrice = unitPriceValue != null ? unitPriceValue : 
+                    packagePrice.divide(new BigDecimal(quantity), 2, RoundingMode.HALF_UP);
+                
+                String description = quantity + "'s pack";
+                if (!seenDescriptions.contains(description)) {
+                    PackageInfo pkgInfo = new PackageInfo();
+                    pkgInfo.description = description;
+                    pkgInfo.size = packageSize;
+                    pkgInfo.unitPrice = calculatedUnitPrice;
+                    pkgInfo.packagePrice = packagePrice;
+                    pkgInfo.quantity = quantity;
+                    pkgInfo.unit = "pack";
+                    packages.add(pkgInfo);
+                    seenDescriptions.add(description);
+                }
+            } catch (Exception e) {
+                log.warn("Could not parse pack price: {}", priceStr);
+            }
+        }
+        
+        // Pattern 3: Volume/weight based pricing - "N ml bottle: ৳ X.XX" or "N gm container: ৳ X.XX"
+        Pattern volumePattern = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*(ml|gm|g|mg)\\s+(?:bottle|container|vial|tube|sachet|drop|sachet):\\s*৳\\s*([\\d,]+(?:\\.\\d+)?)", Pattern.CASE_INSENSITIVE);
+        Matcher volumeMatcher = volumePattern.matcher(cleaned);
+        
+        while (volumeMatcher.find()) {
+            String quantityStr = volumeMatcher.group(1);
+            String unitType = volumeMatcher.group(2).toLowerCase();
+            String priceStr = volumeMatcher.group(3).replace(",", "");
+            
+            try {
+                BigDecimal quantity = new BigDecimal(quantityStr);
+                BigDecimal packagePrice = new BigDecimal(priceStr);
+                // For volume-based items (syrups, liquids), unit price = package price / quantity
+                // This gives price per ml/gm, which is correct for liquid forms
+                BigDecimal calculatedUnitPrice = packagePrice.divide(quantity, 4, RoundingMode.HALF_UP);
+                
+                String unit = unitType.equals("ml") ? "ml" : 
+                             (unitType.equals("gm") || unitType.equals("g")) ? "gm" : "mg";
+                String containerType = cleaned.contains("bottle") ? "bottle" :
+                                      cleaned.contains("container") ? "container" :
+                                      cleaned.contains("vial") ? "vial" :
+                                      cleaned.contains("tube") ? "tube" :
+                                      cleaned.contains("sachet") ? "sachet" :
+                                      cleaned.contains("drop") ? "drop" : "unit";
+                
+                String description = quantityStr + " " + unit + " " + containerType;
+                if (!seenDescriptions.contains(description)) {
+                    PackageInfo pkgInfo = new PackageInfo();
+                    pkgInfo.description = description;
+                    pkgInfo.size = packageSize;
+                    pkgInfo.unitPrice = calculatedUnitPrice;
+                    pkgInfo.packagePrice = packagePrice;
+                    pkgInfo.quantity = quantity.intValue();
+                    pkgInfo.unit = unit;
+                    packages.add(pkgInfo);
+                    seenDescriptions.add(description);
+                }
+            } catch (Exception e) {
+                log.warn("Could not parse volume price: {}", priceStr);
+            }
+        }
+        
+        // Pattern 4: Generic pattern for other formats - "description: ৳ X.XX"
+        // Only if we haven't matched anything yet
+        if (packages.isEmpty()) {
+            Pattern genericPattern = Pattern.compile("([^:]+?):\\s*৳\\s*([\\d,]+(?:\\.\\d+)?)");
+            Matcher genericMatcher = genericPattern.matcher(cleaned);
+            
+            while (genericMatcher.find()) {
+                String description = genericMatcher.group(1).trim();
+                String priceStr = genericMatcher.group(2).replace(",", "");
+                
+                // Skip if it's already been processed by other patterns
+                if (description.toLowerCase().contains("unit price") || 
+                    description.toLowerCase().contains("pack") ||
+                    description.matches(".*\\d+\\s*(ml|gm|g|mg).*")) {
+                    continue;
+                }
+                
+                try {
+                    BigDecimal price = new BigDecimal(priceStr);
+                    Integer quantity = extractQuantity(description);
+                    String unit = extractUnit(description);
+                    
+                    // If quantity is null, assume it's a single unit
+                    if (quantity == null) {
+                        quantity = 1;
+                    }
+                    
+                    BigDecimal calculatedUnitPrice = quantity > 1 ? 
+                        price.divide(new BigDecimal(quantity), 4, RoundingMode.HALF_UP) : price;
+                    
+                    if (!seenDescriptions.contains(description)) {
+                        PackageInfo pkgInfo = new PackageInfo();
+                        pkgInfo.description = description;
+                        pkgInfo.size = packageSize;
+                        pkgInfo.unitPrice = calculatedUnitPrice;
+                        pkgInfo.packagePrice = price;
+                        pkgInfo.quantity = quantity;
+                        pkgInfo.unit = unit;
+                        packages.add(pkgInfo);
+                        seenDescriptions.add(description);
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not parse generic price from: {}", description);
+                }
+            }
+        }
+        
+        // If still no packages found, create a simple entry
+        if (packages.isEmpty() && !packageContainer.trim().isEmpty() && 
+            !packageContainer.equalsIgnoreCase("Price Unavailable")) {
             PackageInfo pkgInfo = new PackageInfo();
-            pkgInfo.description = packageContainer;
+            pkgInfo.description = packageContainer.trim();
             pkgInfo.size = packageSize;
             packages.add(pkgInfo);
         }
@@ -263,20 +389,30 @@ public class MedicineCsvImportService {
     }
     
     private Integer extractQuantity(String text) {
-        Pattern pattern = Pattern.compile("(\\d+)\\s*['']?s?\\s*(?:pack|tablet|capsule|ml|gm|g)", Pattern.CASE_INSENSITIVE);
+        // Pattern for "N's pack" or "N pack" or "N ml" etc.
+        Pattern pattern = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*['']?s?\\s*(?:pack|tablet|capsule|ml|gm|g|mg|vial|bottle|container)", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(text);
         if (matcher.find()) {
-            return Integer.parseInt(matcher.group(1));
+            try {
+                return (int) Double.parseDouble(matcher.group(1));
+            } catch (NumberFormatException e) {
+                return null;
+            }
         }
         return null;
     }
     
     private String extractUnit(String text) {
-        if (text.toLowerCase().contains("ml")) return "ml";
-        if (text.toLowerCase().contains("gm") || text.toLowerCase().contains("g")) return "gm";
-        if (text.toLowerCase().contains("pack")) return "pack";
-        if (text.toLowerCase().contains("tablet")) return "tablets";
-        if (text.toLowerCase().contains("capsule")) return "capsules";
+        String lower = text.toLowerCase();
+        if (lower.contains("ml")) return "ml";
+        if (lower.contains("gm") || (lower.contains("g") && !lower.contains("mg"))) return "gm";
+        if (lower.contains("mg")) return "mg";
+        if (lower.contains("pack")) return "pack";
+        if (lower.contains("tablet")) return "tablets";
+        if (lower.contains("capsule")) return "capsules";
+        if (lower.contains("vial")) return "vial";
+        if (lower.contains("bottle")) return "bottle";
+        if (lower.contains("container")) return "container";
         return "pieces";
     }
     

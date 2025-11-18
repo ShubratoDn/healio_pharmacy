@@ -19,13 +19,12 @@ import java.util.List;
 @Builder
 public class Product extends BaseEntity {
 
-    @Column(name = "brand_id", unique = true)
+    @Column(name = "brand_id")
     private Long brandId;
 
     @Column(nullable = false)
     private String name;
 
-    @Column(unique = true)
     private String slug;
 
     @ManyToOne(fetch = FetchType.LAZY)
