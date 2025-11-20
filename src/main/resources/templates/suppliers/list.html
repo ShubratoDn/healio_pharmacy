@@ -29,7 +29,7 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Company</th>
+                            <th>Manufacturers</th>
                             <th>Contact Person</th>
                             <th>Phone</th>
                             <th>Email</th>
@@ -39,7 +39,13 @@
                     <tbody>
                         <tr th:each="supplier : ${suppliers}">
                             <td th:text="${supplier.name}"></td>
-                            <td th:text="${supplier.companyName}"></td>
+                            <td>
+                                <span th:if="${supplier.manufacturers != null and !supplier.manufacturers.isEmpty()}" 
+                                      th:each="manufacturer, iterStat : ${supplier.manufacturers}">
+                                    <span th:text="${manufacturer.name}"></span><span th:if="${!iterStat.last}">, </span>
+                                </span>
+                                <span th:if="${supplier.manufacturers == null or supplier.manufacturers.isEmpty()}" class="text-muted">-</span>
+                            </td>
                             <td th:text="${supplier.contactPerson}"></td>
                             <td th:text="${supplier.phone}"></td>
                             <td th:text="${supplier.email}"></td>

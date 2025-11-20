@@ -6,7 +6,82 @@
     <title>New Stock In - Healio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .summary-item:last-child {
+            border-bottom: none;
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+            padding-top: 1rem;
+        }
+        .add-product-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .add-product-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        .form-section {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        #productsTable {
+            margin-bottom: 0;
+            table-layout: fixed;
+        }
+        #productsTable thead th {
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            background-color: #f8f9fa;
+        }
+        #productsTable tbody td {
+            vertical-align: middle;
+        }
+        #productsTable tbody td:first-child {
+            width: 300px;
+            min-width: 300px;
+            max-width: 300px;
+            overflow: hidden;
+        }
+        .select2-container {
+            width: 100% !important;
+        }
+    </style>
 </head>
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='stock-in')}"></div>
@@ -18,53 +93,38 @@
         </div>
 
         <div class="content-card">
-            <form th:action="@{/stock-in/save}" th:object="${stockIn}" method="post">
+            <form th:action="@{/stock-in/save}" th:object="${stockIn}" method="post" id="stockInForm">
                 <input type="hidden" th:field="*{id}"/>
                 
+                <!-- Basic Information Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="bi bi-info-circle me-2"></i>Basic Information
+                    </div>
                 <div class="row mb-3">
-                    <div class="col-md-6">
+                        <div class="col-md-4">
                         <label class="form-label">Stock In Number</label>
                         <input type="text" th:field="*{stockInNumber}" class="form-control" placeholder="Auto-generated if empty">
                     </div>
-                    <div class="col-md-6">
+                        <div class="col-md-4">
                         <label class="form-label">Supplier</label>
-                        <select name="supplierId" class="form-select">
+                        <select name="supplierId" id="supplierSelect" class="form-select">
                             <option value="">Select Supplier</option>
-                            <option th:each="supplier : ${suppliers}" th:value="${supplier.id}" th:text="${supplier.name}"></option>
+                            <option th:if="${stockIn.supplier != null}" 
+                                    th:value="${stockIn.supplier.id}" 
+                                    th:text="${stockIn.supplier.name + (stockIn.supplier.phone != null ? ' - ' + stockIn.supplier.phone : '')}" 
+                                    selected></option>
                         </select>
                     </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
+                        <div class="col-md-4">
                         <label class="form-label">Stock In Date <span class="text-danger">*</span></label>
-                        <input type="date" th:field="*{stockInDate}" class="form-control" required>
+                        <input type="date" th:field="*{stockInDate}" class="form-control" required id="stockInDate">
                     </div>
+                    </div>
+                    <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Received Date</label>
                         <input type="date" th:field="*{receivedDate}" class="form-control">
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Total Amount <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" th:field="*{totalAmount}" class="form-control" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Discount Amount</label>
-                        <input type="number" step="0.01" th:field="*{discountAmount}" class="form-control" value="0">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Tax Amount</label>
-                        <input type="number" step="0.01" th:field="*{taxAmount}" class="form-control" value="0">
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Final Amount <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" th:field="*{finalAmount}" class="form-control" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Payment Status</label>
@@ -75,7 +135,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Payment Method</label>
@@ -86,46 +145,370 @@
                             <option value="CHEQUE">Cheque</option>
                             <option value="CREDIT">Credit</option>
                         </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Notes</label>
+                            <textarea th:field="*{notes}" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Notes</label>
-                    <textarea th:field="*{notes}" class="form-control" rows="3"></textarea>
+                <!-- Products Section -->
+                <div class="form-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="section-title mb-0">
+                            <i class="bi bi-box-seam me-2"></i>Products
+                        </div>
+                        <button type="button" class="btn add-product-btn" onclick="addProductRow()">
+                            <i class="bi bi-plus-circle me-2"></i>Add Product
+                        </button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="productsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 300px; min-width: 300px; max-width: 300px;">Product <span class="text-danger">*</span></th>
+                                    <th style="width: 15%;">Package</th>
+                                    <th style="width: 10%;">Unit Price</th>
+                                    <th style="width: 8%;">Quantity <span class="text-danger">*</span></th>
+                                    <th style="width: 12%;">Purchasing Price <span class="text-danger">*</span></th>
+                                    <th style="width: 12%;">Selling Price</th>
+                                    <th style="width: 10%;">Expiry Date</th>
+                                    <th style="width: 8%;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <tr id="emptyStateRow">
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+                                        <p class="mt-2 mb-0">No products added yet. Click "Add Product" to start.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div class="d-flex justify-content-end gap-2">
+                <!-- Summary Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="bi bi-calculator me-2"></i>Summary
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-item">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">৳0.00</span>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-white">Discount Amount</label>
+                                <input type="number" step="0.01" th:field="*{discountAmount}" class="form-control" value="0" id="discountAmount" oninput="calculateTotals()">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-white">Tax Amount</label>
+                                <input type="number" step="0.01" th:field="*{taxAmount}" class="form-control" value="0" id="taxAmount" oninput="calculateTotals()">
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <span>Total Amount:</span>
+                            <span id="totalAmount">৳0.00</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>Final Amount:</span>
+                            <span id="finalAmount">৳0.00</span>
+                        </div>
+                        <input type="hidden" th:field="*{totalAmount}" id="totalAmountInput">
+                        <input type="hidden" th:field="*{finalAmount}" id="finalAmountInput">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
                     <a href="/stock-in" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Save Stock In</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Save Stock In
+                    </button>
                 </div>
             </form>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
     <script>
-        // Auto-calculate final amount
-        document.addEventListener('DOMContentLoaded', function() {
-            const totalAmount = document.querySelector('input[name="totalAmount"]');
-            const discountAmount = document.querySelector('input[name="discountAmount"]');
-            const taxAmount = document.querySelector('input[name="taxAmount"]');
-            const finalAmount = document.querySelector('input[name="finalAmount"]');
+        let rowCounter = 0;
+
+        // Add product row template
+        function getProductRowTemplate(index) {
+            return `
+                <tr class="product-row" data-row-index="${index}">
+                    <td>
+                        <select name="productIds" class="form-select product-select" data-row-index="${index}" required>
+                            <option value="">Select Product</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="packageIds" class="form-select product-package-select" data-row-index="${index}" onchange="updateUnitPrice(${index})">
+                            <option value="">No Package</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm unit-price-display" data-row-index="${index}" readonly style="background-color: #e9ecef; font-weight: 500;" placeholder="--">
+                    </td>
+                    <td>
+                        <input type="number" name="quantities" class="form-control form-control-sm" min="1" required data-row-index="${index}" oninput="calculateRowTotal(${index})">
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" name="unitCosts" class="form-control form-control-sm" min="0" required data-row-index="${index}" oninput="calculateRowTotal(${index})">
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" name="sellingPrices" class="form-control form-control-sm" min="0" data-row-index="${index}">
+                    </td>
+                    <td>
+                        <input type="date" name="expiryDates" class="form-control form-control-sm" data-row-index="${index}">
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeProductRow(${index})" title="Remove">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function addProductRow() {
+            const tbody = document.getElementById('productsTableBody');
+            const emptyStateRow = document.getElementById('emptyStateRow');
             
-            function calculateFinal() {
-                if (totalAmount && discountAmount && taxAmount && finalAmount) {
-                    const total = parseFloat(totalAmount.value) || 0;
-                    const discount = parseFloat(discountAmount.value) || 0;
-                    const tax = parseFloat(taxAmount.value) || 0;
-                    const final = total - discount + tax;
-                    finalAmount.value = final.toFixed(2);
-                }
+            if (emptyStateRow) {
+                emptyStateRow.remove();
             }
             
-            if (totalAmount) totalAmount.addEventListener('input', calculateFinal);
-            if (discountAmount) discountAmount.addEventListener('input', calculateFinal);
-            if (taxAmount) taxAmount.addEventListener('input', calculateFinal);
+            const rowHtml = getProductRowTemplate(rowCounter);
+            tbody.insertAdjacentHTML('beforeend', rowHtml);
+            
+            // Initialize Select2 for the new row
+            const select = tbody.querySelector(`[data-row-index="${rowCounter}"].product-select`);
+            initializeProductSelect2(select, rowCounter);
+            
+            rowCounter++;
+        }
+
+        function initializeProductSelect2(selectElement, rowIndex) {
+            $(selectElement).select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Search and select product...',
+                allowClear: true,
+                ajax: {
+                    url: '/products/api/search',
+                    dataType: 'json',
+                    delay: 300,
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            page: params.page || 0
+                        };
+                    },
+                    processResults: function (data, params) {
+                        params.page = params.page || 0;
+                        return {
+                            results: data.map(product => {
+                                let text = product.name;
+                                
+                                // Add strength if available
+                                if (product.strength) {
+                                    text += ' [' + product.strength + ']';
+                                }
+                                
+                                // Add dosage form if available
+                                if (product.dosageForm) {
+                                    text += ' (' + product.dosageForm + ')';
+                                }
+                                
+                                // Add manufacturer (company name) if available
+                                if (product.manufacturer) {
+                                    text += ' - ' + product.manufacturer;
+                                }
+                                
+                                return {
+                                    id: product.id,
+                                    text: text,
+                                    product: product
+                                };
+                            }),
+                            pagination: {
+                                more: false
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1
+            }).on('select2:select', function (e) {
+                const data = e.params.data;
+                const productId = data.id;
+                // The select element value is automatically set by Select2
+                // Load product packages
+                loadProductPackages(productId, rowIndex);
+            }).on('select2:clear', function (e) {
+                const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+                const packageSelect = row.querySelector('.product-package-select');
+                packageSelect.innerHTML = '<option value="">No Package</option>';
+            });
+        }
+
+        function removeProductRow(index) {
+            const row = document.querySelector(`tr[data-row-index="${index}"]`);
+            if (row) {
+                // Destroy Select2 instance before removing
+                const select = row.querySelector('.product-select');
+                if (select && $(select).hasClass('select2-hidden-accessible')) {
+                    $(select).select2('destroy');
+                }
+                row.remove();
+                calculateTotals();
+                
+                // Show empty state if no rows
+                const tbody = document.getElementById('productsTableBody');
+                if (tbody.children.length === 0) {
+                    tbody.innerHTML = `
+                        <tr id="emptyStateRow">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+                                <p class="mt-2 mb-0">No products added yet. Click "Add Product" to start.</p>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+        }
+
+        function loadProductPackages(productId, rowIndex) {
+            fetch(`/stock-in/api/product-packages/${productId}`)
+                .then(response => response.json())
+                .then(packages => {
+                    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+                    const select = row.querySelector('.product-package-select');
+                    const unitPriceDisplay = row.querySelector('.unit-price-display');
+                    select.innerHTML = '<option value="">No Package</option>';
+                    unitPriceDisplay.value = '';
+                    
+                    packages.forEach(pkg => {
+                        const option = document.createElement('option');
+                        option.value = pkg.id;
+                        option.textContent = pkg.description + (pkg.size ? ' (' + pkg.size + ')' : '');
+                        option.dataset.unitPrice = pkg.unitPrice || '';
+                        if (pkg.isDefault) {
+                            option.selected = true;
+                            updateUnitPrice(rowIndex);
+                        }
+                        select.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading packages:', error);
+                });
+        }
+
+        function updateUnitPrice(rowIndex) {
+            const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+            const packageSelect = row.querySelector('.product-package-select');
+            const unitPriceDisplay = row.querySelector('.unit-price-display');
+            
+            if (packageSelect.value) {
+                const selectedOption = packageSelect.options[packageSelect.selectedIndex];
+                const unitPrice = selectedOption.dataset.unitPrice;
+                if (unitPrice) {
+                    unitPriceDisplay.value = '৳' + parseFloat(unitPrice).toFixed(2);
+                } else {
+                    unitPriceDisplay.value = '--';
+                }
+            } else {
+                unitPriceDisplay.value = '';
+            }
+        }
+
+        function calculateRowTotal(rowIndex) {
+            const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+            const quantity = parseFloat(row.querySelector('[name="quantities"]').value) || 0;
+            const unitCost = parseFloat(row.querySelector('[name="unitCosts"]').value) || 0;
+            calculateTotals();
+        }
+
+        function calculateTotals() {
+            let subtotal = 0;
+            
+            document.querySelectorAll('tr.product-row').forEach(row => {
+                const quantity = parseFloat(row.querySelector('[name="quantities"]').value) || 0;
+                const unitCost = parseFloat(row.querySelector('[name="unitCosts"]').value) || 0;
+                subtotal += quantity * unitCost;
+            });
+            
+            const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+            const tax = parseFloat(document.getElementById('taxAmount').value) || 0;
+            const total = subtotal;
+                    const final = total - discount + tax;
+            
+            document.getElementById('subtotal').textContent = '৳' + subtotal.toFixed(2);
+            document.getElementById('totalAmount').textContent = '৳' + total.toFixed(2);
+            document.getElementById('finalAmount').textContent = '৳' + final.toFixed(2);
+            
+            document.getElementById('totalAmountInput').value = total;
+            document.getElementById('finalAmountInput').value = final;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set today's date as default for stock in date
+            const today = new Date().toISOString().split('T')[0];
+            const stockInDateInput = document.getElementById('stockInDate');
+            if (stockInDateInput && !stockInDateInput.value) {
+                stockInDateInput.value = today;
+            }
+            
+            // Initialize Select2 for supplier
+            const existingSupplier = $('#supplierSelect option[selected]');
+            const existingData = [];
+            if (existingSupplier.length > 0 && existingSupplier.val()) {
+                existingData.push({
+                    id: existingSupplier.val(),
+                    text: existingSupplier.text()
+                });
+            }
+            
+            $('#supplierSelect').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Search and select supplier...',
+                allowClear: true,
+                data: existingData,
+                ajax: {
+                    url: '/suppliers/api/search',
+                    dataType: 'json',
+                    delay: 300,
+                    data: function (params) {
+                        return {
+                            q: params.term || ''
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.map(function(item) {
+                                // Format: Name - Phone (Manufacturers)
+                                return {
+                                    id: item.id,
+                                    text: item.text
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0
+            });
+            
+            addProductRow();
         });
     </script>
 </body>
 </html>
-

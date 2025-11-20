@@ -6,7 +6,34 @@
     <title th:text="${supplier.id != null} ? 'Edit Supplier' : 'Add Supplier'">Supplier Form - Healio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .select2-container {
+            width: 100% !important;
+        }
+        .manufacturer-select-wrapper {
+            position: relative;
+        }
+        .manufacturer-create-icon {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            cursor: pointer;
+            color: #0d6efd;
+            font-size: 1.2rem;
+            pointer-events: auto;
+        }
+        .manufacturer-create-icon:hover {
+            color: #0a58ca;
+        }
+        .select2-container {
+            position: relative;
+        }
+    </style>
 </head>
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='suppliers')}"></div>
@@ -18,7 +45,7 @@
         </div>
 
         <div class="content-card">
-            <form th:action="@{/suppliers/save}" th:object="${supplier}" method="post">
+            <form th:action="@{/suppliers/save}" th:object="${supplier}" method="post" id="supplierForm">
                 <input type="hidden" th:field="*{id}"/>
                 
                 <div class="row mb-3">
@@ -27,8 +54,16 @@
                         <input type="text" th:field="*{name}" class="form-control" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Company Name</label>
-                        <input type="text" th:field="*{companyName}" class="form-control">
+                        <label class="form-label">Manufacturers</label>
+                        <div class="manufacturer-select-wrapper">
+                            <select name="manufacturerIds" id="manufacturerSelect" class="form-select" multiple>
+                                <option th:each="manufacturer : ${supplier.manufacturers}" 
+                                        th:value="${manufacturer.id}" 
+                                        th:text="${manufacturer.name}" 
+                                        selected></option>
+                            </select>
+                            <i class="bi bi-plus-circle-fill manufacturer-create-icon" onclick="openCreateManufacturerModal()" title="Create New Manufacturer"></i>
+                        </div>
                     </div>
                 </div>
 
@@ -71,8 +106,145 @@
             </form>
         </div>
     </div>
+
+    <!-- Create Manufacturer Modal -->
+    <div class="modal fade" id="createManufacturerModal" tabindex="-1" aria-labelledby="createManufacturerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createManufacturerModalLabel">Create New Manufacturer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createManufacturerForm">
+                        <div class="mb-3">
+                            <label class="form-label">Manufacturer Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Address</label>
+                            <textarea name="address" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact Info</label>
+                            <textarea name="contactInfo" class="form-control" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveManufacturer()">Save Manufacturer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
+    <script>
+        $(document).ready(function() {
+            // Store existing manufacturers for later use
+            const existingManufacturers = [];
+            $('#manufacturerSelect option').each(function() {
+                if ($(this).val()) {
+                    existingManufacturers.push({
+                        id: $(this).val(),
+                        text: $(this).text()
+                    });
+                }
+            });
+
+            // Initialize Select2 for manufacturers
+            $('#manufacturerSelect').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Search and select manufacturers...',
+                allowClear: true,
+                ajax: {
+                    url: '/manufacturers/api/search',
+                    dataType: 'json',
+                    delay: 300,
+                    data: function (params) {
+                        return {
+                            q: params.term || ''
+                        };
+                    },
+                    processResults: function (data) {
+                        // Combine existing manufacturers with search results
+                        const allResults = [...existingManufacturers];
+                        const existingIds = new Set(existingManufacturers.map(m => m.id));
+                        
+                        data.forEach(function(item) {
+                            if (!existingIds.has(item.id)) {
+                                allResults.push({
+                                    id: item.id,
+                                    text: item.name
+                                });
+                            }
+                        });
+                        
+                        return {
+                            results: allResults
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0
+            });
+        });
+
+        function openCreateManufacturerModal() {
+            const modal = new bootstrap.Modal(document.getElementById('createManufacturerModal'));
+            modal.show();
+        }
+
+        function saveManufacturer() {
+            const form = document.getElementById('createManufacturerForm');
+            const formData = new FormData(form);
+            
+            // Validate required fields
+            const name = formData.get('name');
+            if (!name || name.trim() === '') {
+                alert('Manufacturer name is required');
+                return;
+            }
+
+            fetch('/manufacturers/api/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams(formData).toString()
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Add the new manufacturer to Select2
+                    const option = new Option(data.name, data.id, true, true);
+                    $('#manufacturerSelect').append(option).trigger('change');
+                    
+                    // Close modal and reset form
+                    bootstrap.Modal.getInstance(document.getElementById('createManufacturerModal')).hide();
+                    form.reset();
+                } else {
+                    alert('Error saving manufacturer. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving manufacturer. Please try again.');
+            });
+        }
+    </script>
 </body>
 </html>
 
