@@ -29,9 +29,6 @@ public class ProductPackage extends BaseEntity {
     @Column(name = "unit_price", precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
-    @Column(name = "package_price", precision = 10, scale = 2)
-    private BigDecimal packagePrice;
-
     @Column(name = "quantity_per_package")
     private Integer quantityPerPackage;
 

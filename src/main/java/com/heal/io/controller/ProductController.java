@@ -74,7 +74,6 @@ public class ProductController {
             @RequestParam(value = "packageDescriptions", required = false) List<String> packageDescriptions,
             @RequestParam(value = "packageSizes", required = false) List<String> packageSizes,
             @RequestParam(value = "unitPrices", required = false) List<String> unitPrices,
-            @RequestParam(value = "packagePrices", required = false) List<String> packagePrices,
             @RequestParam(value = "quantities", required = false) List<String> quantities,
             @RequestParam(value = "units", required = false) List<String> units,
             @RequestParam(value = "isDefaults", required = false) List<String> isDefaults,
@@ -157,9 +156,6 @@ public class ProductController {
                     try {
                         if (unitPrices != null && i < unitPrices.size() && unitPrices.get(i) != null && !unitPrices.get(i).trim().isEmpty()) {
                             productPackage.setUnitPrice(new BigDecimal(unitPrices.get(i).trim()));
-                        }
-                        if (packagePrices != null && i < packagePrices.size() && packagePrices.get(i) != null && !packagePrices.get(i).trim().isEmpty()) {
-                            productPackage.setPackagePrice(new BigDecimal(packagePrices.get(i).trim()));
                         }
                         if (quantities != null && i < quantities.size() && quantities.get(i) != null && !quantities.get(i).trim().isEmpty()) {
                             productPackage.setQuantityPerPackage(Integer.parseInt(quantities.get(i).trim()));

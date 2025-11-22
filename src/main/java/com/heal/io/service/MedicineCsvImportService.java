@@ -30,6 +30,53 @@ public class MedicineCsvImportService {
     private final MedicineTypeRepository medicineTypeRepository;
     private final ProductPackageRepository productPackageRepository;
 
+    // Dosage forms that have unit prices - extract only unit price (1 package info only)
+    private static final Set<String> UNIT_PRICE_DOSAGE_FORMS = Set.of(
+        "Capsule",
+        "Capsule (Controlled Release)",
+        "Capsule (Delayed Release)",
+        "Capsule (Extended Release)",
+        "Capsule (Modified Release)",
+        "Capsule (Sustained Release)",
+        "Capsule (Timed Release)",
+        "Chewable Tablet",
+        "Chewing Gum Tablet",
+        "Dispersible Tablet",
+        "Effervescent Granules",
+        "Effervescent Tablet",
+        "Eye Capsule",
+        "Flash Tablet",
+        "IV Infusion",
+        "IV/SC Injection",
+        "Inhalation Capsule",
+        "Inhaler",
+        "Injection",
+        "Long Acting Tablet",
+        "MUPS Tablet",
+        "OROS Tablet",
+        "Oral Powder",
+        "Oral Soluble Film",
+        "Powder for Suspension",
+        "Retard Tablet",
+        "Sprinkle Capsule",
+        "Sublingual Tablet",
+        "Suppository",
+        "Tablet",
+        "Tablet (Controlled Release)",
+        "Tablet (Delayed Release)",
+        "Tablet (Enteric Coated)",
+        "Tablet (Extended Release)",
+        "Tablet (Immediate Release)",
+        "Tablet (Modified Release)",
+        "Tablet (Prolonged Release)",
+        "Tablet (Sustained Release)",
+        "Transdermal Patch",
+        "Vaginal Gel",
+        "Vaginal Pessary",
+        "Vaginal Suppository",
+        "Vaginal Tablet"
+    );
+
     @Transactional
     public ImportResult importMedicines(MultipartFile file) {
         ImportResult result = new ImportResult();
@@ -172,7 +219,6 @@ public class MedicineCsvImportService {
                                     .packageDescription(pkgInfo.description)
                                     .packageSize(pkgInfo.size)
                                     .unitPrice(pkgInfo.unitPrice)
-                                    .packagePrice(pkgInfo.packagePrice)
                                     .quantityPerPackage(pkgInfo.quantity)
                                     .unitOfMeasure(pkgInfo.unit)
                                     .isDefault(packages.size() == 1)
@@ -227,6 +273,9 @@ public class MedicineCsvImportService {
             return packages;
         }
         
+        // Check if this dosage form should only extract unit price
+        boolean isUnitPriceDosageForm = UNIT_PRICE_DOSAGE_FORMS.contains(dosageForm);
+        
         // Clean up the package container string - remove extra commas and parentheses
         String cleaned = packageContainer.replaceAll(",\\s*,+", ",").trim();
         
@@ -246,7 +295,6 @@ public class MedicineCsvImportService {
                     pkgInfo.description = description;
                     pkgInfo.size = packageSize;
                     pkgInfo.unitPrice = unitPriceValue;
-                    pkgInfo.packagePrice = unitPriceValue;
                     pkgInfo.quantity = 1;
                     pkgInfo.unit = "pieces";
                     packages.add(pkgInfo);
@@ -257,7 +305,40 @@ public class MedicineCsvImportService {
             }
         }
         
-        // Pattern 2: "(N's pack: ৳ X.XX)" - pack entries
+        // For unit price dosage forms, only extract unit price and skip pack prices
+        if (isUnitPriceDosageForm) {
+            // If we found a unit price, return only that (1 package info only)
+            if (!packages.isEmpty()) {
+                return packages;
+            }
+            // If no unit price found but it's a unit price dosage form, try to extract from pack price
+            Pattern packPattern = Pattern.compile("\\(\\s*(\\d+)\\s*['']?s?\\s*pack:\\s*৳\\s*([\\d,]+(?:\\.\\d+)?)\\s*\\)", Pattern.CASE_INSENSITIVE);
+            Matcher packMatcher = packPattern.matcher(cleaned);
+            
+            if (packMatcher.find()) {
+                int quantity = Integer.parseInt(packMatcher.group(1));
+                String priceStr = packMatcher.group(2).replace(",", "");
+                
+                try {
+                    BigDecimal packagePrice = new BigDecimal(priceStr);
+                    BigDecimal calculatedUnitPrice = packagePrice.divide(new BigDecimal(quantity), 2, RoundingMode.HALF_UP);
+                    
+                    PackageInfo pkgInfo = new PackageInfo();
+                    pkgInfo.description = "Unit Price";
+                    pkgInfo.size = packageSize;
+                    pkgInfo.unitPrice = calculatedUnitPrice;
+                    pkgInfo.quantity = 1;
+                    pkgInfo.unit = "pieces";
+                    packages.add(pkgInfo);
+                    return packages;
+                } catch (Exception e) {
+                    log.warn("Could not parse pack price for unit price dosage form: {}", priceStr);
+                }
+            }
+            return packages;
+        }
+        
+        // Pattern 2: "(N's pack: ৳ X.XX)" - pack entries (only for non-unit-price dosage forms)
         Pattern packPattern = Pattern.compile("\\(\\s*(\\d+)\\s*['']?s?\\s*pack:\\s*৳\\s*([\\d,]+(?:\\.\\d+)?)\\s*\\)", Pattern.CASE_INSENSITIVE);
         Matcher packMatcher = packPattern.matcher(cleaned);
         
@@ -276,7 +357,6 @@ public class MedicineCsvImportService {
                     pkgInfo.description = description;
                     pkgInfo.size = packageSize;
                     pkgInfo.unitPrice = calculatedUnitPrice;
-                    pkgInfo.packagePrice = packagePrice;
                     pkgInfo.quantity = quantity;
                     pkgInfo.unit = "pack";
                     packages.add(pkgInfo);
@@ -288,6 +368,7 @@ public class MedicineCsvImportService {
         }
         
         // Pattern 3: Volume/weight based pricing - "N ml bottle: ৳ X.XX" or "N gm container: ৳ X.XX"
+        // For non-unit-price dosage forms, quantity should be 1 (1 quantity)
         Pattern volumePattern = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*(ml|gm|g|mg)\\s+(?:bottle|container|vial|tube|sachet|drop|sachet):\\s*৳\\s*([\\d,]+(?:\\.\\d+)?)", Pattern.CASE_INSENSITIVE);
         Matcher volumeMatcher = volumePattern.matcher(cleaned);
         
@@ -297,11 +378,10 @@ public class MedicineCsvImportService {
             String priceStr = volumeMatcher.group(3).replace(",", "");
             
             try {
-                BigDecimal quantity = new BigDecimal(quantityStr);
                 BigDecimal packagePrice = new BigDecimal(priceStr);
-                // For volume-based items (syrups, liquids), unit price = package price / quantity
-                // This gives price per ml/gm, which is correct for liquid forms
-                BigDecimal calculatedUnitPrice = packagePrice.divide(quantity, 4, RoundingMode.HALF_UP);
+                // For non-unit-price dosage forms, quantity is always 1 (1 quantity)
+                // Unit price = package price (since quantity is 1)
+                BigDecimal calculatedUnitPrice = packagePrice;
                 
                 String unit = unitType.equals("ml") ? "ml" : 
                              (unitType.equals("gm") || unitType.equals("g")) ? "gm" : "mg";
@@ -318,8 +398,7 @@ public class MedicineCsvImportService {
                     pkgInfo.description = description;
                     pkgInfo.size = packageSize;
                     pkgInfo.unitPrice = calculatedUnitPrice;
-                    pkgInfo.packagePrice = packagePrice;
-                    pkgInfo.quantity = quantity.intValue();
+                    pkgInfo.quantity = 1; // Always 1 quantity for non-unit-price dosage forms
                     pkgInfo.unit = unit;
                     packages.add(pkgInfo);
                     seenDescriptions.add(description);
@@ -348,11 +427,16 @@ public class MedicineCsvImportService {
                 
                 try {
                     BigDecimal price = new BigDecimal(priceStr);
-                    Integer quantity = extractQuantity(description);
                     String unit = extractUnit(description);
                     
-                    // If quantity is null, assume it's a single unit
-                    if (quantity == null) {
+                    // For non-unit-price dosage forms, quantity is always 1
+                    // For unit-price dosage forms, extract quantity if available, otherwise default to 1
+                    Integer quantity;
+                    if (isUnitPriceDosageForm) {
+                        Integer extractedQuantity = extractQuantity(description);
+                        quantity = extractedQuantity != null ? extractedQuantity : 1;
+                    } else {
+                        // For non-unit-price dosage forms, always set quantity to 1
                         quantity = 1;
                     }
                     
@@ -364,7 +448,6 @@ public class MedicineCsvImportService {
                         pkgInfo.description = description;
                         pkgInfo.size = packageSize;
                         pkgInfo.unitPrice = calculatedUnitPrice;
-                        pkgInfo.packagePrice = price;
                         pkgInfo.quantity = quantity;
                         pkgInfo.unit = unit;
                         packages.add(pkgInfo);
@@ -420,7 +503,6 @@ public class MedicineCsvImportService {
         String description;
         String size;
         BigDecimal unitPrice;
-        BigDecimal packagePrice;
         Integer quantity;
         String unit;
     }

@@ -102,7 +102,6 @@
                                 <tr>
                                     <th>Package Description</th>
                                     <th>Unit Price (৳)</th>
-                                    <th>Package Price (৳)</th>
                                     <th>Quantity</th>
                                     <th>Unit</th>
                                     <th>Default</th>
@@ -119,18 +118,11 @@
                                     </td>
                                     <td>
                                         <input type="number" th:name="unitPrices" th:value="${pkg.unitPrice}" 
-                                               step="0.01" min="0" class="form-control form-control-sm package-unit-price" 
-                                               onchange="calculatePackagePrice(this)">
-                                    </td>
-                                    <td>
-                                        <input type="number" th:name="packagePrices" th:value="${pkg.packagePrice}" 
-                                               step="0.01" min="0" class="form-control form-control-sm package-price" 
-                                               onchange="calculateUnitPrice(this)">
+                                               step="0.01" min="0" class="form-control form-control-sm package-unit-price">
                                     </td>
                                     <td>
                                         <input type="number" th:name="quantities" th:value="${pkg.quantityPerPackage}" 
-                                               min="1" class="form-control form-control-sm package-quantity" 
-                                               onchange="calculateUnitPrice(this)">
+                                               min="1" class="form-control form-control-sm package-quantity">
                                     </td>
                                     <td>
                                         <select th:name="units" class="form-select form-select-sm">
@@ -185,18 +177,11 @@
                 </td>
                 <td>
                     <input type="number" name="unitPrices" step="0.01" min="0" 
-                           class="form-control form-control-sm package-unit-price" 
-                           onchange="calculatePackagePrice(this)">
-                </td>
-                <td>
-                    <input type="number" name="packagePrices" step="0.01" min="0" 
-                           class="form-control form-control-sm package-price" 
-                           onchange="calculateUnitPrice(this)">
+                           class="form-control form-control-sm package-unit-price">
                 </td>
                 <td>
                     <input type="number" name="quantities" min="1" value="1" 
-                           class="form-control form-control-sm package-quantity" 
-                           onchange="calculateUnitPrice(this)">
+                           class="form-control form-control-sm package-quantity">
                 </td>
                 <td>
                     <select name="units" class="form-select form-select-sm">
@@ -230,36 +215,6 @@
         function removePackageRow(button) {
             const row = button.closest('tr');
             row.remove();
-        }
-        
-        function calculateUnitPrice(input) {
-            const row = input.closest('tr');
-            const packagePriceInput = row.querySelector('.package-price');
-            const quantityInput = row.querySelector('.package-quantity');
-            const unitPriceInput = row.querySelector('.package-unit-price');
-            
-            const packagePrice = parseFloat(packagePriceInput.value) || 0;
-            const quantity = parseFloat(quantityInput.value) || 1;
-            
-            if (packagePrice > 0 && quantity > 0) {
-                const unitPrice = packagePrice / quantity;
-                unitPriceInput.value = unitPrice.toFixed(2);
-            }
-        }
-        
-        function calculatePackagePrice(input) {
-            const row = input.closest('tr');
-            const unitPriceInput = row.querySelector('.package-unit-price');
-            const quantityInput = row.querySelector('.package-quantity');
-            const packagePriceInput = row.querySelector('.package-price');
-            
-            const unitPrice = parseFloat(unitPriceInput.value) || 0;
-            const quantity = parseFloat(quantityInput.value) || 1;
-            
-            if (unitPrice > 0 && quantity > 0) {
-                const packagePrice = unitPrice * quantity;
-                packagePriceInput.value = packagePrice.toFixed(2);
-            }
         }
         
         function updateDefaultCheckbox(checkbox) {
