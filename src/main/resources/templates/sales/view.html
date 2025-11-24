@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sale Details - Healio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .sale-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .info-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        .item-row {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+        .item-row:last-child {
+            border-bottom: none;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .sale-header {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/sidebar :: sidebar(activePage='sales')}"></div>
+    <div class="main-content">
+        <div th:replace="~{fragments/navbar :: navbar(pageTitle='Sale Details')}"></div>
+
+        <div class="page-header d-flex justify-content-between align-items-center no-print">
+            <h4 class="mb-0"><i class="bi bi-receipt me-2"></i>Sale Details</h4>
+            <div class="d-flex gap-2">
+                <a th:href="@{/sales/{id}/edit(id=${sale.id})}" class="btn btn-warning">
+                    <i class="bi bi-pencil me-2"></i>Edit
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-primary">
+                    <i class="bi bi-printer me-2"></i>Print
+                </button>
+                <a href="/sales" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Sales
+                </a>
+            </div>
+        </div>
+
+        <div th:object="${sale}">
+            <!-- Sale Header -->
+            <div class="sale-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="mb-2">Sale #<span th:text="*{saleNumber}"></span></h3>
+                        <p class="mb-0">
+                            <i class="bi bi-calendar me-2"></i>
+                            <span th:text="${#temporals.format(sale.saleDate, 'EEEE, MMMM dd, yyyy')}"></span>
+                            <span th:text="${#temporals.format(sale.saleDate, 'hh:mm a')}"></span>
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-light text-dark fs-6 px-3 py-2" 
+                              th:classappend="*{saleStatus == 'COMPLETED'} ? 'bg-success' : 
+                                              (*{saleStatus == 'PENDING'} ? 'bg-warning' : 'bg-danger')"
+                              th:text="*{saleStatus}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Left Column: Customer & Items -->
+                <div class="col-md-8">
+                    <!-- Customer Information -->
+                    <div class="info-card">
+                        <h5 class="mb-3"><i class="bi bi-person me-2"></i>Customer Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Name:</strong></p>
+                                <p th:text="*{customer?.name ?: customerName ?: 'Walk-in Customer'}"></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Phone:</strong></p>
+                                <p th:text="*{customerPhone ?: '-'}"></p>
+                            </div>
+                            <div class="col-md-6" th:if="*{customer != null}">
+                                <p class="mb-1"><strong>Email:</strong></p>
+                                <p th:text="*{customer.email ?: '-'}"></p>
+                            </div>
+                            <div class="col-md-6" th:if="*{customer != null}">
+                                <p class="mb-1"><strong>Address:</strong></p>
+                                <p th:text="*{customer.address ?: '-'}"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sale Items -->
+                    <div class="info-card">
+                        <h5 class="mb-3"><i class="bi bi-list-ul me-2"></i>Sale Items</h5>
+                        <div th:if="*{items != null && !items.isEmpty()}">
+                            <div class="item-row" th:each="item, iterStat : *{items}">
+                                <div class="row align-items-center">
+                                    <div class="col-md-1 text-center">
+                                        <span class="badge bg-secondary" th:text="${iterStat.count}"></span>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <strong th:text="${item.productName}"></strong>
+                                        <div class="text-muted small" th:if="${item.productPackage != null}">
+                                            <span th:text="${item.productPackage.packageDescription}"></span>
+                                        </div>
+                                        <div class="text-muted small" th:if="${item.batchNumber}">
+                                            Batch: <span th:text="${item.batchNumber}"></span>
+                                        </div>
+                                        <div class="text-muted small" th:if="${item.expiryDate}">
+                                            Expiry: <span th:text="${#temporals.format(item.expiryDate, 'yyyy-MM-dd')}"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        <span th:text="${item.quantity}"></span>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        ৳<span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 2)}"></span>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <strong>৳<span th:text="${#numbers.formatDecimal(item.totalPrice, 0, 2)}"></span></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="*{items == null || items.isEmpty()}" class="text-center text-muted py-4">
+                            No items in this sale
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="info-card" th:if="*{notes != null && !notes.isEmpty()}">
+                        <h5 class="mb-3"><i class="bi bi-sticky me-2"></i>Notes</h5>
+                        <p th:text="*{notes}"></p>
+                    </div>
+                </div>
+
+                <!-- Right Column: Summary -->
+                <div class="col-md-4">
+                    <div class="info-card">
+                        <h5 class="mb-3"><i class="bi bi-calculator me-2"></i>Summary</h5>
+                        <div class="summary-box">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <strong>৳<span th:text="${#numbers.formatDecimal(sale.subtotal, 0, 2)}"></span></strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" th:if="*{discountAmount != null && discountAmount > 0}">
+                                <span class="text-danger">Discount:</span>
+                                <strong class="text-danger">-৳<span th:text="${#numbers.formatDecimal(sale.discountAmount, 0, 2)}"></span></strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" th:if="*{taxAmount != null && taxAmount > 0}">
+                                <span>Tax:</span>
+                                <strong>৳<span th:text="${#numbers.formatDecimal(sale.taxAmount, 0, 2)}"></span></strong>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="fs-5"><strong>Total:</strong></span>
+                                <span class="fs-5"><strong>৳<span th:text="${#numbers.formatDecimal(sale.totalAmount, 0, 2)}"></span></strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h5 class="mb-3"><i class="bi bi-credit-card me-2"></i>Payment</h5>
+                        <div class="mb-2">
+                            <strong>Payment Method:</strong>
+                            <div th:text="*{paymentMethod}"></div>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Payment Status:</strong>
+                            <div>
+                                <span class="badge" 
+                                      th:classappend="*{paymentStatus == 'PAID'} ? 'bg-success' : 
+                                                      (*{paymentStatus == 'PARTIAL'} ? 'bg-warning' : 'bg-danger')"
+                                      th:text="*{paymentStatus}"></span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Paid Amount:</strong>
+                            <div>৳<span th:text="${#numbers.formatDecimal(sale.paidAmount, 0, 2)}"></span></div>
+                        </div>
+                        <div class="mb-2" th:if="*{changeAmount != null && changeAmount > 0}">
+                            <strong>Change:</strong>
+                            <div>৳<span th:text="${#numbers.formatDecimal(sale.changeAmount, 0, 2)}"></span></div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h5 class="mb-3"><i class="bi bi-info-circle me-2"></i>Additional Information</h5>
+                        <div class="mb-2">
+                            <strong>Sold By:</strong>
+                            <div th:text="*{soldBy?.name ?: 'N/A'}"></div>
+                        </div>
+                        <div class="mb-2" th:if="*{prescriptionRequired}">
+                            <strong>Prescription Required:</strong>
+                            <div>
+                                <span class="badge bg-warning">Yes</span>
+                                <span th:if="*{prescriptionNumber}" th:text="'(' + *{prescriptionNumber} + ')'"></span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Created:</strong>
+                            <div>
+                                <small th:text="${#temporals.format(sale.createdAt, 'yyyy-MM-dd HH:mm')}"></small>
+                            </div>
+                        </div>
+                        <div class="mb-2" th:if="*{updatedAt != createdAt}">
+                            <strong>Last Updated:</strong>
+                            <div>
+                                <small th:text="${#temporals.format(sale.updatedAt, 'yyyy-MM-dd HH:mm')}"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/common.js}"></script>
+</body>
+</html>
+
