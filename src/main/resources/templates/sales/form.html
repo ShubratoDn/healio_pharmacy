@@ -163,11 +163,11 @@
                 <div class="content-card mb-3">
                     <h5 class="mb-3"><i class="bi bi-person me-2"></i>Customer Information</h5>
                     <div class="row mb-3">
-                        <div class="col-md-12">
+                        <div class="col-md-12 position-relative">
                             <label class="form-label">Search Customer</label>
                             <input type="text" id="customerSearch" class="form-control"
                                    placeholder="Search by name, phone, or code...">
-                            <div id="customerSuggestions" class="product-suggestions"></div>
+                            <div id="customerSuggestions" class="product-suggestions" style="margin: 0 10px"></div>
                         </div>
                     </div>
                     <div id="customerInfo" class="customer-info-card" style="display: none;">
@@ -196,11 +196,7 @@
                 <!-- Product Search and Items -->
                 <div class="content-card mb-3">
                     <h5 class="mb-3"><i class="bi bi-capsule me-2"></i>Products</h5>
-                    <div class="product-search-container">
-                        <input type="text" id="productSearch" class="form-control"
-                               placeholder="Search products by name, manufacturer, or generic...">
-                        <div id="productSuggestions" class="product-suggestions"></div>
-                    </div>
+
 
                     <div class="items-table">
                         <table class="table table-bordered mt-3" id="itemsTable">
@@ -219,6 +215,12 @@
                             <!-- Items will be added dynamically -->
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="product-search-container">
+                        <input type="text" id="productSearch" class="form-control"
+                               placeholder="Search products by name, manufacturer, or generic...">
+                        <div id="productSuggestions" class="product-suggestions"></div>
                     </div>
                 </div>
 
@@ -270,20 +272,22 @@
                         <div class="col-md-6">
                             <label class="form-label">Sale Date <span class="text-danger">*</span></label>
                             <input type="text" 
-                                   class="form-control" 
+                                   class="form-control datetime-picker" 
                                    id="saleDate"
-                                   placeholder="18-Apr-2025 10:25 AM"
-                                   required
+                                   placeholder="dd-MMM-yyyy hh:mm AM/PM"
+                                   data-required="true"
+                                   data-default-today="true"
+                                   data-hidden-input="saleDateHidden"
                                    th:value="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'dd-MMM-yyyy hh:mm a') : ''}">
                             <input type="hidden" 
                                    name="saleDate" 
                                    id="saleDateHidden"
+                                   required
                                    th:value="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'yyyy-MM-dd') + 'T' + #temporals.format(sale.saleDate, 'HH:mm') : ''}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Payment Method <span class="text-danger">*</span></label>
                             <select th:field="*{paymentMethod}" class="form-select" required>
-                                <option value="">Select Payment Method</option>
                                 <option value="CASH">Cash</option>
                                 <option value="CARD">Card</option>
                                 <option value="MOBILE_BANKING">Mobile Banking</option>
@@ -402,25 +406,48 @@
     const isEditMode = saleId != null;
     /*]]>*/
 
-    // Customer Search
-    document.getElementById('customerSearch').addEventListener('input', function (e) {
-        clearTimeout(customerSearchTimeout);
-        const query = e.target.value.trim();
-
-        if (query.length < 2) {
-            document.getElementById('customerSuggestions').style.display = 'none';
+    // Customer Search - Initialize when DOM is ready
+    function initializeCustomerSearch() {
+        const customerSearchInput = document.getElementById('customerSearch');
+        if (!customerSearchInput) {
+            console.error('Customer search input not found');
             return;
         }
+        
+        customerSearchInput.addEventListener('input', function (e) {
+            clearTimeout(customerSearchTimeout);
+            const query = e.target.value.trim();
 
-        customerSearchTimeout = setTimeout(() => {
-            fetch(`/sales/api/customers/search?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    displayCustomerSuggestions(data);
-                })
-                .catch(error => console.error('Error:', error));
-        }, 300);
-    });
+            if (query.length < 2) {
+                const suggestionsContainer = document.getElementById('customerSuggestions');
+                if (suggestionsContainer) {
+                    suggestionsContainer.style.display = 'none';
+                }
+                return;
+            }
+
+            customerSearchTimeout = setTimeout(() => {
+                fetch(`/sales/api/customers/search?q=${encodeURIComponent(query)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        displayCustomerSuggestions(data);
+                    })
+                    .catch(error => {
+                        console.error('Customer search error:', error);
+                        const container = document.getElementById('customerSuggestions');
+                        if (container) {
+                            container.innerHTML = '<div class="product-suggestion-item text-danger">Error searching customers. Please try again.</div>';
+                            container.style.display = 'block';
+                        }
+                    });
+            }, 300);
+        });
+    }
 
     function displayCustomerSuggestions(customers) {
         const container = document.getElementById('customerSuggestions');
@@ -466,25 +493,48 @@
         document.getElementById('customerInfo').style.display = 'none';
     }
 
-    // Product Search
-    document.getElementById('productSearch').addEventListener('input', function (e) {
-        clearTimeout(productSearchTimeout);
-        const query = e.target.value.trim();
-
-        if (query.length < 2) {
-            document.getElementById('productSuggestions').style.display = 'none';
+    // Product Search - Initialize when DOM is ready
+    function initializeProductSearch() {
+        const productSearchInput = document.getElementById('productSearch');
+        if (!productSearchInput) {
+            console.error('Product search input not found');
             return;
         }
+        
+        productSearchInput.addEventListener('input', function (e) {
+            clearTimeout(productSearchTimeout);
+            const query = e.target.value.trim();
 
-        productSearchTimeout = setTimeout(() => {
-            fetch(`/sales/api/products/search?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    displayProductSuggestions(data);
-                })
-                .catch(error => console.error('Error:', error));
-        }, 300);
-    });
+            if (query.length < 2) {
+                const suggestionsContainer = document.getElementById('productSuggestions');
+                if (suggestionsContainer) {
+                    suggestionsContainer.style.display = 'none';
+                }
+                return;
+            }
+
+            productSearchTimeout = setTimeout(() => {
+                fetch(`/sales/api/products/search?q=${encodeURIComponent(query)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        displayProductSuggestions(data);
+                    })
+                    .catch(error => {
+                        console.error('Product search error:', error);
+                        const container = document.getElementById('productSuggestions');
+                        if (container) {
+                            container.innerHTML = '<div class="product-suggestion-item text-danger">Error searching products. Please try again.</div>';
+                            container.style.display = 'block';
+                        }
+                    });
+            }, 300);
+        });
+    }
 
     function displayProductSuggestions(products) {
         const container = document.getElementById('productSuggestions');
@@ -796,6 +846,22 @@
 
 
     // Initialize discount on page load
+    function initializePage() {
+        // Initialize customer search
+        initializeCustomerSearch();
+        
+        // Initialize product search
+        initializeProductSearch();
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePage);
+    } else {
+        // DOM is already loaded
+        initializePage();
+    }
+    
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize discount fields
         const discountPercent = document.getElementById('discountPercentage');
@@ -913,81 +979,7 @@
             }
         }
 
-        // Initialize Flatpickr for sale date
-        const saleDateInput = document.getElementById('saleDate');
-        const saleDateHidden = document.getElementById('saleDateHidden');
-        if (saleDateInput) {
-            // Get initial date value from hidden input or use current date
-            let initialDate = null;
-            if (saleDateHidden && saleDateHidden.value) {
-                // Parse backend format: yyyy-MM-ddTHH:mm
-                initialDate = saleDateHidden.value;
-            } else if (saleDateInput.value) {
-                // Parse display format if present
-                initialDate = saleDateInput.value;
-            } else {
-                // Use current date/time for new sales
-                initialDate = new Date();
-            }
-            
-            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            
-            function formatDateForDisplay(date) {
-                const day = date.getDate();
-                const month = months[date.getMonth()];
-                const year = date.getFullYear();
-                let hours = date.getHours();
-                const minutes = date.getMinutes();
-                const ampm = hours >= 12 ? 'PM' : 'AM';
-                hours = hours % 12;
-                hours = hours ? hours : 12;
-                const minutesStr = minutes < 10 ? '0' + minutes : minutes;
-                return `${day}-${month}-${year} ${hours}:${minutesStr} ${ampm}`;
-            }
-            
-            const flatpickrInstance = flatpickr(saleDateInput, {
-                enableTime: true,
-                dateFormat: "Y-m-d H:i", // Internal format, will be overridden for display
-                time_24hr: false,
-                defaultDate: initialDate,
-                allowInput: false, // Prevent manual input to maintain format
-                clickOpens: true,
-                onChange: function(selectedDates, dateStr, instance) {
-                    if (selectedDates.length > 0) {
-                        const date = selectedDates[0];
-                        // Update display with custom format
-                        saleDateInput.value = formatDateForDisplay(date);
-                        
-                        // Update hidden input for form submission in backend format
-                        if (saleDateHidden) {
-                            const year = date.getFullYear();
-                            const month = String(date.getMonth() + 1).padStart(2, '0');
-                            const day = String(date.getDate()).padStart(2, '0');
-                            const hours = String(date.getHours()).padStart(2, '0');
-                            const minutes = String(date.getMinutes()).padStart(2, '0');
-                            saleDateHidden.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-                        }
-                    }
-                },
-                onReady: function(selectedDates, dateStr, instance) {
-                    // Format initial display value
-                    if (selectedDates.length > 0) {
-                        saleDateInput.value = formatDateForDisplay(selectedDates[0]);
-                    }
-                }
-            });
-            
-            // Initialize hidden input on page load if date is set
-            if (flatpickrInstance.selectedDates.length > 0 && saleDateHidden) {
-                const date = flatpickrInstance.selectedDates[0];
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                saleDateHidden.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-            }
-        }
+        // Date pickers are automatically initialized by common.js
     });
 </script>
 </body>

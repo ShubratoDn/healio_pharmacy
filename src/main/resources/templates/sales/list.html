@@ -6,6 +6,7 @@
     <title>Sales - Healio</title>
     <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="/lib/flatpickr/flatpickr.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .filter-card {
@@ -53,11 +54,27 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Start Date</label>
-                        <input type="date" name="startDate" class="form-control" th:value="${startDate}">
+                        <input type="text" 
+                               class="form-control date-picker" 
+                               id="startDate"
+                               placeholder="dd-MMM-yyyy"
+                               data-hidden-input="startDateHidden">
+                        <input type="hidden" 
+                               name="startDate" 
+                               id="startDateHidden"
+                               th:value="${startDate}">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">End Date</label>
-                        <input type="date" name="endDate" class="form-control" th:value="${endDate}">
+                        <input type="text" 
+                               class="form-control date-picker" 
+                               id="endDate"
+                               placeholder="dd-MMM-yyyy"
+                               data-hidden-input="endDateHidden">
+                        <input type="hidden" 
+                               name="endDate" 
+                               id="endDateHidden"
+                               th:value="${endDate}">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">&nbsp;</label>
@@ -216,6 +233,7 @@
         </div>
     </div>
     <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/lib/flatpickr/flatpickr.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
 </body>
 </html>

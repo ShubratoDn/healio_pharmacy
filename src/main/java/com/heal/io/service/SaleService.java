@@ -71,13 +71,15 @@ public class SaleService {
         BigDecimal change = paidAmount.subtract(total);
         sale.setChangeAmount(change.compareTo(BigDecimal.ZERO) > 0 ? change : BigDecimal.ZERO);
         
-        // Update payment status
-        if (paidAmount.compareTo(BigDecimal.ZERO) == 0) {
-            sale.setPaymentStatus("PENDING");
-        } else if (paidAmount.compareTo(total) < 0) {
-            sale.setPaymentStatus("PARTIAL");
-        } else {
-            sale.setPaymentStatus("PAID");
+        // Only auto-calculate payment status if it's not already set (preserve user's selection)
+        if (sale.getPaymentStatus() == null || sale.getPaymentStatus().isEmpty()) {
+            if (paidAmount.compareTo(BigDecimal.ZERO) == 0) {
+                sale.setPaymentStatus("PENDING");
+            } else if (paidAmount.compareTo(total) < 0) {
+                sale.setPaymentStatus("PARTIAL");
+            } else {
+                sale.setPaymentStatus("PAID");
+            }
         }
     }
 

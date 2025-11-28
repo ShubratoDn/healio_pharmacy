@@ -94,6 +94,7 @@ public class SaleController {
         sale.setChangeAmount(BigDecimal.ZERO);
         sale.setPaymentStatus("PAID");
         sale.setSaleStatus("COMPLETED");
+        sale.setPaymentMethod("CASH");
         
         model.addAttribute("sale", sale);
         return "sales/form";

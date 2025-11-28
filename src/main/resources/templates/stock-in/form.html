@@ -8,6 +8,7 @@
     <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link href="/lib/select2/select2.min.css" rel="stylesheet" />
     <link href="/lib/select2/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link href="/lib/flatpickr/flatpickr.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .summary-card {
@@ -118,13 +119,34 @@
                     </div>
                         <div class="col-md-4">
                         <label class="form-label">Stock In Date <span class="text-danger">*</span></label>
-                        <input type="date" th:field="*{stockInDate}" class="form-control" required id="stockInDate">
+                        <input type="text" 
+                               class="form-control date-picker" 
+                               id="stockInDate"
+                               placeholder="dd-MMM-yyyy"
+                               data-required="true"
+                               data-default-today="true"
+                               data-hidden-input="stockInDateHidden"
+                               th:value="${stockIn.stockInDate != null ? #temporals.format(stockIn.stockInDate, 'dd-MMM-yyyy') : ''}">
+                        <input type="hidden" 
+                               name="stockInDate" 
+                               id="stockInDateHidden"
+                               required
+                               th:value="${stockIn.stockInDate != null ? #temporals.format(stockIn.stockInDate, 'yyyy-MM-dd') : ''}">
                     </div>
                     </div>
                     <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Received Date</label>
-                        <input type="date" th:field="*{receivedDate}" class="form-control">
+                        <input type="text" 
+                               class="form-control date-picker" 
+                               id="receivedDate"
+                               placeholder="dd-MMM-yyyy"
+                               data-hidden-input="receivedDateHidden"
+                               th:value="${stockIn.receivedDate != null ? #temporals.format(stockIn.receivedDate, 'dd-MMM-yyyy') : ''}">
+                        <input type="hidden" 
+                               name="receivedDate" 
+                               id="receivedDateHidden"
+                               th:value="${stockIn.receivedDate != null ? #temporals.format(stockIn.receivedDate, 'yyyy-MM-dd') : ''}">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Payment Status</label>
@@ -235,6 +257,7 @@
 <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="/lib/jquery/jquery-3.7.1.min.js"></script>
 <script src="/lib/select2/select2.min.js"></script>
+<script src="/lib/flatpickr/flatpickr.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
     <script>
         let rowCounter = 0;
@@ -266,7 +289,15 @@
                         <input type="number" step="0.01" name="sellingPrices" class="form-control form-control-sm" min="0" data-row-index="${index}">
                     </td>
                     <td>
-                        <input type="date" name="expiryDates" class="form-control form-control-sm" data-row-index="${index}">
+                        <input type="text" 
+                               class="form-control form-control-sm date-picker" 
+                               data-row-index="${index}"
+                               placeholder="dd-MM-yyyy"
+                               data-hidden-input="expiryDateHidden_${index}">
+                        <input type="hidden" 
+                               name="expiryDates" 
+                               id="expiryDateHidden_${index}"
+                               data-row-index="${index}">
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeProductRow(${index})" title="Remove">
@@ -291,6 +322,11 @@
             // Initialize Select2 for the new row
             const select = tbody.querySelector(`[data-row-index="${rowCounter}"].product-select`);
             initializeProductSelect2(select, rowCounter);
+            
+            // Re-initialize date pickers for the new row
+            if (window.reinitializeDatePickers) {
+                window.reinitializeDatePickers();
+            }
             
             rowCounter++;
         }
@@ -460,12 +496,7 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Set today's date as default for stock in date
-            const today = new Date().toISOString().split('T')[0];
-            const stockInDateInput = document.getElementById('stockInDate');
-            if (stockInDateInput && !stockInDateInput.value) {
-                stockInDateInput.value = today;
-            }
+            // Date pickers are automatically initialized by common.js
             
             // Initialize Select2 for supplier
             const existingSupplier = $('#supplierSelect option[selected]');
