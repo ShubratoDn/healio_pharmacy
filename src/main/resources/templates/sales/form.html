@@ -6,6 +6,7 @@
     <title>New Sale - Healio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .sale-form-container {
@@ -268,10 +269,16 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Sale Date <span class="text-danger">*</span></label>
-                            <input type="datetime-local" 
-                                   th:value="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'yyyy-MM-dd') + 'T' + #temporals.format(sale.saleDate, 'HH:mm') : ''}"
-                                   th:field="*{saleDate}"
-                                   class="form-control" required id="saleDate">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="saleDate"
+                                   placeholder="18-Apr-2025 10:25 AM"
+                                   required
+                                   th:value="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'dd-MMM-yyyy hh:mm a') : ''}">
+                            <input type="hidden" 
+                                   name="saleDate" 
+                                   id="saleDateHidden"
+                                   th:value="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'yyyy-MM-dd') + 'T' + #temporals.format(sale.saleDate, 'HH:mm') : ''}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Payment Method <span class="text-danger">*</span></label>
@@ -381,6 +388,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script th:src="@{/js/common.js}"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
@@ -786,6 +794,7 @@
         updateSummary();
     });
 
+
     // Initialize discount on page load
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize discount fields
@@ -901,6 +910,82 @@
                         updateSummary();
                     });
                 }
+            }
+        }
+
+        // Initialize Flatpickr for sale date
+        const saleDateInput = document.getElementById('saleDate');
+        const saleDateHidden = document.getElementById('saleDateHidden');
+        if (saleDateInput) {
+            // Get initial date value from hidden input or use current date
+            let initialDate = null;
+            if (saleDateHidden && saleDateHidden.value) {
+                // Parse backend format: yyyy-MM-ddTHH:mm
+                initialDate = saleDateHidden.value;
+            } else if (saleDateInput.value) {
+                // Parse display format if present
+                initialDate = saleDateInput.value;
+            } else {
+                // Use current date/time for new sales
+                initialDate = new Date();
+            }
+            
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            
+            function formatDateForDisplay(date) {
+                const day = date.getDate();
+                const month = months[date.getMonth()];
+                const year = date.getFullYear();
+                let hours = date.getHours();
+                const minutes = date.getMinutes();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12;
+                const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+                return `${day}-${month}-${year} ${hours}:${minutesStr} ${ampm}`;
+            }
+            
+            const flatpickrInstance = flatpickr(saleDateInput, {
+                enableTime: true,
+                dateFormat: "Y-m-d H:i", // Internal format, will be overridden for display
+                time_24hr: false,
+                defaultDate: initialDate,
+                allowInput: false, // Prevent manual input to maintain format
+                clickOpens: true,
+                onChange: function(selectedDates, dateStr, instance) {
+                    if (selectedDates.length > 0) {
+                        const date = selectedDates[0];
+                        // Update display with custom format
+                        saleDateInput.value = formatDateForDisplay(date);
+                        
+                        // Update hidden input for form submission in backend format
+                        if (saleDateHidden) {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            const hours = String(date.getHours()).padStart(2, '0');
+                            const minutes = String(date.getMinutes()).padStart(2, '0');
+                            saleDateHidden.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                        }
+                    }
+                },
+                onReady: function(selectedDates, dateStr, instance) {
+                    // Format initial display value
+                    if (selectedDates.length > 0) {
+                        saleDateInput.value = formatDateForDisplay(selectedDates[0]);
+                    }
+                }
+            });
+            
+            // Initialize hidden input on page load if date is set
+            if (flatpickrInstance.selectedDates.length > 0 && saleDateHidden) {
+                const date = flatpickrInstance.selectedDates[0];
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                saleDateHidden.value = `${year}-${month}-${day}T${hours}:${minutes}`;
             }
         }
     });
