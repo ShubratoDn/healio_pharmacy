@@ -97,6 +97,31 @@ public class StockInController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(result);
     }
+    
+    @PutMapping("/api/package/{packageId}/unit-price")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updatePackageUnitPrice(
+            @PathVariable Long packageId,
+            @RequestParam(required = false) BigDecimal unitPrice) {
+        try {
+            ProductPackage productPackage = productPackageRepository.findById(packageId)
+                    .orElseThrow(() -> new RuntimeException("Package not found: " + packageId));
+            
+            productPackage.setUnitPrice(unitPrice);
+            productPackageRepository.save(productPackage);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Package unit price updated successfully");
+            response.put("unitPrice", productPackage.getUnitPrice());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error updating package unit price: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
 
     @PostMapping("/save")
     public String saveStockIn(

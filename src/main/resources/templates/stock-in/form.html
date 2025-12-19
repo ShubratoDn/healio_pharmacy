@@ -181,9 +181,6 @@
                         <div class="section-title mb-0">
                             <i class="bi bi-box-seam me-2"></i>Products
                         </div>
-                        <button type="button" class="btn add-product-btn" onclick="addProductRow()">
-                            <i class="bi bi-plus-circle me-2"></i>Add Product
-                        </button>
                     </div>
                     
                     <div class="table-responsive">
@@ -193,22 +190,29 @@
                                     <th style="width: 300px; min-width: 300px; max-width: 300px;">Product <span class="text-danger">*</span></th>
                                     <th style="width: 15%;">Package</th>
                                     <th style="width: 10%;">Unit Price</th>
+                                    <th style="width: 12%;">Purchasing Unit Price <span class="text-danger">*</span></th>
                                     <th style="width: 8%;">Quantity <span class="text-danger">*</span></th>
-                                    <th style="width: 12%;">Purchasing Price <span class="text-danger">*</span></th>
-                                    <th style="width: 12%;">Selling Price</th>
-                                    <th style="width: 10%;">Expiry Date</th>
+                                    <th style="width: 12%;">Total</th>
                                     <th style="width: 8%;">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="productsTableBody">
                                 <tr id="emptyStateRow">
-                                    <td colspan="8" class="text-center text-muted py-4">
+                                    <td colspan="7" class="text-center text-muted py-4">
                                         <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
                                         <p class="mt-2 mb-0">No products added yet. Click "Add Product" to start.</p>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div class="section-title mb-0">
+                        </div>
+                        <button type="button" class="btn add-product-btn" onclick="addProductRow()">
+                            <i class="bi bi-plus-circle me-2"></i>Add Product
+                        </button>
                     </div>
                 </div>
 
@@ -272,32 +276,37 @@
                         </select>
                     </td>
                     <td>
-                        <select name="packageIds" class="form-select product-package-select" data-row-index="${index}" onchange="updateUnitPrice(${index})">
+                        <select name="packageIds" class="form-select form-select-sm product-package-select" data-row-index="${index}" onchange="updatePackageDisplay(${index})">
                             <option value="">No Package</option>
                         </select>
                     </td>
                     <td>
-                        <input type="text" class="form-control form-control-sm unit-price-display" data-row-index="${index}" readonly style="background-color: #e9ecef; font-weight: 500;" placeholder="--">
+                        <input type="number" 
+                               step="0.01" 
+                               class="form-control form-control-sm unit-price-input" 
+                               data-row-index="${index}" 
+                               data-package-id=""
+                               min="0"
+                               placeholder="0.00"
+                               onchange="updatePackageUnitPrice(${index})"
+                               style="font-weight: 500;">
                     </td>
                     <td>
-                        <input type="number" name="quantities" class="form-control form-control-sm" min="1" required data-row-index="${index}" oninput="calculateRowTotal(${index})">
+                        <input type="number" step="0.01" name="unitCosts" class="form-control form-control-sm purchasing-unit-price" min="0" required data-row-index="${index}" oninput="calculateRowTotalFromPrice(${index})" placeholder="0.00">
                     </td>
                     <td>
-                        <input type="number" step="0.01" name="unitCosts" class="form-control form-control-sm" min="0" required data-row-index="${index}" oninput="calculateRowTotal(${index})">
+                        <input type="number" name="quantities" class="form-control form-control-sm" min="1" required data-row-index="${index}" oninput="calculateRowTotalFromPrice(${index})" placeholder="0">
                     </td>
                     <td>
-                        <input type="number" step="0.01" name="sellingPrices" class="form-control form-control-sm" min="0" data-row-index="${index}">
-                    </td>
-                    <td>
-                        <input type="text" 
-                               class="form-control form-control-sm date-picker" 
+                        <input type="number" 
+                               step="0.01"
+                               name="rowTotals" 
+                               class="form-control form-control-sm row-total-input" 
                                data-row-index="${index}"
-                               placeholder="dd-MM-yyyy"
-                               data-hidden-input="expiryDateHidden_${index}">
-                        <input type="hidden" 
-                               name="expiryDates" 
-                               id="expiryDateHidden_${index}"
-                               data-row-index="${index}">
+                               min="0"
+                               style="font-weight: 500; text-align: right;"
+                               value="0.00"
+                               oninput="calculatePurchasingPriceFromTotal(${index})">
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeProductRow(${index})" title="Remove">
@@ -327,6 +336,9 @@
             if (window.reinitializeDatePickers) {
                 window.reinitializeDatePickers();
             }
+            
+            // Initialize row total
+            calculateRowTotalFromPrice(rowCounter);
             
             rowCounter++;
         }
@@ -390,7 +402,14 @@
             }).on('select2:clear', function (e) {
                 const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
                 const packageSelect = row.querySelector('.product-package-select');
-                packageSelect.innerHTML = '<option value="">No Package</option>';
+                if (packageSelect) {
+                    packageSelect.innerHTML = '<option value="">No Package</option>';
+                }
+                const unitPriceInput = row.querySelector('.unit-price-input[data-row-index="' + rowIndex + '"]');
+                if (unitPriceInput) {
+                    unitPriceInput.value = '';
+                    unitPriceInput.setAttribute('data-package-id', '');
+                }
             });
         }
 
@@ -410,7 +429,7 @@
                 if (tbody.children.length === 0) {
                     tbody.innerHTML = `
                         <tr id="emptyStateRow">
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="7" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
                                 <p class="mt-2 mb-0">No products added yet. Click "Add Product" to start.</p>
                             </td>
@@ -426,49 +445,175 @@
                 .then(packages => {
                     const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
                     const select = row.querySelector('.product-package-select');
-                    const unitPriceDisplay = row.querySelector('.unit-price-display');
                     select.innerHTML = '<option value="">No Package</option>';
-                    unitPriceDisplay.value = '';
+                    
+                    let selectedPackageId = null;
                     
                     packages.forEach(pkg => {
                         const option = document.createElement('option');
                         option.value = pkg.id;
-                        option.textContent = pkg.description + (pkg.size ? ' (' + pkg.size + ')' : '');
-                        option.dataset.unitPrice = pkg.unitPrice || '';
+                        // Store unit price in dataset (handle null values)
+                        option.dataset.unitPrice = (pkg.unitPrice != null && pkg.unitPrice !== '') ? pkg.unitPrice : '';
+                        // Show only package name (description) in the select
+                        option.textContent = pkg.description || 'Package';
                         if (pkg.isDefault) {
                             option.selected = true;
-                            updateUnitPrice(rowIndex);
+                            selectedPackageId = pkg.id;
                         }
                         select.appendChild(option);
                     });
+                    
+                    // If no default package, select first package if available
+                    if (packages.length > 0 && !selectedPackageId) {
+                        selectedPackageId = packages[0].id;
+                        select.value = selectedPackageId;
+                    } else if (selectedPackageId) {
+                        // Ensure the select value is set for default package
+                        select.value = selectedPackageId;
+                    }
+                    
+                    // Update display after all options are added and selection is set
+                    updatePackageDisplay(rowIndex);
                 })
                 .catch(error => {
                     console.error('Error loading packages:', error);
                 });
         }
 
-        function updateUnitPrice(rowIndex) {
+        function updatePackageDisplay(rowIndex) {
             const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
-            const packageSelect = row.querySelector('.product-package-select');
-            const unitPriceDisplay = row.querySelector('.unit-price-display');
+            if (!row) return;
             
-            if (packageSelect.value) {
-                const selectedOption = packageSelect.options[packageSelect.selectedIndex];
-                const unitPrice = selectedOption.dataset.unitPrice;
-                if (unitPrice) {
-                    unitPriceDisplay.value = '৳' + parseFloat(unitPrice).toFixed(2);
-                } else {
-                    unitPriceDisplay.value = '--';
+            const packageSelect = row.querySelector('.product-package-select');
+            const unitPriceInput = row.querySelector('.unit-price-input[data-row-index="' + rowIndex + '"]');
+            
+            if (packageSelect && packageSelect.value) {
+                const packageId = packageSelect.value;
+                
+                // Find the selected option by value (more reliable than selectedIndex)
+                const selectedOption = Array.from(packageSelect.options).find(opt => opt.value === packageId);
+                
+                if (selectedOption && unitPriceInput) {
+                    const unitPrice = selectedOption.dataset.unitPrice;
+                    
+                    // Store package ID in data attribute
+                    unitPriceInput.setAttribute('data-package-id', packageId);
+                    
+                    if (unitPrice && unitPrice !== '') {
+                        const priceValue = parseFloat(unitPrice);
+                        if (!isNaN(priceValue)) {
+                            unitPriceInput.value = priceValue.toFixed(2);
+                        } else {
+                            unitPriceInput.value = '';
+                        }
+                    } else {
+                        unitPriceInput.value = '';
+                    }
                 }
-            } else {
-                unitPriceDisplay.value = '';
+            } else if (unitPriceInput) {
+                unitPriceInput.value = '';
+                unitPriceInput.setAttribute('data-package-id', '');
             }
         }
-
-        function calculateRowTotal(rowIndex) {
+        
+        function updatePackageUnitPrice(rowIndex) {
             const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
-            const quantity = parseFloat(row.querySelector('[name="quantities"]').value) || 0;
-            const unitCost = parseFloat(row.querySelector('[name="unitCosts"]').value) || 0;
+            if (!row) return;
+            
+            const unitPriceInput = row.querySelector('.unit-price-input[data-row-index="' + rowIndex + '"]');
+            if (!unitPriceInput) return;
+            
+            const packageId = unitPriceInput.getAttribute('data-package-id');
+            const unitPriceValue = unitPriceInput.value.trim();
+            
+            // Don't update if no package selected or empty value
+            if (!packageId || !unitPriceValue) {
+                return;
+            }
+            
+            const unitPrice = parseFloat(unitPriceValue);
+            
+            // Validate unit price
+            if (isNaN(unitPrice) || unitPrice < 0) {
+                alert('Please enter a valid unit price (must be a positive number)');
+                return;
+            }
+            
+            // Update package unit price via API
+            fetch(`/stock-in/api/package/${packageId}/unit-price?unitPrice=${unitPrice}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'Failed to update package unit price');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Update the option's dataset to reflect the new price
+                    const packageSelect = row.querySelector('.product-package-select');
+                    if (packageSelect && packageSelect.value === packageId) {
+                        const selectedOption = packageSelect.options[packageSelect.selectedIndex];
+                        if (selectedOption) {
+                            selectedOption.dataset.unitPrice = unitPrice;
+                        }
+                    }
+                    console.log('Package unit price updated successfully');
+                } else {
+                    throw new Error(data.message || 'Failed to update package unit price');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating package unit price:', error);
+                alert('Error updating package unit price: ' + error.message);
+            });
+        }
+
+        // Calculate total from quantity and purchasing unit price
+        function calculateRowTotalFromPrice(rowIndex) {
+            const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+            if (!row) return;
+            
+            const quantityInput = row.querySelector('[name="quantities"]');
+            const purchasingUnitPriceInput = row.querySelector('[name="unitCosts"][data-row-index="' + rowIndex + '"]');
+            const totalInput = row.querySelector('.row-total-input[data-row-index="' + rowIndex + '"]');
+            
+            const quantity = parseFloat(quantityInput ? quantityInput.value : 0) || 0;
+            const purchasingUnitPrice = parseFloat(purchasingUnitPriceInput ? purchasingUnitPriceInput.value : 0) || 0;
+            
+            // Calculate row total: quantity × purchasing unit price
+            const rowTotal = quantity * purchasingUnitPrice;
+            if (totalInput) {
+                totalInput.value = rowTotal.toFixed(2);
+            }
+            
+            calculateTotals();
+        }
+
+        // Calculate purchasing unit price from total
+        function calculatePurchasingPriceFromTotal(rowIndex) {
+            const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+            if (!row) return;
+            
+            const quantityInput = row.querySelector('[name="quantities"]');
+            const totalInput = row.querySelector('.row-total-input[data-row-index="' + rowIndex + '"]');
+            const purchasingUnitPriceInput = row.querySelector('[name="unitCosts"][data-row-index="' + rowIndex + '"]');
+            
+            const quantity = parseFloat(quantityInput ? quantityInput.value : 0) || 0;
+            
+            if (totalInput && purchasingUnitPriceInput && quantity > 0) {
+                const total = parseFloat(totalInput.value) || 0;
+                // Calculate purchasing unit price: total / quantity
+                const purchasingUnitPrice = total / quantity;
+                purchasingUnitPriceInput.value = purchasingUnitPrice.toFixed(2);
+            }
+            
             calculateTotals();
         }
 
@@ -476,15 +621,17 @@
             let subtotal = 0;
             
             document.querySelectorAll('tr.product-row').forEach(row => {
-                const quantity = parseFloat(row.querySelector('[name="quantities"]').value) || 0;
-                const unitCost = parseFloat(row.querySelector('[name="unitCosts"]').value) || 0;
-                subtotal += quantity * unitCost;
+                const totalInput = row.querySelector('.row-total-input');
+                if (totalInput) {
+                    const rowTotal = parseFloat(totalInput.value) || 0;
+                    subtotal += rowTotal;
+                }
             });
             
             const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
             const tax = parseFloat(document.getElementById('taxAmount').value) || 0;
             const total = subtotal;
-                    const final = total - discount + tax;
+            const final = total - discount + tax;
             
             document.getElementById('subtotal').textContent = '৳' + subtotal.toFixed(2);
             document.getElementById('totalAmount').textContent = '৳' + total.toFixed(2);
