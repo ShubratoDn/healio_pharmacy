@@ -6,21 +6,213 @@
     <title>Stock In - Healio</title>
     <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="/lib/flatpickr/flatpickr.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .stock-in-list-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+        }
+        .search-filter-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .search-input-group {
+            position: relative;
+        }
+        .search-input-group .form-control {
+            padding-left: 2.75rem;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+        .search-input-group .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        }
+        .search-input-group .search-icon {
+            position: absolute;
+            left: 0.875rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            z-index: 10;
+        }
+        .table-modern {
+            margin-bottom: 0;
+        }
+        .table-modern thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 1rem 0.75rem;
+        }
+        .table-modern tbody tr {
+            transition: all 0.2s ease;
+        }
+        .table-modern tbody tr:hover {
+            background-color: #f8f9fa;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .table-modern tbody td {
+            padding: 1rem 0.75rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .badge-modern {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.5rem 0.875rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-paid {
+            background-color: #10b981 !important;
+            color: white;
+        }
+        .badge-partial {
+            background-color: #f59e0b !important;
+            color: white;
+        }
+        .badge-pending {
+            background-color: #6b7280 !important;
+            color: white;
+        }
+        .amount-cell {
+            font-weight: 600;
+            color: #059669;
+            font-size: 0.95rem;
+        }
+        .action-buttons .btn {
+            border-radius: 6px;
+            padding: 0.375rem 0.75rem;
+            transition: all 0.2s ease;
+        }
+        .action-buttons .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .date-cell {
+            font-weight: 500;
+            color: #495057;
+        }
+        .empty-state {
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: #dee2e6;
+            margin-bottom: 1rem;
+        }
+        .pagination-modern .page-link {
+            border-radius: 6px;
+            margin: 0 0.25rem;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            transition: all 0.2s ease;
+        }
+        .pagination-modern .page-link:hover {
+            background-color: #f8f9fa;
+            border-color: #0d6efd;
+            color: #0d6efd;
+        }
+        .pagination-modern .page-item.active .page-link {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .clear-search-btn {
+            margin-left: 0.5rem;
+        }
+    </style>
 </head>
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='stock-in')}"></div>
     <div class="main-content">
         <div th:replace="~{fragments/navbar :: navbar(pageTitle='Stock In')}"></div>
 
-        <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
+        <div class="page-header d-flex justify-content-between align-items-center flex-wrap mb-4">
             <h4 class="mb-0"><i class="bi bi-box-arrow-in-down me-2"></i>Stock In</h4>
-            <a href="/stock-in/new" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>New Stock In</a>
+            <a href="/stock-in/new" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>New Stock In
+            </a>
         </div>
 
-        <div class="content-card">
+        <div class="stock-in-list-card">
+            <!-- Search Filter Section -->
+            <div class="search-filter-section">
+                <form method="get" action="/stock-in" id="filterForm">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Search</label>
+                            <div class="search-input-group">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" 
+                                       class="form-control" 
+                                       name="search" 
+                                       th:value="${search}"
+                                       placeholder="Stock-in number, supplier, payment status..."
+                                       autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Start Date</label>
+                            <input type="text" 
+                                   class="form-control date-picker" 
+                                   id="startDate"
+                                   placeholder="dd-MMM-yyyy"
+                                   data-hidden-input="startDateHidden">
+                            <input type="hidden" 
+                                   name="startDate" 
+                                   id="startDateHidden"
+                                   th:value="${startDate}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">End Date</label>
+                            <input type="text" 
+                                   class="form-control date-picker" 
+                                   id="endDate"
+                                   placeholder="dd-MMM-yyyy"
+                                   data-hidden-input="endDateHidden">
+                            <input type="hidden" 
+                                   name="endDate" 
+                                   id="endDateHidden"
+                                   th:value="${endDate}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search me-1"></i>Filter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-2" th:if="${(search != null && !search.isEmpty()) || (startDate != null && !startDate.isEmpty()) || (endDate != null && !endDate.isEmpty())}">
+                        <div class="col-12">
+                            <a href="/stock-in" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Clear Filters
+                            </a>
+                        </div>
+                    </div>
+                    <input type="hidden" name="page" value="0">
+                    <input type="hidden" name="size" th:value="${stockIns.size}">
+                </form>
+            </div>
+
+            <!-- Table Section -->
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-modern">
                     <thead>
                         <tr>
                             <th>Stock In #</th>
@@ -28,44 +220,103 @@
                             <th>Supplier</th>
                             <th>Total Amount</th>
                             <th>Payment Status</th>
-                            <th>Actions</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:each="stockIn : ${stockIns.content}">
-                            <td th:text="${stockIn.stockInNumber}"></td>
-                            <td th:text="${#temporals.format(stockIn.stockInDate, 'yyyy-MM-dd')}"></td>
-                            <td th:text="${stockIn.supplier?.name}"></td>
-                            <td>৳<span th:text="${#numbers.formatDecimal(stockIn.finalAmount, 0, 0)}"></span></td>
-                            <td><span class="badge" th:classappend="${stockIn.paymentStatus == 'PAID'} ? 'bg-success' : 'bg-warning'" th:text="${stockIn.paymentStatus}"></span></td>
                             <td>
-                                <a th:href="@{/stock-in/{id}(id=${stockIn.id})}" class="btn btn-sm btn-info"><i class="bi bi-eye"></i></a>
+                                <strong th:text="${stockIn.stockInNumber}"></strong>
+                            </td>
+                            <td class="date-cell">
+                                <i class="bi bi-calendar3 me-1 text-muted"></i>
+                                <span th:text="${#temporals.format(stockIn.stockInDate, 'MMM dd, yyyy')}"></span>
+                            </td>
+                            <td>
+                                <div th:if="${stockIn.supplier != null}">
+                                    <div th:text="${stockIn.supplier.name}"></div>
+                                    <small class="text-muted" th:if="${stockIn.supplier.companyName != null && !stockIn.supplier.companyName.isEmpty()}" 
+                                           th:text="${stockIn.supplier.companyName}"></small>
+                                </div>
+                                <span class="text-muted" th:if="${stockIn.supplier == null}">N/A</span>
+                            </td>
+                            <td class="amount-cell">
+                                ৳<span th:text="${#numbers.formatDecimal(stockIn.finalAmount, 0, 2)}"></span>
+                            </td>
+                            <td>
+                                <span class="badge badge-modern" 
+                                      th:classappend="${stockIn.paymentStatus == 'PAID'} ? 'badge-paid' : 
+                                                      (${stockIn.paymentStatus == 'PARTIAL'} ? 'badge-partial' : 'badge-pending')"
+                                      th:text="${stockIn.paymentStatus ?: 'PENDING'}"></span>
+                            </td>
+                            <td class="action-buttons text-center">
+                                <a th:href="@{/stock-in/{id}(id=${stockIn.id})}" 
+                                   class="btn btn-sm btn-info me-1" 
+                                   title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a th:href="@{/stock-in/edit/{id}(id=${stockIn.id})}" 
+                                   class="btn btn-sm btn-warning" 
+                                   title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
                             </td>
                         </tr>
                         <tr th:if="${stockIns.content.isEmpty()}">
-                            <td colspan="6" class="text-center text-muted py-4">No stock in records found</td>
+                            <td colspan="6" class="empty-state">
+                                <i class="bi bi-inbox"></i>
+                                <div class="text-muted">
+                                    <h5>No stock in records found</h5>
+                                    <p class="mb-0" th:if="${(search != null && !search.isEmpty()) || (startDate != null && !startDate.isEmpty()) || (endDate != null && !endDate.isEmpty())}">
+                                        Try adjusting your search criteria or date range
+                                    </p>
+                                    <p class="mb-0" th:if="${(search == null || search.isEmpty()) && (startDate == null || startDate.isEmpty()) && (endDate == null || endDate.isEmpty())}">
+                                        Get started by creating a new stock in record
+                                    </p>
+                                </div>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <nav th:if="${stockIns.totalPages > 1}">
-                <ul class="pagination justify-content-center">
+            <!-- Pagination -->
+            <nav th:if="${stockIns.totalPages > 1}" class="mt-4">
+                <ul class="pagination pagination-modern justify-content-center">
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                        <a class="page-link" th:href="@{/stock-in(page=${currentPage - 1})}">Previous</a>
+                        <a class="page-link" 
+                           th:if="${currentPage > 0}"
+                           th:href="@{'/stock-in?page=' + (currentPage - 1) + '&size=' + stockIns.size + (search != null && !search.isEmpty() ? '&search=' + #strings.replace(search, ' ', '%20') : '') + (startDate != null && !startDate.isEmpty() ? '&startDate=' + startDate : '') + (endDate != null && !endDate.isEmpty() ? '&endDate=' + endDate : '')}">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </a>
+                        <span class="page-link" th:if="${currentPage == 0}">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </span>
                     </li>
-                    <li class="page-item" th:each="i : ${#numbers.sequence(0, stockIns.totalPages - 1)}" th:classappend="${i == currentPage} ? 'active'">
-                        <a class="page-link" th:href="@{/stock-in(page=${i})}" th:text="${i + 1}"></a>
+                    <li class="page-item" 
+                        th:each="i : ${#numbers.sequence(0, stockIns.totalPages - 1)}" 
+                        th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" 
+                           th:href="@{'/stock-in?page=' + i + '&size=' + stockIns.size + (search != null && !search.isEmpty() ? '&search=' + #strings.replace(search, ' ', '%20') : '') + (startDate != null && !startDate.isEmpty() ? '&startDate=' + startDate : '') + (endDate != null && !endDate.isEmpty() ? '&endDate=' + endDate : '')}" 
+                           th:text="${i + 1}"></a>
                     </li>
-                    <li class="page-item" th:classappend="${currentPage == stockIns.totalPages - 1} ? 'disabled'">
-                        <a class="page-link" th:href="@{/stock-in(page=${currentPage + 1})}">Next</a>
+                    <li class="page-item" 
+                        th:classappend="${currentPage == stockIns.totalPages - 1} ? 'disabled'">
+                        <a class="page-link" 
+                           th:if="${currentPage < stockIns.totalPages - 1}"
+                           th:href="@{'/stock-in?page=' + (currentPage + 1) + '&size=' + stockIns.size + (search != null && !search.isEmpty() ? '&search=' + #strings.replace(search, ' ', '%20') : '') + (startDate != null && !startDate.isEmpty() ? '&startDate=' + startDate : '') + (endDate != null && !endDate.isEmpty() ? '&endDate=' + endDate : '')}">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                        <span class="page-link" th:if="${currentPage == stockIns.totalPages - 1}">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </span>
                     </li>
                 </ul>
             </nav>
         </div>
     </div>
     <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/lib/flatpickr/flatpickr.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
 </body>
 </html>
-

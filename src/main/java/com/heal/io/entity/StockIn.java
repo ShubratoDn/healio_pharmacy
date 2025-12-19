@@ -52,6 +52,9 @@ public class StockIn extends BaseEntity {
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;
 
+    @Column(name = "paid_amount", precision = 12, scale = 2)
+    private BigDecimal paidAmount;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 

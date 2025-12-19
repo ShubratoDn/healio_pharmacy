@@ -16,6 +16,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,13 +39,39 @@ public class StockInController {
     public String listStockIns(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
             Model model) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<StockIn> stockIns = stockInRepository.findAllByOrderByStockInDateDesc(pageable);
+        Page<StockIn> stockIns;
+        
+        boolean hasDateRange = startDate != null && !startDate.isEmpty() && 
+                              endDate != null && !endDate.isEmpty();
+        boolean hasSearch = search != null && !search.trim().isEmpty();
+        
+        if (hasDateRange) {
+            LocalDate start = LocalDate.parse(startDate);
+            LocalDate end = LocalDate.parse(endDate);
+            
+            if (hasSearch) {
+                stockIns = stockInRepository.findByStockInDateBetweenAndSearch(
+                    start, end, search.trim(), pageable);
+            } else {
+                stockIns = stockInRepository.findByStockInDateBetween(start, end, pageable);
+            }
+        } else if (hasSearch) {
+            stockIns = stockInRepository.searchStockIns(search.trim(), pageable);
+        } else {
+            stockIns = stockInRepository.findAllByOrderByStockInDateDesc(pageable);
+        }
         
         model.addAttribute("stockIns", stockIns);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", stockIns.getTotalPages());
+        model.addAttribute("search", search != null ? search : "");
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
         return "stock-in/list";
     }
 
@@ -53,9 +80,116 @@ public class StockInController {
         StockIn stockIn = new StockIn();
         stockIn.setStockInDate(LocalDate.now());
         stockIn.setReceivedDate(LocalDate.now());
+        stockIn.setPaymentStatus("PAID");
+        stockIn.setPaymentMethod("CASH");
         model.addAttribute("stockIn", stockIn);
         model.addAttribute("suppliers", supplierRepository.findByIsActiveTrue());
         return "stock-in/form";
+    }
+    
+    @GetMapping("/edit/{id}")
+    public String editStockIn(@PathVariable Long id, Model model) {
+        StockIn stockIn = stockInRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Stock In not found: " + id));
+        
+        // Initialize lazy-loaded collections and related entities
+        if (stockIn.getItems() != null && !stockIn.getItems().isEmpty()) {
+            stockIn.getItems().forEach(item -> {
+                if (item.getProduct() != null) {
+                    item.getProduct().getName(); // Initialize product
+                }
+                if (item.getProductPackage() != null) {
+                    item.getProductPackage().getPackageDescription(); // Initialize package
+                }
+            });
+        }
+        
+        model.addAttribute("stockIn", stockIn);
+        model.addAttribute("suppliers", supplierRepository.findByIsActiveTrue());
+        return "stock-in/form";
+    }
+    
+    @GetMapping("/api/items/{id}")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getStockInItems(@PathVariable Long id) {
+        StockIn stockIn = stockInRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Stock In not found: " + id));
+        
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (stockIn.getItems() != null) {
+            for (StockInItem item : stockIn.getItems()) {
+                // Initialize product to avoid lazy loading issues
+                item.getProduct().getName();
+                if (item.getProduct().getDosageForm() != null) {
+                    item.getProduct().getDosageForm().getName();
+                }
+                if (item.getProduct().getManufacturer() != null) {
+                    item.getProduct().getManufacturer().getName();
+                }
+                
+                Map<String, Object> itemMap = new HashMap<>();
+                itemMap.put("productId", item.getProduct().getId());
+                
+                // Build product display name
+                StringBuilder productName = new StringBuilder(item.getProduct().getName());
+                if (item.getProduct().getStrength() != null && !item.getProduct().getStrength().isEmpty()) {
+                    productName.append(" [").append(item.getProduct().getStrength()).append("]");
+                }
+                if (item.getProduct().getDosageForm() != null) {
+                    productName.append(" (").append(item.getProduct().getDosageForm().getName()).append(")");
+                }
+                if (item.getProduct().getManufacturer() != null) {
+                    productName.append(" - ").append(item.getProduct().getManufacturer().getName());
+                }
+                itemMap.put("productName", productName.toString());
+                
+                itemMap.put("packageId", item.getProductPackage() != null ? item.getProductPackage().getId() : null);
+                itemMap.put("packageDescription", item.getProductPackage() != null ? item.getProductPackage().getPackageDescription() : null);
+                itemMap.put("packageUnitPrice", item.getProductPackage() != null ? item.getProductPackage().getUnitPrice() : null);
+                itemMap.put("quantity", item.getQuantity());
+                itemMap.put("unitCost", item.getUnitCost());
+                itemMap.put("totalCost", item.getTotalCost());
+                itemMap.put("sellingPrice", item.getSellingPrice());
+                result.add(itemMap);
+            }
+        }
+        return ResponseEntity.ok(result);
+    }
+    
+    @GetMapping("/{id}")
+    public String viewStockIn(@PathVariable Long id, Model model) {
+        StockIn stockIn = stockInRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Stock In not found: " + id));
+        
+        // Initialize lazy-loaded collections and related entities
+        if (stockIn.getItems() != null && !stockIn.getItems().isEmpty()) {
+            // Force initialization of items and their related entities
+            stockIn.getItems().forEach(item -> {
+                if (item.getProduct() != null) {
+                    item.getProduct().getName(); // Initialize product
+                    if (item.getProduct().getDosageForm() != null) {
+                        item.getProduct().getDosageForm().getName(); // Initialize dosage form
+                    }
+                    if (item.getProduct().getManufacturer() != null) {
+                        item.getProduct().getManufacturer().getName(); // Initialize manufacturer
+                    }
+                }
+                if (item.getProductPackage() != null) {
+                    item.getProductPackage().getPackageDescription(); // Initialize package
+                }
+            });
+            
+            // Calculate total quantity
+            int totalQuantity = stockIn.getItems().stream()
+                    .mapToInt(item -> item.getQuantity() != null ? item.getQuantity() : 0)
+                    .sum();
+            model.addAttribute("totalQuantity", totalQuantity);
+        } else {
+            model.addAttribute("totalQuantity", 0);
+        }
+        
+        model.addAttribute("stockIn", stockIn);
+        return "stock-in/view";
     }
     
     @GetMapping("/api/products")
@@ -177,6 +311,14 @@ public class StockInController {
             BigDecimal tax = stockIn.getTaxAmount() != null ? stockIn.getTaxAmount() : BigDecimal.ZERO;
             stockIn.setFinalAmount(totalAmount.subtract(discount).add(tax));
             
+            // Handle paid amount based on payment status
+            // The paid amount is already bound from the form via @ModelAttribute
+            // Only clear it if payment status is not PARTIAL
+            if (!"PARTIAL".equals(stockIn.getPaymentStatus())) {
+                stockIn.setPaidAmount(null);
+            }
+            // If PARTIAL, the paid amount from the form is already set, so we keep it as is
+            
             // Save stock in first
             StockIn savedStockIn = stockInRepository.save(stockIn);
             
@@ -238,12 +380,148 @@ public class StockInController {
             
             stockInRepository.save(savedStockIn);
             redirectAttributes.addFlashAttribute("success", "Stock In saved successfully!");
+            return "redirect:/stock-in/" + savedStockIn.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error saving stock in: " + e.getMessage());
             e.printStackTrace();
+            return "redirect:/stock-in";
         }
+    }
+    
+    @PostMapping("/update/{id}")
+    public String updateStockIn(
+            @PathVariable Long id,
+            @ModelAttribute StockIn stockIn,
+            @RequestParam(required = false) Long supplierId,
+            @RequestParam(required = false) List<Long> productIds,
+            @RequestParam(required = false) List<Long> packageIds,
+            @RequestParam(required = false) List<Integer> quantities,
+            @RequestParam(required = false) List<BigDecimal> unitCosts,
+            @RequestParam(required = false) List<BigDecimal> sellingPrices,
+            @RequestParam(required = false) List<String> expiryDates,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
         
-        return "redirect:/stock-in";
+        try {
+            StockIn existingStockIn = stockInRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Stock In not found: " + id));
+            
+            // Update basic information
+            existingStockIn.setStockInNumber(stockIn.getStockInNumber());
+            existingStockIn.setStockInDate(stockIn.getStockInDate());
+            existingStockIn.setReceivedDate(stockIn.getReceivedDate());
+            existingStockIn.setPaymentStatus(stockIn.getPaymentStatus());
+            existingStockIn.setPaymentMethod(stockIn.getPaymentMethod());
+            existingStockIn.setNotes(stockIn.getNotes());
+            existingStockIn.setDiscountAmount(stockIn.getDiscountAmount());
+            existingStockIn.setTaxAmount(stockIn.getTaxAmount());
+            
+            // Load supplier if provided
+            if (supplierId != null) {
+                existingStockIn.setSupplier(supplierRepository.findById(supplierId).orElse(null));
+            }
+            
+            // Calculate totals from items
+            BigDecimal totalAmount = BigDecimal.ZERO;
+            if (productIds != null && !productIds.isEmpty()) {
+                for (int i = 0; i < productIds.size(); i++) {
+                    if (productIds.get(i) != null && quantities != null && i < quantities.size() && 
+                        unitCosts != null && i < unitCosts.size()) {
+                        Integer qty = quantities.get(i);
+                        BigDecimal unitCost = unitCosts.get(i);
+                        if (qty != null && unitCost != null) {
+                            totalAmount = totalAmount.add(unitCost.multiply(BigDecimal.valueOf(qty)));
+                        }
+                    }
+                }
+            }
+            
+            existingStockIn.setTotalAmount(totalAmount);
+            
+            // Calculate final amount
+            BigDecimal discount = existingStockIn.getDiscountAmount() != null ? existingStockIn.getDiscountAmount() : BigDecimal.ZERO;
+            BigDecimal tax = existingStockIn.getTaxAmount() != null ? existingStockIn.getTaxAmount() : BigDecimal.ZERO;
+            existingStockIn.setFinalAmount(totalAmount.subtract(discount).add(tax));
+            
+            // Handle paid amount based on payment status - set AFTER payment status is set
+            if ("PARTIAL".equals(existingStockIn.getPaymentStatus())) {
+                // Set paid amount as provided by user
+                existingStockIn.setPaidAmount(stockIn.getPaidAmount());
+            } else {
+                // Clear paid amount if not PARTIAL
+                existingStockIn.setPaidAmount(null);
+            }
+            
+            // Clear existing items
+            existingStockIn.getItems().clear();
+            
+            // Save stock in first
+            StockIn savedStockIn = stockInRepository.save(existingStockIn);
+            
+            // Save stock in items and update inventory
+            if (productIds != null && !productIds.isEmpty()) {
+                for (int i = 0; i < productIds.size(); i++) {
+                    if (productIds.get(i) == null) continue;
+                    
+                    final Long productId = productIds.get(i);
+                    Product product = productRepository.findById(productId)
+                            .orElseThrow(() -> new RuntimeException("Product not found: " + productId));
+                    
+                    Integer quantity = (quantities != null && i < quantities.size()) ? quantities.get(i) : 0;
+                    BigDecimal unitCost = (unitCosts != null && i < unitCosts.size()) ? unitCosts.get(i) : BigDecimal.ZERO;
+                    BigDecimal sellingPrice = (sellingPrices != null && i < sellingPrices.size()) ? sellingPrices.get(i) : null;
+                    String expiryDateStr = (expiryDates != null && i < expiryDates.size()) ? expiryDates.get(i) : null;
+                    
+                    if (quantity == null || quantity <= 0 || unitCost == null) {
+                        continue;
+                    }
+                    
+                    LocalDate expiryDate = null;
+                    if (expiryDateStr != null && !expiryDateStr.trim().isEmpty()) {
+                        try {
+                            expiryDate = LocalDate.parse(expiryDateStr);
+                        } catch (Exception e) {
+                            // Invalid date, skip
+                        }
+                    }
+                    
+                    ProductPackage productPackage = null;
+                    if (packageIds != null && i < packageIds.size() && packageIds.get(i) != null) {
+                        productPackage = productPackageRepository.findById(packageIds.get(i)).orElse(null);
+                    }
+                    
+                    BigDecimal totalCost = unitCost.multiply(BigDecimal.valueOf(quantity));
+                    
+                    // Create stock in item
+                    StockInItem item = StockInItem.builder()
+                            .stockIn(savedStockIn)
+                            .product(product)
+                            .productPackage(productPackage)
+                            .quantity(quantity)
+                            .unitCost(unitCost)
+                            .totalCost(totalCost)
+                            .sellingPrice(sellingPrice)
+                            .batchNumber(null)
+                            .expiryDate(expiryDate)
+                            .location(null)
+                            .notes(null)
+                            .build();
+                    
+                    savedStockIn.getItems().add(item);
+                    
+                    // Update inventory
+                    updateInventory(product, productPackage, quantity, unitCost, sellingPrice, null, expiryDate, null);
+                }
+            }
+            
+            stockInRepository.save(savedStockIn);
+            redirectAttributes.addFlashAttribute("success", "Stock In updated successfully!");
+            return "redirect:/stock-in/" + savedStockIn.getId();
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error updating stock in: " + e.getMessage());
+            e.printStackTrace();
+            return "redirect:/stock-in";
+        }
     }
     
     private void updateInventory(Product product, ProductPackage productPackage, Integer quantity, 

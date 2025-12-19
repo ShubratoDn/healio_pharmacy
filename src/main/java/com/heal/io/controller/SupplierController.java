@@ -107,8 +107,11 @@ public class SupplierController {
                     Map<String, Object> map = new HashMap<>();
                     map.put("id", supplier.getId());
                     
-                    // Build display text: Name - Phone (Manufacturers)
+                    // Build display text: Name (Company Name) - Phone (Manufacturers)
                     StringBuilder text = new StringBuilder(supplier.getName());
+                    if (supplier.getCompanyName() != null && !supplier.getCompanyName().isEmpty()) {
+                        text.append(" (").append(supplier.getCompanyName()).append(")");
+                    }
                     if (supplier.getPhone() != null && !supplier.getPhone().isEmpty()) {
                         text.append(" - ").append(supplier.getPhone());
                     }
@@ -121,6 +124,7 @@ public class SupplierController {
                     
                     map.put("text", text.toString());
                     map.put("name", supplier.getName());
+                    map.put("companyName", supplier.getCompanyName() != null ? supplier.getCompanyName() : "");
                     map.put("phone", supplier.getPhone() != null ? supplier.getPhone() : "");
                     map.put("manufacturers", supplier.getManufacturers() != null ? 
                             supplier.getManufacturers().stream()

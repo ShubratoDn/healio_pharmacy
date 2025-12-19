@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock In Details - Healio</title>
+    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .stock-in-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .info-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        .item-row {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+            transition: background-color 0.2s;
+        }
+        .item-row:hover {
+            background-color: #f8f9fa;
+        }
+        .item-row:last-child {
+            border-bottom: none;
+        }
+        .badge-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .stock-in-header {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/sidebar :: sidebar(activePage='stock-in')}"></div>
+    <div class="main-content">
+        <div th:replace="~{fragments/navbar :: navbar(pageTitle='Stock In Details')}"></div>
+
+        <div class="content-card">
+            <!-- Header Section -->
+            <div class="stock-in-header">
+                <div class="d-flex justify-content-between align-items-start flex-wrap">
+                    <div>
+                        <h3 class="mb-2"><i class="bi bi-box-arrow-in-down me-2"></i>Stock In Details</h3>
+                        <h5 class="mb-0" th:text="${stockIn.stockInNumber}"></h5>
+                    </div>
+                    <div class="text-end mt-2">
+                        <span class="badge-status" 
+                              th:classappend="${stockIn.paymentStatus == 'PAID'} ? 'bg-success' : 
+                                              (${stockIn.paymentStatus == 'PARTIAL'} ? 'bg-warning' : 'bg-secondary')"
+                              th:text="${stockIn.paymentStatus ?: 'PENDING'}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Items</div>
+                        <div class="stat-value" th:text="${stockIn.items != null ? stockIn.items.size() : 0}"></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <div class="stat-label">Subtotal</div>
+                        <div class="stat-value">৳<span th:text="${#numbers.formatDecimal(stockIn.totalAmount, 0, 2)}"></span></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div class="stat-label">Final Amount</div>
+                        <div class="stat-value">৳<span th:text="${#numbers.formatDecimal(stockIn.finalAmount, 0, 2)}"></span></div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <div class="stat-label">Total Quantity</div>
+                        <div class="stat-value" th:text="${totalQuantity}"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Left Column: Supplier & Items -->
+                <div class="col-md-8">
+                    <!-- Supplier Information -->
+                    <div class="info-card">
+                        <h5 class="mb-3"><i class="bi bi-truck me-2"></i>Supplier Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Name:</strong></p>
+                                <p th:text="${stockIn.supplier?.name ?: 'N/A'}"></p>
+                            </div>
+                            <div class="col-md-6" th:if="${stockIn.supplier != null}">
+                                <p class="mb-1"><strong>Phone:</strong></p>
+                                <p th:text="${stockIn.supplier.phone ?: '-'}"></p>
+                            </div>
+                            <div class="col-md-6" th:if="${stockIn.supplier != null && stockIn.supplier.email != null}">
+                                <p class="mb-1"><strong>Email:</strong></p>
+                                <p th:text="${stockIn.supplier.email}"></p>
+                            </div>
+                            <div class="col-md-6" th:if="${stockIn.supplier != null && stockIn.supplier.address != null}">
+                                <p class="mb-1"><strong>Address:</strong></p>
+                                <p th:text="${stockIn.supplier.address}"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stock In Items -->
+                    <div class="info-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Products Received</h5>
+                            <span class="badge bg-primary" th:text="'Total: ' + ${stockIn.items != null ? stockIn.items.size() : 0} + ' items'"></span>
+                        </div>
+                        <div th:if="${stockIn.items != null && !stockIn.items.isEmpty()}">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 5%;">#</th>
+                                            <th style="width: 40%;">Product</th>
+                                            <th style="width: 18%;">Package</th>
+                                            <th style="width: 12%;" class="text-center">Quantity</th>
+                                            <th style="width: 12%;" class="text-end">Unit Price</th>
+                                            <th style="width: 13%;" class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="item, iterStat : ${stockIn.items}">
+                                            <td class="text-center">
+                                                <span class="badge bg-secondary" th:text="${iterStat.count}"></span>
+                                            </td>
+                                            <td>
+                                                <strong th:text="${item.product.name}"></strong>
+                                                <div class="text-muted small" th:if="${item.product.strength}">
+                                                    <span th:text="'[' + ${item.product.strength} + ']'"></span>
+                                                </div>
+                                                <div class="text-muted small" th:if="${item.product.dosageForm != null}">
+                                                    <span th:text="'(' + ${item.product.dosageForm.name} + ')'"></span>
+                                                </div>
+                                                <div class="text-muted small" th:if="${item.product.manufacturer != null}">
+                                                    <span th:text="${item.product.manufacturer.name}"></span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span th:if="${item.productPackage != null}" 
+                                                      th:text="${item.productPackage.packageDescription}"></span>
+                                                <span th:if="${item.productPackage == null}" class="text-muted">-</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-info" th:text="${item.quantity}"></span>
+                                            </td>
+                                            <td class="text-end">
+                                                ৳<span th:text="${#numbers.formatDecimal(item.unitCost, 0, 2)}"></span>
+                                            </td>
+                                            <td class="text-end">
+                                                <strong>৳<span th:text="${#numbers.formatDecimal(item.totalCost, 0, 2)}"></span></strong>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div th:if="${stockIn.items == null || stockIn.items.isEmpty()}" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.3;"></i>
+                            <p class="mt-2 mb-0">No items in this stock in</p>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="info-card" th:if="${stockIn.notes != null && !stockIn.notes.isEmpty()}">
+                        <h5 class="mb-3"><i class="bi bi-sticky me-2"></i>Notes</h5>
+                        <p th:text="${stockIn.notes}"></p>
+                    </div>
+                </div>
+
+                <!-- Right Column: Summary & Details -->
+                <div class="col-md-4">
+                    <!-- Financial Summary -->
+                    <div class="info-card">
+                        <h5 class="mb-3"><i class="bi bi-calculator me-2"></i>Financial Summary</h5>
+                        <div class="summary-box">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <strong>৳<span th:text="${#numbers.formatDecimal(stockIn.totalAmount, 0, 2)}"></span></strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" th:if="${stockIn.discountAmount != null && stockIn.discountAmount > 0}">
+                                <span class="text-success">Discount:</span>
+                                <strong class="text-success">-৳<span th:text="${#numbers.formatDecimal(stockIn.discountAmount, 0, 2)}"></span></strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2" th:if="${stockIn.taxAmount != null && stockIn.taxAmount > 0}">
+                                <span class="text-info">Tax:</span>
+                                <strong class="text-info">+৳<span th:text="${#numbers.formatDecimal(stockIn.taxAmount, 0, 2)}"></span></strong>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span><strong>Final Amount:</strong></span>
+                                <strong style="font-size: 1.2rem; color: #667eea;">৳<span th:text="${#numbers.formatDecimal(stockIn.finalAmount, 0, 2)}"></span></strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Information -->
+                    <div class="info-card">
+                        <h5 class="mb-3"><i class="bi bi-credit-card me-2"></i>Payment Information</h5>
+                        <div class="mb-3">
+                            <strong class="d-block mb-2">Payment Status:</strong>
+                            <div>
+                                <span class="badge" 
+                                      th:classappend="${stockIn.paymentStatus == 'PAID'} ? 'bg-success' : 
+                                                      (${stockIn.paymentStatus == 'PARTIAL'} ? 'bg-warning text-dark' : 'bg-secondary')"
+                                      style="font-size: 0.9rem; padding: 0.5rem 1rem;"
+                                      th:text="${stockIn.paymentStatus ?: 'PENDING'}"></span>
+                            </div>
+                        </div>
+                        <div class="mb-3" th:if="${stockIn.paymentMethod != null && !stockIn.paymentMethod.isEmpty()}">
+                            <strong class="d-block mb-2">Payment Method:</strong>
+                            <div>
+                                <span class="badge bg-info" style="font-size: 0.9rem; padding: 0.5rem 1rem;" th:text="${stockIn.paymentMethod}"></span>
+                            </div>
+                        </div>
+                        <div class="mb-3" th:if="${stockIn.paymentStatus == 'PARTIAL' && stockIn.paidAmount != null}">
+                            <strong class="d-block mb-2">Paid Amount:</strong>
+                            <div>
+                                <span style="font-size: 1rem; font-weight: 500; color: #28a745;">
+                                    ৳<span th:text="${#numbers.formatDecimal(stockIn.paidAmount, 0, 2)}"></span>
+                                </span>
+                                <div class="text-muted small mt-1">
+                                    Remaining: ৳<span th:text="${#numbers.formatDecimal(stockIn.finalAmount.subtract(stockIn.paidAmount), 0, 2)}"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date Information -->
+                    <div class="info-card">
+                        <h5 class="mb-3"><i class="bi bi-calendar me-2"></i>Date Information</h5>
+                        <div class="mb-2">
+                            <strong>Stock In Date:</strong>
+                            <div>
+                                <i class="bi bi-calendar-event me-1"></i>
+                                <span th:text="${#temporals.format(stockIn.stockInDate, 'dd MMMM yyyy')}"></span>
+                            </div>
+                        </div>
+                        <div class="mb-2" th:if="${stockIn.receivedDate != null}">
+                            <strong>Received Date:</strong>
+                            <div>
+                                <i class="bi bi-calendar-check me-1"></i>
+                                <span th:text="${#temporals.format(stockIn.receivedDate, 'dd MMMM yyyy')}"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="info-card">
+                        <h5 class="mb-3"><i class="bi bi-info-circle me-2"></i>Additional Information</h5>
+                        <div class="mb-2">
+                            <strong>Received By:</strong>
+                            <div th:text="${stockIn.receivedBy?.name ?: 'N/A'}"></div>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Created By:</strong>
+                            <div th:text="${stockIn.insertedBy?.name ?: 'N/A'}"></div>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Created:</strong>
+                            <div>
+                                <small th:text="${#temporals.format(stockIn.createdAt, 'dd MMM yyyy HH:mm')}"></small>
+                            </div>
+                        </div>
+                        <div class="mb-2" th:if="${stockIn.updatedAt != stockIn.createdAt}">
+                            <strong>Last Updated:</strong>
+                            <div>
+                                <small th:text="${#temporals.format(stockIn.updatedAt, 'dd MMM yyyy HH:mm')}"></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="info-card no-print">
+                        <div class="d-grid gap-2">
+                            <a th:href="@{/stock-in/edit/{id}(id=${stockIn.id})}" class="btn btn-warning">
+                                <i class="bi bi-pencil me-2"></i>Edit
+                            </a>
+                            <a th:href="@{/stock-in}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to List
+                            </a>
+                            <button type="button" class="btn btn-primary" onclick="window.print()">
+                                <i class="bi bi-printer me-2"></i>Print
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/common.js}"></script>
+</body>
+</html>
+
