@@ -1,5 +1,11 @@
 package com.heal.io.service;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.heal.io.dto.SaleReportDTO;
 import com.heal.io.entity.Sale;
 import com.heal.io.entity.SaleItem;
@@ -10,6 +16,12 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
@@ -51,10 +63,24 @@ public class SaleReportService {
                 log.warn("Could not load logo image: {}", e.getMessage());
             }
             
-            // Calculate total discount amount (sum of all item discounts)
-            BigDecimal totalDiscountAmount = reportData.getItems().stream()
+            // Generate QR code
+            InputStream qrCodeStream = null;
+            try {
+                String qrCodeContent = buildQRCodeContent(reportData);
+                qrCodeStream = generateQRCode(qrCodeContent, 200, 200);
+            } catch (Exception e) {
+                log.warn("Could not generate QR code: {}", e.getMessage());
+            }
+            
+            // Calculate total discount amount (sum of all item discounts + sale-level discount)
+            BigDecimal itemDiscounts = reportData.getItems().stream()
                     .map(item -> item.getDiscountAmount() != null ? item.getDiscountAmount() : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            BigDecimal saleLevelDiscount = reportData.getDiscountAmount() != null ? 
+                    reportData.getDiscountAmount() : BigDecimal.ZERO;
+            
+            BigDecimal totalDiscountAmount = itemDiscounts.add(saleLevelDiscount);
             
             // Calculate due amount for partial payments
             BigDecimal dueAmount = BigDecimal.ZERO;
@@ -91,6 +117,7 @@ public class SaleReportService {
             parameters.put("SOLD_BY_NAME", reportData.getSoldByName());
             parameters.put("NOTES", reportData.getNotes());
             parameters.put("LOGO_IMAGE", logoStream);
+            parameters.put("QR_CODE_IMAGE", qrCodeStream);
             parameters.put("TOTAL_DISCOUNT_AMOUNT", totalDiscountAmount);
             parameters.put("DUE_AMOUNT", dueAmount);
             
@@ -168,6 +195,60 @@ public class SaleReportService {
                 .notes(sale.getNotes())
                 .items(items)
                 .build();
+    }
+    
+    /**
+     * Build QR code content string from sale data
+     */
+    private String buildQRCodeContent(SaleReportDTO reportData) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Invoice: ").append(reportData.getSaleNumber()).append("\n");
+        if (reportData.getSaleDate() != null) {
+            sb.append("Date: ").append(reportData.getSaleDate()
+                    .format(DateTimeFormatter.ofPattern("d MMMM yyyy"))).append("\n");
+        }
+        sb.append("Customer: ").append(reportData.getCustomerName() != null ? 
+                reportData.getCustomerName() : "Walk-in Customer").append("\n");
+        if (reportData.getTotalAmount() != null) {
+            sb.append("Total: ৳").append(reportData.getTotalAmount().toString()).append("\n");
+        }
+        if (reportData.getPaymentStatus() != null) {
+            sb.append("Status: ").append(reportData.getPaymentStatus());
+        }
+        return sb.toString();
+    }
+    
+    /**
+     * Generate QR code image as InputStream
+     */
+    private InputStream generateQRCode(String content, int width, int height) throws WriterException, IOException {
+        Map<EncodeHintType, Object> hints = new HashMap<>();
+        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
+        hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+        hints.put(EncodeHintType.MARGIN, 1);
+        
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = qrCodeWriter.encode(content, BarcodeFormat.QR_CODE, width, height, hints);
+        
+        BufferedImage qrImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        qrImage.createGraphics();
+        
+        Graphics2D graphics = (Graphics2D) qrImage.getGraphics();
+        graphics.setColor(Color.WHITE);
+        graphics.fillRect(0, 0, width, height);
+        graphics.setColor(Color.BLACK);
+        
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                if (bitMatrix.get(i, j)) {
+                    graphics.fillRect(i, j, 1, 1);
+                }
+            }
+        }
+        
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(qrImage, "PNG", baos);
+        return new ByteArrayInputStream(baos.toByteArray());
     }
 }
 
