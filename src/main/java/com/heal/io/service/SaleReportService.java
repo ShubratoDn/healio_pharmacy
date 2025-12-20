@@ -55,7 +55,7 @@ public class SaleReportService {
             // Load logo image
             InputStream logoStream = null;
             try {
-                ClassPathResource logoResource = new ClassPathResource("static/logo.jpg");
+                ClassPathResource logoResource = new ClassPathResource("static/logo-slogan.jpg");
                 if (logoResource.exists()) {
                     logoStream = logoResource.getInputStream();
                 }

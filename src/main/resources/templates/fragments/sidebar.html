@@ -3,9 +3,8 @@
 <body>
     <div th:fragment="sidebar(activePage)" class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="bi bi-heart-pulse-fill" style="font-size: 2.5rem;"></i>
-            <h5 class="mt-2 mb-0">Healio</h5>
-            <small>Pharmacy Management</small>
+            <img src="/logo-slogan.png" alt="Healio" class="logo-expanded">
+            <img src="/logo.png" alt="Healio" class="logo-collapsed">
         </div>
         <nav class="nav flex-column">
             <a class="nav-link" th:classappend="${activePage == 'dashboard'} ? 'active'" href="/dashboard">
@@ -19,6 +18,9 @@
             </a>
             <a class="nav-link" th:classappend="${activePage == 'stock-in'} ? 'active'" href="/stock-in">
                 <i class="bi bi-box-arrow-in-down"></i><span>Stock In</span>
+            </a>
+            <a class="nav-link" th:classappend="${activePage == 'inventory'} ? 'active'" href="/inventory">
+                <i class="bi bi-boxes"></i><span>Inventory</span>
             </a>
             <a class="nav-link" th:classappend="${activePage == 'customers'} ? 'active'" href="/customers">
                 <i class="bi bi-people"></i><span>Customers</span>

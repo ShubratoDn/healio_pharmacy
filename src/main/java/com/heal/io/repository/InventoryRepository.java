@@ -1,6 +1,7 @@
 package com.heal.io.repository;
 
 import com.heal.io.entity.Inventory;
+import com.heal.io.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,5 +33,17 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     
     @Query("SELECT i FROM Inventory i WHERE i.expiryDate <= :date AND i.expiryDate IS NOT NULL AND i.quantity > 0 AND i.isActive = true")
     List<Inventory> findExpiringItems(@Param("date") LocalDate date);
+    
+    @Query("SELECT DISTINCT i.product FROM Inventory i WHERE i.isActive = true AND i.product.isActive = true")
+    List<Product> findProductsWithInventory();
+    
+    @Query("SELECT DISTINCT i.product FROM Inventory i WHERE i.isActive = true AND i.product.isActive = true AND " +
+           "(LOWER(i.product.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(i.product.manufacturer.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(i.product.generic.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+    List<Product> findProductsWithInventoryBySearch(@Param("search") String search);
+    
+    @Query("SELECT i FROM Inventory i WHERE i.isActive = true AND i.product.isActive = true")
+    List<Inventory> findAllActiveInventories();
 }
 

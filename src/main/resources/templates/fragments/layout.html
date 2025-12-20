@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${title} + ' - Healio Pharmacy Management'">Healio</title>
+    <link rel="icon" type="image/png" href="/icon.png">
     <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -15,25 +16,54 @@
             background-color: #f8f9fa;
         }
         .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            height: 100vh;
+            background: linear-gradient(180deg, #f5f7ff 0%, #faf8ff 100%);
+            color: #333;
             position: fixed;
             top: 0;
             left: 0;
             width: 250px;
             padding-top: 20px;
+            padding-bottom: 20px;
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             z-index: 1000;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        /* Hide scrollbar for sidebar but keep scrolling functionality */
+        .sidebar::-webkit-scrollbar {
+            width: 0;
+            display: none;
         }
         .sidebar .logo {
             padding: 20px;
             text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar.collapsed .logo {
+            padding: 15px 5px;
+        }
+        /* Logo visibility based on collapsed state */
+        .sidebar .logo-expanded {
+            display: block !important;
+        }
+        .sidebar .logo-collapsed {
+            display: none !important;
+        }
+        .sidebar.collapsed .logo-expanded {
+            display: none !important;
+        }
+        .sidebar.collapsed .logo-collapsed {
+            display: block !important;
         }
         .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(0, 0, 0, 0.7);
             padding: 12px 20px;
             margin: 5px 10px;
             border-radius: 8px;
@@ -42,8 +72,8 @@
         }
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
+            background-color: rgba(102, 126, 234, 0.1);
+            color: #667eea;
         }
         .main-content {
             margin-left: 250px;
@@ -116,9 +146,8 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="bi bi-heart-pulse-fill" style="font-size: 2.5rem;"></i>
-            <h5 class="mt-2 mb-0">Healio</h5>
-            <small>Pharmacy Management</small>
+            <img src="/logo-slogan.png" alt="Healio" class="logo-expanded">
+            <img src="/logo.png" alt="Healio" class="logo-collapsed">
         </div>
         <nav class="nav flex-column">
             <a class="nav-link" th:classappend="${activePage == 'dashboard'} ? 'active'" href="/dashboard">

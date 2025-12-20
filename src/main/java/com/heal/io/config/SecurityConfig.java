@@ -46,7 +46,29 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**", "/lib/**", "/error").permitAll()
+                        .requestMatchers(
+                                "/", 
+                                "/login", 
+                                "/css/**", 
+                                "/js/**", 
+                                "/images/**", 
+                                "/lib/**", 
+                                "/error",
+                                "/logo-slogan.png",
+                                "/logo-slogan.jpg",
+                                "/logo.png",
+                                "/logo.jpg",
+                                "/icon.png",
+                                "/icon.jpg",
+                                "/favicon.ico",
+                                "/*.png",
+                                "/*.jpg",
+                                "/*.jpeg",
+                                "/*.gif",
+                                "/*.ico",
+                                "/*.svg",
+                                "/*.webp"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
