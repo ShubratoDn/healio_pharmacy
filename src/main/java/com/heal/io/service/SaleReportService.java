@@ -40,12 +40,37 @@ public class SaleReportService {
             // Convert Sale entity to DTO
             SaleReportDTO reportData = convertToReportDTO(sale);
             
+            // Load logo image
+            InputStream logoStream = null;
+            try {
+                ClassPathResource logoResource = new ClassPathResource("static/logo.jpg");
+                if (logoResource.exists()) {
+                    logoStream = logoResource.getInputStream();
+                }
+            } catch (Exception e) {
+                log.warn("Could not load logo image: {}", e.getMessage());
+            }
+            
+            // Calculate total discount amount (sum of all item discounts)
+            BigDecimal totalDiscountAmount = reportData.getItems().stream()
+                    .map(item -> item.getDiscountAmount() != null ? item.getDiscountAmount() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // Calculate due amount for partial payments
+            BigDecimal dueAmount = BigDecimal.ZERO;
+            if ("PARTIAL".equals(reportData.getPaymentStatus()) && 
+                reportData.getTotalAmount() != null && reportData.getPaidAmount() != null) {
+                dueAmount = reportData.getTotalAmount().subtract(
+                    reportData.getPaidAmount() != null ? reportData.getPaidAmount() : BigDecimal.ZERO
+                );
+            }
+            
             // Prepare parameters
             Map<String, Object> parameters = new HashMap<>();
-            parameters.put("COMPANY_NAME", "Healio Pharmacy");
-            parameters.put("COMPANY_ADDRESS", "123 Pharmacy Street, City, Country");
-            parameters.put("COMPANY_PHONE", "+880-1234-567890");
-            parameters.put("COMPANY_EMAIL", "info@healio.com");
+            parameters.put("COMPANY_NAME", "Rupganj Pharmacy");
+            parameters.put("COMPANY_ADDRESS", "892/1, Beside Shahidbagh Mosque, Rajarbagh, Dhaka - 1217");
+            parameters.put("COMPANY_PHONE", "01966551343");
+            parameters.put("COMPANY_EMAIL", "");
             
             // Add sale data as parameters
             parameters.put("SALE_NUMBER", reportData.getSaleNumber());
@@ -65,6 +90,9 @@ public class SaleReportService {
             parameters.put("PAYMENT_STATUS", reportData.getPaymentStatus());
             parameters.put("SOLD_BY_NAME", reportData.getSoldByName());
             parameters.put("NOTES", reportData.getNotes());
+            parameters.put("LOGO_IMAGE", logoStream);
+            parameters.put("TOTAL_DISCOUNT_AMOUNT", totalDiscountAmount);
+            parameters.put("DUE_AMOUNT", dueAmount);
             
             // Prepare items data source
             List<Map<String, Object>> itemsData = reportData.getItems().stream()

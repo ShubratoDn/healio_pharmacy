@@ -15,16 +15,16 @@
     <property name="com.jasperreports.print.keep.full.text" value="true"/>
     
     <parameter name="COMPANY_NAME" class="java.lang.String" isForPrompting="false">
-        <defaultValueExpression><![CDATA["Healio Pharmacy"]]></defaultValueExpression>
+        <defaultValueExpression><![CDATA["Rupganj Pharmacy"]]></defaultValueExpression>
     </parameter>
     <parameter name="COMPANY_ADDRESS" class="java.lang.String" isForPrompting="false">
-        <defaultValueExpression><![CDATA["234 Pine Street, Boroughville, USA"]]></defaultValueExpression>
+        <defaultValueExpression><![CDATA["892/1, Beside Shahidbagh Mosque, Rajarbagh, Dhaka - 1217"]]></defaultValueExpression>
     </parameter>
     <parameter name="COMPANY_PHONE" class="java.lang.String" isForPrompting="false">
-        <defaultValueExpression><![CDATA["+880-1234-567890"]]></defaultValueExpression>
+        <defaultValueExpression><![CDATA["01966551343"]]></defaultValueExpression>
     </parameter>
     <parameter name="COMPANY_EMAIL" class="java.lang.String" isForPrompting="false">
-        <defaultValueExpression><![CDATA["info@healio.com"]]></defaultValueExpression>
+        <defaultValueExpression><![CDATA[""]]></defaultValueExpression>
     </parameter>
     
     <parameter name="SALE_NUMBER" class="java.lang.String"/>
@@ -44,6 +44,9 @@
     <parameter name="PAYMENT_STATUS" class="java.lang.String"/>
     <parameter name="SOLD_BY_NAME" class="java.lang.String"/>
     <parameter name="NOTES" class="java.lang.String"/>
+    <parameter name="LOGO_IMAGE" class="java.io.InputStream"/>
+    <parameter name="DUE_AMOUNT" class="java.math.BigDecimal"/>
+    <parameter name="TOTAL_DISCOUNT_AMOUNT" class="java.math.BigDecimal"/>
     
     <field name="productName" class="java.lang.String"/>
     <field name="quantity" class="java.lang.Integer"/>
@@ -62,280 +65,228 @@
     </background>
     
     <title>
-        <band height="140" splitType="Stretch">
-            <!-- Teal Banner Header -->
+        <band height="60" splitType="Stretch">
             <rectangle>
-                <reportElement x="0" y="0" width="555" height="50" backcolor="#17A2B8"/>
+                <reportElement x="0" y="0" width="555" height="40" backcolor="#0E5A6F"/>
             </rectangle>
-            
             <staticText>
-                <reportElement x="0" y="5" width="555" height="40">
-                    <property name="com.jasperreports.print.keep.full.text" value="true"/>
-                </reportElement>
+                <reportElement x="0" y="8" width="555" height="24"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="20" isBold="true" pdfFontName="Helvetica-Bold"/>
+                    <font size="18" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
-                <text><![CDATA[SALE INVOICE]]></text>
+                <text><![CDATA[Sale Invoice]]></text>
             </staticText>
-            
-            <!-- Company Information Section -->
-            <rectangle>
-                <reportElement x="0" y="50" width="555" height="90" backcolor="#FFFFFF"/>
-            </rectangle>
-            
-            <!-- Company Name -->
-            <staticText>
-                <reportElement x="10" y="60" width="300" height="25">
-                    <property name="com.jasperreports.print.keep.full.text" value="true"/>
-                </reportElement>
-                <textElement>
-                    <font size="18" isBold="true" pdfFontName="Helvetica-Bold"/>
-                </textElement>
-                <text><![CDATA[$P{COMPANY_NAME}]]></text>
-            </staticText>
-            
-            <!-- Company Address -->
-            <textField isStretchWithOverflow="true">
-                <reportElement x="10" y="85" width="300" height="15"/>
-                <textElement>
-                    <font size="10" pdfFontName="Helvetica"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$P{COMPANY_ADDRESS}]]></textFieldExpression>
-            </textField>
-            
-            <!-- Company Contact -->
-            <textField isStretchWithOverflow="true">
-                <reportElement x="10" y="100" width="300" height="15"/>
-                <textElement>
-                    <font size="10" pdfFontName="Helvetica"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$P{COMPANY_EMAIL} + " | " + $P{COMPANY_PHONE}]]></textFieldExpression>
-            </textField>
-            
-            <!-- Invoice Number Box -->
-            <rectangle>
-                <reportElement x="320" y="60" width="115" height="25" backcolor="#E8F4F8"/>
-            </rectangle>
-            <staticText>
-                <reportElement x="325" y="62" width="105" height="10"/>
-                <textElement>
-                    <font size="8" pdfFontName="Helvetica"/>
-                </textElement>
-                <text><![CDATA[Invoice No.]]></text>
-            </staticText>
-            <textField>
-                <reportElement x="325" y="72" width="105" height="12"/>
-                <textElement>
-                    <font size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$P{SALE_NUMBER}]]></textFieldExpression>
-            </textField>
-            
-            <!-- Invoice Date Box -->
-            <rectangle>
-                <reportElement x="320" y="90" width="115" height="25" backcolor="#E8F4F8"/>
-            </rectangle>
-            <staticText>
-                <reportElement x="325" y="92" width="105" height="10"/>
-                <textElement>
-                    <font size="8" pdfFontName="Helvetica"/>
-                </textElement>
-                <text><![CDATA[Invoice Date]]></text>
-            </staticText>
-            <textField pattern="MMMM dd, yyyy">
-                <reportElement x="325" y="102" width="105" height="12"/>
-                <textElement>
-                    <font size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$P{SALE_DATE}]]></textFieldExpression>
-            </textField>
         </band>
     </title>
     
     <pageHeader>
-        <band height="100" splitType="Stretch">
-            <!-- Customer and Payment Info Section -->
-            <rectangle>
-                <reportElement x="0" y="0" width="555" height="100" backcolor="#FFFFFF"/>
-            </rectangle>
+        <band height="170" splitType="Stretch">
+            <!-- Logo -->
+            <image onErrorType="Blank">
+                <reportElement x="0" y="0" width="48" height="48">
+                    <printWhenExpression><![CDATA[$P{LOGO_IMAGE} != null]]></printWhenExpression>
+                </reportElement>
+                <imageExpression><![CDATA[$P{LOGO_IMAGE}]]></imageExpression>
+            </image>
             
-            <!-- Billed To Section -->
-            <staticText>
-                <reportElement x="10" y="5" width="100" height="15"/>
+            <!-- Company Information -->
+            <textField>
+                <reportElement x="60" y="0" width="300" height="18"/>
                 <textElement>
-                    <font size="11" isBold="true" pdfFontName="Helvetica-Bold"/>
+                    <font size="12" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
-                <text><![CDATA[Billed To]]></text>
-            </staticText>
-            
-            <staticText>
-                <reportElement x="10" y="20" width="50" height="12"/>
-                <textElement>
-                    <font size="9" pdfFontName="Helvetica"/>
-                </textElement>
-                <text><![CDATA[Name:]]></text>
-            </staticText>
+                <textFieldExpression><![CDATA[$P{COMPANY_NAME}]]></textFieldExpression>
+            </textField>
             <textField isStretchWithOverflow="true">
-                <reportElement x="60" y="20" width="200" height="12"/>
+                <reportElement x="60" y="20" width="300" height="14"/>
                 <textElement>
-                    <font size="9" pdfFontName="Helvetica"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
                 </textElement>
-                <textFieldExpression><![CDATA[$P{CUSTOMER_NAME} != null ? $P{CUSTOMER_NAME} : "Walk-in Customer"]]></textFieldExpression>
+                <textFieldExpression><![CDATA[$P{COMPANY_ADDRESS}]]></textFieldExpression>
+            </textField>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="60" y="36" width="300" height="14"/>
+                <textElement>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                </textElement>
+                <textFieldExpression><![CDATA[($P{COMPANY_EMAIL} != null && !$P{COMPANY_EMAIL}.isEmpty() ? $P{COMPANY_EMAIL} + " | " : "") + $P{COMPANY_PHONE}]]></textFieldExpression>
             </textField>
             
-            <staticText>
-                <reportElement x="10" y="35" width="50" height="12"/>
-                <textElement>
-                    <font size="9" pdfFontName="Helvetica"/>
-                </textElement>
-                <text><![CDATA[Address:]]></text>
-            </staticText>
-            <textField isStretchWithOverflow="true" isBlankWhenNull="true">
-                <reportElement x="60" y="35" width="200" height="12"/>
-                <textElement>
-                    <font size="9" pdfFontName="Helvetica"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$P{CUSTOMER_ADDRESS}]]></textFieldExpression>
-            </textField>
-            
-            <staticText>
-                <reportElement x="10" y="50" width="50" height="12"/>
-                <textElement>
-                    <font size="9" pdfFontName="Helvetica"/>
-                </textElement>
-                <text><![CDATA[Contact:]]></text>
-            </staticText>
-            <textField isStretchWithOverflow="true" isBlankWhenNull="true">
-                <reportElement x="60" y="50" width="200" height="12"/>
-                <textElement>
-                    <font size="9" pdfFontName="Helvetica"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$P{CUSTOMER_PHONE}]]></textFieldExpression>
-            </textField>
-            
-            <!-- Payment Information Section -->
+            <!-- Invoice Number and Date Box -->
             <rectangle>
-                <reportElement x="280" y="5" width="135" height="30" backcolor="#E8F4F8"/>
+                <reportElement x="350" y="0" width="205" height="45" backcolor="#E7F3F7"/>
             </rectangle>
             <staticText>
-                <reportElement x="285" y="8" width="125" height="10"/>
+                <reportElement x="360" y="8" width="80" height="14"/>
                 <textElement>
-                    <font size="8" pdfFontName="Helvetica"/>
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
+                </textElement>
+                <text><![CDATA[Invoice No]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="445" y="8" width="100" height="14"/>
+                <textElement>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{SALE_NUMBER}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="360" y="24" width="80" height="14"/>
+                <textElement>
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
+                </textElement>
+                <text><![CDATA[Invoice Date]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="445" y="24" width="100" height="14"/>
+                <textElement>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{SALE_DATE} != null ? 
+                    $P{SALE_DATE}.format(java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy, hh:mm a")) : ""]]></textFieldExpression>
+            </textField>
+            
+            <!-- Payment Information Box -->
+            <rectangle>
+                <reportElement x="0" y="80" width="260" height="45" backcolor="#E7F3F7"/>
+            </rectangle>
+            <staticText>
+                <reportElement x="10" y="88" width="120" height="14"/>
+                <textElement>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
                 </textElement>
                 <text><![CDATA[Payment Method]]></text>
             </staticText>
             <textField>
-                <reportElement x="285" y="18" width="125" height="12"/>
+                <reportElement x="140" y="88" width="100" height="14"/>
                 <textElement>
-                    <font size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$P{PAYMENT_METHOD}]]></textFieldExpression>
             </textField>
-            
-            <rectangle>
-                <reportElement x="280" y="40" width="135" height="30" backcolor="#E8F4F8"/>
-            </rectangle>
             <staticText>
-                <reportElement x="285" y="43" width="125" height="10"/>
+                <reportElement x="10" y="105" width="120" height="14"/>
                 <textElement>
-                    <font size="8" pdfFontName="Helvetica"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
                 </textElement>
                 <text><![CDATA[Payment Status]]></text>
             </staticText>
             <textField>
-                <reportElement x="285" y="53" width="125" height="12"/>
+                <reportElement x="140" y="105" width="100" height="14"/>
                 <textElement>
-                    <font size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$P{PAYMENT_STATUS}]]></textFieldExpression>
             </textField>
             
+            <!-- Billed To Section -->
+            <rectangle>
+                <reportElement x="300" y="80" width="255" height="70" backcolor="#F5F7F9"/>
+            </rectangle>
             <staticText>
-                <reportElement x="10" y="70" width="100" height="12"/>
+                <reportElement x="310" y="85" width="200" height="14"/>
                 <textElement>
-                    <font size="9" pdfFontName="Helvetica"/>
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
-                <text><![CDATA[Sold By:]]></text>
+                <text><![CDATA[Billed to]]></text>
             </staticText>
-            <textField isBlankWhenNull="true">
-                <reportElement x="60" y="70" width="200" height="12"/>
+            <textField isStretchWithOverflow="true">
+                <reportElement x="310" y="102" width="230" height="14"/>
                 <textElement>
-                    <font size="9" pdfFontName="Helvetica"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
                 </textElement>
-                <textFieldExpression><![CDATA[$P{SOLD_BY_NAME}]]></textFieldExpression>
+                <textFieldExpression><![CDATA[$P{CUSTOMER_NAME} != null ? $P{CUSTOMER_NAME} : "Walk-in Customer"]]></textFieldExpression>
+            </textField>
+            <textField isStretchWithOverflow="true" isBlankWhenNull="true">
+                <reportElement x="310" y="118" width="230" height="14"/>
+                <textElement>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{CUSTOMER_ADDRESS}]]></textFieldExpression>
+            </textField>
+            <textField isStretchWithOverflow="true" isBlankWhenNull="true">
+                <reportElement x="310" y="134" width="230" height="14"/>
+                <textElement>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{CUSTOMER_PHONE}]]></textFieldExpression>
             </textField>
         </band>
     </pageHeader>
     
     <columnHeader>
-        <band height="30" splitType="Stretch">
-            <!-- Table Header with Teal Background -->
+        <band height="24" splitType="Stretch">
             <rectangle>
-                <reportElement x="0" y="0" width="555" height="30" backcolor="#17A2B8"/>
+                <reportElement x="0" y="0" width="555" height="24" backcolor="#B7DEE8"/>
             </rectangle>
-            
+            <line>
+                <reportElement x="0" y="0" width="1" height="24"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
+            <line>
+                <reportElement x="70" y="0" width="1" height="24"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
+            <line>
+                <reportElement x="290" y="0" width="1" height="24"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
+            <line>
+                <reportElement x="370" y="0" width="1" height="24"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
+            <line>
+                <reportElement x="430" y="0" width="1" height="24"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
+            <line>
+                <reportElement x="555" y="0" width="1" height="24"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
             <staticText>
-                <reportElement x="0" y="0" width="40" height="30"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#FFFFFF"/>
-                </box>
+                <reportElement x="0" y="5" width="70" height="14"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
                 <text><![CDATA[#]]></text>
             </staticText>
-            
             <staticText>
-                <reportElement x="40" y="0" width="200" height="30"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#FFFFFF"/>
-                </box>
-                <textElement textAlignment="Left" verticalAlignment="Middle">
-                    <font size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+                <reportElement x="70" y="5" width="220" height="14"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
                 <text><![CDATA[Description]]></text>
             </staticText>
-            
             <staticText>
-                <reportElement x="240" y="0" width="80" height="30"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#FFFFFF"/>
-                </box>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+                <reportElement x="290" y="5" width="80" height="14"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
                 <text><![CDATA[Unit Price]]></text>
             </staticText>
-            
             <staticText>
-                <reportElement x="320" y="0" width="60" height="30"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#FFFFFF"/>
-                </box>
+                <reportElement x="370" y="5" width="60" height="14"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
                 <text><![CDATA[Qty]]></text>
             </staticText>
-            
             <staticText>
-                <reportElement x="380" y="0" width="80" height="30"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#FFFFFF"/>
-                </box>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
-                </textElement>
-                <text><![CDATA[Discount]]></text>
-            </staticText>
-            
-            <staticText>
-                <reportElement x="460" y="0" width="95" height="30"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#FFFFFF"/>
-                </box>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" isBold="true" pdfFontName="Helvetica-Bold"/>
+                <reportElement x="430" y="5" width="125" height="14"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
                 <text><![CDATA[Amount]]></text>
             </staticText>
@@ -343,85 +294,72 @@
     </columnHeader>
     
     <detail>
-        <band height="40" splitType="Stretch">
-            <!-- Alternating row colors -->
-            <rectangle>
-                <reportElement x="0" y="0" width="555" height="40" backcolor="#F5F5F5">
-                    <printWhenExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></printWhenExpression>
-                </reportElement>
-            </rectangle>
-            <rectangle>
-                <reportElement x="0" y="0" width="555" height="40" backcolor="#FFFFFF">
-                    <printWhenExpression><![CDATA[$V{REPORT_COUNT} % 2 == 1]]></printWhenExpression>
-                </reportElement>
-            </rectangle>
-            
+        <band height="22" splitType="Stretch">
+            <line>
+                <reportElement x="0" y="21" width="555" height="1"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
+            <line>
+                <reportElement x="70" y="0" width="1" height="22"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
+            <line>
+                <reportElement x="290" y="0" width="1" height="22"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
+            <line>
+                <reportElement x="370" y="0" width="1" height="22"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
+            <line>
+                <reportElement x="430" y="0" width="1" height="22"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#6FAFC3"/>
+                </graphicElement>
+            </line>
             <textField>
-                <reportElement x="0" y="0" width="40" height="40"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#E0E0E0"/>
-                </box>
+                <reportElement x="2" y="4" width="66" height="14"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="9" pdfFontName="Helvetica"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$V{REPORT_COUNT}]]></textFieldExpression>
             </textField>
-            
             <textField isStretchWithOverflow="true">
-                <reportElement x="40" y="0" width="200" height="40"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#E0E0E0"/>
-                </box>
+                <reportElement x="72" y="4" width="216" height="14"/>
                 <textElement textAlignment="Left" verticalAlignment="Top">
-                    <font size="9" pdfFontName="Helvetica"/>
-                    <paragraph leftIndent="5"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                    <paragraph leftIndent="2"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{productName} + ($F{batchNumber} != null && !$F{batchNumber}.isEmpty() ? "\nBatch: " + $F{batchNumber} : "") + ($F{expiryDate} != null && !$F{expiryDate}.isEmpty() ? "\nExpiry: " + $F{expiryDate} : "")]]></textFieldExpression>
             </textField>
-            
             <textField pattern="৳#,##0.00">
-                <reportElement x="240" y="0" width="80" height="40"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#E0E0E0"/>
-                </box>
+                <reportElement x="292" y="4" width="76" height="14"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="9" pdfFontName="Helvetica"/>
-                    <paragraph rightIndent="5"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                    <paragraph rightIndent="2"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{unitPrice}]]></textFieldExpression>
             </textField>
-            
             <textField>
-                <reportElement x="320" y="0" width="60" height="40"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#E0E0E0"/>
-                </box>
+                <reportElement x="372" y="4" width="56" height="14"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="9" pdfFontName="Helvetica"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{quantity}]]></textFieldExpression>
             </textField>
-            
-            <textField pattern="৳#,##0.00" isBlankWhenNull="true">
-                <reportElement x="380" y="0" width="80" height="40"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#E0E0E0"/>
-                </box>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="9" pdfFontName="Helvetica"/>
-                    <paragraph rightIndent="5"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$F{discountAmount} != null && $F{discountAmount}.doubleValue() > 0 ? $F{discountAmount} : null]]></textFieldExpression>
-            </textField>
-            
             <textField pattern="৳#,##0.00">
-                <reportElement x="460" y="0" width="95" height="40"/>
-                <box>
-                    <pen lineWidth="0.5" lineColor="#E0E0E0"/>
-                </box>
+                <reportElement x="432" y="4" width="120" height="14"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="9" isBold="true" pdfFontName="Helvetica-Bold"/>
-                    <paragraph rightIndent="5"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                    <paragraph rightIndent="2"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{totalPrice}]]></textFieldExpression>
             </textField>
@@ -429,11 +367,11 @@
     </detail>
     
     <pageFooter>
-        <band height="30" splitType="Stretch">
+        <band height="20" splitType="Stretch">
             <staticText>
-                <reportElement x="0" y="10" width="555" height="15"/>
+                <reportElement x="0" y="0" width="555" height="20"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font size="9" pdfFontName="Helvetica"/>
+                    <font size="11" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
                 <text><![CDATA[Thank you for choosing our pharmacy service!]]></text>
             </staticText>
@@ -441,139 +379,109 @@
     </pageFooter>
     
     <summary>
-        <band height="200" splitType="Stretch">
-            <!-- Summary Section on Right -->
+        <band height="180" splitType="Stretch">
             <staticText>
-                <reportElement x="355" y="0" width="100" height="20"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" pdfFontName="Helvetica"/>
+                <reportElement x="350" y="0" width="100" height="14"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
                 </textElement>
                 <text><![CDATA[Subtotal]]></text>
             </staticText>
             <textField pattern="৳#,##0.00">
-                <reportElement x="455" y="0" width="100" height="20"/>
+                <reportElement x="450" y="0" width="100" height="14"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" pdfFontName="Helvetica"/>
-                    <paragraph rightIndent="5"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                    <paragraph rightIndent="2"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$P{SUBTOTAL}]]></textFieldExpression>
             </textField>
             
-            <textField>
-                <reportElement x="355" y="20" width="100" height="20">
+            <staticText>
+                <reportElement x="350" y="18" width="100" height="14">
                     <printWhenExpression><![CDATA[$P{TAX_AMOUNT} != null && $P{TAX_AMOUNT}.doubleValue() > 0]]></printWhenExpression>
                 </reportElement>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" pdfFontName="Helvetica"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
                 </textElement>
-                <textFieldExpression><![CDATA["Tax " + ($P{TAX_AMOUNT} != null && $P{SUBTOTAL} != null && $P{SUBTOTAL}.doubleValue() > 0 ? 
-                    ($P{TAX_AMOUNT}.divide($P{SUBTOTAL}, 4, java.math.RoundingMode.HALF_UP).multiply(new java.math.BigDecimal(100)).setScale(2, java.math.RoundingMode.HALF_UP) + "%") : "")]]></textFieldExpression>
-            </textField>
+                <text><![CDATA[Tax]]></text>
+            </staticText>
             <textField pattern="৳#,##0.00" isBlankWhenNull="true">
-                <reportElement x="455" y="20" width="100" height="20">
+                <reportElement x="450" y="18" width="100" height="14">
                     <printWhenExpression><![CDATA[$P{TAX_AMOUNT} != null && $P{TAX_AMOUNT}.doubleValue() > 0]]></printWhenExpression>
                 </reportElement>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" pdfFontName="Helvetica"/>
-                    <paragraph rightIndent="5"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                    <paragraph rightIndent="2"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$P{TAX_AMOUNT}]]></textFieldExpression>
             </textField>
             
-            <textField>
-                <reportElement x="355" y="40" width="100" height="20">
-                    <printWhenExpression><![CDATA[$P{DISCOUNT_AMOUNT} != null && $P{DISCOUNT_AMOUNT}.doubleValue() > 0]]></printWhenExpression>
-                </reportElement>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" pdfFontName="Helvetica"/>
-                </textElement>
-                <textFieldExpression><![CDATA["Discount " + ($P{DISCOUNT_PERCENTAGE} != null && $P{DISCOUNT_PERCENTAGE}.doubleValue() > 0 ? 
-                    ($P{DISCOUNT_PERCENTAGE} + "%") : "")]]></textFieldExpression>
-            </textField>
-            <textField pattern="৳#,##0.00" isBlankWhenNull="true">
-                <reportElement x="455" y="40" width="100" height="20">
-                    <printWhenExpression><![CDATA[$P{DISCOUNT_AMOUNT} != null && $P{DISCOUNT_AMOUNT}.doubleValue() > 0]]></printWhenExpression>
-                </reportElement>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" pdfFontName="Helvetica"/>
-                    <paragraph rightIndent="5"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$P{DISCOUNT_AMOUNT}]]></textFieldExpression>
-            </textField>
-            
-            <!-- Total Line -->
-            <line>
-                <reportElement x="355" y="65" width="200" height="1"/>
-                <graphicElement>
-                    <pen lineWidth="1.0" lineColor="#17A2B8"/>
-                </graphicElement>
-            </line>
-            
             <staticText>
-                <reportElement x="355" y="70" width="100" height="25"/>
+                <reportElement x="350" y="36" width="100" height="14">
+                    <printWhenExpression><![CDATA[$P{TOTAL_DISCOUNT_AMOUNT} != null && $P{TOTAL_DISCOUNT_AMOUNT}.doubleValue() > 0]]></printWhenExpression>
+                </reportElement>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                </textElement>
+                <text><![CDATA[Total Discount]]></text>
+            </staticText>
+            <textField pattern="৳#,##0.00" isBlankWhenNull="true">
+                <reportElement x="450" y="36" width="100" height="14">
+                    <printWhenExpression><![CDATA[$P{TOTAL_DISCOUNT_AMOUNT} != null && $P{TOTAL_DISCOUNT_AMOUNT}.doubleValue() > 0]]></printWhenExpression>
+                </reportElement>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="12" isBold="true" pdfFontName="Helvetica-Bold"/>
+                    <font size="10" fontName="Courier New" pdfFontName="Courier"/>
+                    <paragraph rightIndent="2"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{TOTAL_DISCOUNT_AMOUNT}]]></textFieldExpression>
+            </textField>
+            
+            <!-- Due Amount (for Partial Payment) -->
+            <staticText>
+                <reportElement x="350" y="54" width="100" height="14">
+                    <printWhenExpression><![CDATA["PARTIAL".equals($P{PAYMENT_STATUS}) && $P{DUE_AMOUNT} != null && $P{DUE_AMOUNT}.doubleValue() > 0]]></printWhenExpression>
+                </reportElement>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
+                </textElement>
+                <text><![CDATA[Due Amount]]></text>
+            </staticText>
+            <textField pattern="৳#,##0.00" isBlankWhenNull="true">
+                <reportElement x="450" y="54" width="100" height="14">
+                    <printWhenExpression><![CDATA["PARTIAL".equals($P{PAYMENT_STATUS}) && $P{DUE_AMOUNT} != null && $P{DUE_AMOUNT}.doubleValue() > 0]]></printWhenExpression>
+                </reportElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
+                    <paragraph rightIndent="2"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{DUE_AMOUNT}]]></textFieldExpression>
+            </textField>
+            
+            <!-- Total Box -->
+            <rectangle>
+                <reportElement x="350" y="72" width="205" height="26" backcolor="#B7DEE8"/>
+            </rectangle>
+            <staticText>
+                <reportElement x="360" y="78" width="80" height="14"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
                 </textElement>
                 <text><![CDATA[Total]]></text>
             </staticText>
             <textField pattern="৳#,##0.00">
-                <reportElement x="455" y="70" width="100" height="25"/>
+                <reportElement x="450" y="78" width="100" height="14"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="14" isBold="true" pdfFontName="Helvetica-Bold"/>
-                    <paragraph rightIndent="5"/>
+                    <font size="10" isBold="true" fontName="Courier New" pdfFontName="Courier-Bold"/>
+                    <paragraph rightIndent="2"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$P{TOTAL_AMOUNT}]]></textFieldExpression>
             </textField>
             
-            <staticText>
-                <reportElement x="355" y="100" width="100" height="20"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" pdfFontName="Helvetica"/>
-                </textElement>
-                <text><![CDATA[Paid Amount]]></text>
-            </staticText>
-            <textField pattern="৳#,##0.00">
-                <reportElement x="455" y="100" width="100" height="20"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" pdfFontName="Helvetica"/>
-                    <paragraph rightIndent="5"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$P{PAID_AMOUNT}]]></textFieldExpression>
-            </textField>
-            
-            <staticText>
-                <reportElement x="355" y="120" width="100" height="20">
-                    <printWhenExpression><![CDATA[$P{CHANGE_AMOUNT} != null && $P{CHANGE_AMOUNT}.doubleValue() > 0]]></printWhenExpression>
-                </reportElement>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" pdfFontName="Helvetica"/>
-                </textElement>
-                <text><![CDATA[Change]]></text>
-            </staticText>
-            <textField pattern="৳#,##0.00" isBlankWhenNull="true">
-                <reportElement x="455" y="120" width="100" height="20">
-                    <printWhenExpression><![CDATA[$P{CHANGE_AMOUNT} != null && $P{CHANGE_AMOUNT}.doubleValue() > 0]]></printWhenExpression>
-                </reportElement>
-                <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font size="10" pdfFontName="Helvetica"/>
-                    <paragraph rightIndent="5"/>
-                </textElement>
-                <textFieldExpression><![CDATA[$P{CHANGE_AMOUNT}]]></textFieldExpression>
-            </textField>
-            
-            <!-- Terms and Conditions Section on Left -->
-            <staticText>
-                <reportElement x="0" y="0" width="340" height="15"/>
-                <textElement>
-                    <font size="11" isBold="true" pdfFontName="Helvetica-Bold"/>
-                </textElement>
-                <text><![CDATA[Terms and Conditions]]></text>
-            </staticText>
-            
+            <!-- Terms and Conditions -->
             <textField isStretchWithOverflow="true" isBlankWhenNull="true">
-                <reportElement x="0" y="15" width="340" height="60"/>
+                <reportElement x="0" y="100" width="340" height="50"/>
                 <textElement>
-                    <font size="8" pdfFontName="Helvetica"/>
+                    <font size="9" fontName="Courier New" pdfFontName="Courier"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$P{NOTES} != null && !$P{NOTES}.isEmpty() ? $P{NOTES} : 
                     "Payment due 30 days after invoice issuance. All sales are final. Please retain this invoice for your records."]]></textFieldExpression>
