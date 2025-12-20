@@ -93,9 +93,9 @@ public class SaleReportService {
             
             // Prepare parameters
             Map<String, Object> parameters = new HashMap<>();
-            parameters.put("COMPANY_NAME", "Rupganj Pharmacy");
+            parameters.put("COMPANY_NAME", "RUPGANJ PHARMACY");
             parameters.put("COMPANY_ADDRESS", "892/1, Beside Shahidbagh Mosque, Rajarbagh, Dhaka - 1217");
-            parameters.put("COMPANY_PHONE", "01966551343");
+            parameters.put("COMPANY_PHONE", "Mobile: 01966551343");
             parameters.put("COMPANY_EMAIL", "");
             
             // Add sale data as parameters

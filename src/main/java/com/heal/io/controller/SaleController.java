@@ -113,7 +113,9 @@ public class SaleController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> downloadSaleInvoicePdf(@PathVariable Long id) {
+    public ResponseEntity<byte[]> downloadSaleInvoicePdf(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "attachment") String disposition) {
         try {
             Sale sale = saleRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Sale not found"));
@@ -122,8 +124,13 @@ public class SaleController {
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("attachment", 
-                    "invoice-" + sale.getSaleNumber() + ".pdf");
+            
+            String filename = "invoice-" + sale.getSaleNumber() + ".pdf";
+            if ("inline".equals(disposition)) {
+                headers.setContentDispositionFormData("inline", filename);
+            } else {
+                headers.setContentDispositionFormData("attachment", filename);
+            }
             headers.setContentLength(pdfBytes.length);
             
             return ResponseEntity.ok()

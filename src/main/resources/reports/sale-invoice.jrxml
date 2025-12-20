@@ -51,17 +51,23 @@
 	<title>
 		<band height="60" splitType="Stretch">
 			<rectangle>
-				<reportElement x="0" y="0" width="555" height="40" backcolor="rgba(39, 210, 219, 0.23529412)" uuid="41590c15-2a3c-4621-a543-c148811f27c6"/>
+				<reportElement x="0" y="0" width="555" height="30" backcolor="#003E5F" uuid="41590c15-2a3c-4621-a543-c148811f27c6"/>
 				<graphicElement>
-					<pen lineColor="#28B5ED"/>
+					<pen lineColor="rgba(40, 181, 237, 0.0)"/>
+				</graphicElement>
+			</rectangle>
+			<rectangle>
+				<reportElement x="352" y="0" width="154" height="30" uuid="a9d08af2-064c-4353-b5c9-206b40999710"/>
+				<graphicElement>
+					<pen lineColor="rgba(0, 0, 0, 0.0)"/>
 				</graphicElement>
 			</rectangle>
 			<staticText>
-				<reportElement x="0" y="8" width="555" height="24" uuid="6a115d09-a42f-4f89-866e-b2403c48e9a8"/>
+				<reportElement x="350" y="-3" width="155" height="40" forecolor="#003E5F" backcolor="#FFFFFF" uuid="d675dd43-93cb-4053-b57b-4031d50810a4"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="Courier New" size="18" isBold="true" pdfFontName="Courier-Bold"/>
+					<font fontName="Courier New" size="34" isBold="true" pdfFontName="Courier-Bold"/>
 				</textElement>
-				<text><![CDATA[SALE INVOICE]]></text>
+				<text><![CDATA[INVOICE]]></text>
 			</staticText>
 		</band>
 	</title>
@@ -74,21 +80,21 @@
 				<imageExpression><![CDATA[$P{LOGO_IMAGE}]]></imageExpression>
 			</image>
 			<textField>
-				<reportElement x="60" y="0" width="280" height="18" uuid="48f3aece-28b8-42a7-8957-f947e843620d"/>
+				<reportElement x="60" y="0" width="280" height="30" forecolor="#003E5F" uuid="48f3aece-28b8-42a7-8957-f947e843620d"/>
 				<textElement>
-					<font fontName="Courier New" size="12" isBold="true" pdfFontName="Courier-Bold"/>
+					<font fontName="Courier New" size="25" isBold="true" pdfFontName="Courier-Bold"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{COMPANY_NAME}]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="StretchHeight">
-				<reportElement x="60" y="20" width="280" height="25" uuid="6574cb97-cfc3-4f4b-8e47-a8cb388abffe"/>
+				<reportElement x="60" y="31" width="280" height="25" uuid="6574cb97-cfc3-4f4b-8e47-a8cb388abffe"/>
 				<textElement>
 					<font fontName="Courier New" size="10" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{COMPANY_ADDRESS}]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="StretchHeight">
-				<reportElement x="60" y="48" width="280" height="14" uuid="b0a0fb38-d68b-4e5a-85c3-a4fdf64a4dcf"/>
+				<reportElement x="60" y="59" width="280" height="14" uuid="b0a0fb38-d68b-4e5a-85c3-a4fdf64a4dcf"/>
 				<textElement>
 					<font fontName="Courier New" size="10" pdfFontName="Courier"/>
 				</textElement>
