@@ -1,0 +1,157 @@
+<!-- Created with Jaspersoft Studio version 7.0.2.final using JasperReports Library version 7.0.0  -->
+<jasperReport name="RentalInvoiceFinal" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="bb42a67b-9907-4a89-a7be-db1ee6753beb">
+	<parameter name="logoUrl" class="java.lang.String"/>
+	<parameter name="invoiceNo" class="java.lang.String"/>
+	<parameter name="invoiceDate" class="java.lang.String"/>
+	<parameter name="paymentDueDate" class="java.lang.String"/>
+	<parameter name="paymentMethod" class="java.lang.String"/>
+	<parameter name="customerName" class="java.lang.String"/>
+	<parameter name="customerAddress" class="java.lang.String"/>
+	<parameter name="customerContact" class="java.lang.String"/>
+	<parameter name="subtotal" class="java.lang.Double"/>
+	<parameter name="tax" class="java.lang.Double"/>
+	<parameter name="discount" class="java.lang.Double"/>
+	<parameter name="total" class="java.lang.Double"/>
+	<field name="code" class="java.lang.String"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="rate" class="java.lang.Double"/>
+	<field name="quantity" class="java.lang.Integer"/>
+	<field name="amount" class="java.lang.Double"/>
+	<title height="60">
+		<element kind="rectangle" uuid="f5feb9ec-6aab-4ce3-9f6f-fd4c37ef134f" x="0" y="0" width="555" height="40" backcolor="#0E5A6F"/>
+		<element kind="staticText" uuid="670f23f1-5689-4f3e-99d2-14b4c0e15b15" x="0" y="8" width="555" height="24" fontName="Courier New" fontSize="18.0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Rental Invoice Template]]></text>
+		</element>
+	</title>
+	<pageHeader height="170">
+		<element kind="image" uuid="6608f715-ca75-4972-828e-e3db6e9f5907" x="0" y="0" width="48" height="48">
+			<expression><![CDATA[$P{logoUrl}]]></expression>
+		</element>
+		<element kind="staticText" uuid="fdfb04be-15f5-4863-ace7-8da974b45396" x="60" y="0" width="300" height="18" fontName="Courier New" fontSize="12.0" bold="true">
+			<text><![CDATA[Car Rental Services]]></text>
+		</element>
+		<element kind="staticText" uuid="ff39d460-216e-42c6-b892-ec81cc20473f" x="60" y="20" width="300" height="14" fontName="Courier New" fontSize="10.0">
+			<text><![CDATA[234 Pine Street, Boroughville, USA]]></text>
+		</element>
+		<element kind="staticText" uuid="44cc4260-9c61-4c02-82fb-4d5c315b1401" x="60" y="36" width="300" height="14" fontName="Courier New" fontSize="10.0">
+			<text><![CDATA[carrental@sample.com | +44 20 6789 0123]]></text>
+		</element>
+		<element kind="rectangle" uuid="3ffacc8d-e98d-49d9-a471-378ffe2c65d1" x="350" y="0" width="205" height="45" backcolor="#E7F3F7"/>
+		<element kind="staticText" uuid="f661d90f-25d8-4063-a353-94157ba3fdb3" x="360" y="8" width="80" height="14" fontName="Courier New" fontSize="10.0" bold="true">
+			<text><![CDATA[Invoice No]]></text>
+		</element>
+		<element kind="textField" uuid="ab374d4b-a455-4c83-a824-85f2e819a72c" x="445" y="8" width="100" height="14" fontName="Courier New" fontSize="10.0">
+			<expression><![CDATA[$P{invoiceNo}]]></expression>
+		</element>
+		<element kind="staticText" uuid="1279d194-a99d-40f3-9372-eec62d76f545" x="360" y="24" width="80" height="14" fontName="Courier New" fontSize="10.0" bold="true">
+			<text><![CDATA[Invoice Date]]></text>
+		</element>
+		<element kind="textField" uuid="a855a0c1-ec17-4996-8b19-93fef5f30c70" x="445" y="24" width="100" height="14" fontName="Courier New" fontSize="10.0">
+			<expression><![CDATA[$P{invoiceDate}]]></expression>
+		</element>
+		<element kind="rectangle" uuid="5646bd47-fc7a-4e9e-9527-b831da8648b3" x="0" y="80" width="260" height="45" backcolor="#E7F3F7"/>
+		<element kind="staticText" uuid="ab8d7643-51e0-470d-8516-c095bb040a4b" x="10" y="88" width="120" height="14" fontName="Courier New" fontSize="10.0">
+			<text><![CDATA[Payment due by]]></text>
+		</element>
+		<element kind="textField" uuid="2c8cd3fa-aa2e-4755-9c45-d38c1215dfc6" x="140" y="88" width="100" height="14" fontName="Courier New" fontSize="10.0" bold="true">
+			<expression><![CDATA[$P{paymentDueDate}]]></expression>
+		</element>
+		<element kind="staticText" uuid="53cb3d7c-0948-4401-aca5-4e01421d539e" x="10" y="105" width="120" height="14" fontName="Courier New" fontSize="10.0">
+			<text><![CDATA[Payment method]]></text>
+		</element>
+		<element kind="textField" uuid="04af457b-bf4a-450c-b4e3-78b7ec1a60ad" x="140" y="105" width="100" height="14" fontName="Courier New" fontSize="10.0">
+			<expression><![CDATA[$P{paymentMethod}]]></expression>
+		</element>
+		<element kind="rectangle" uuid="2540753c-365e-4c30-809f-11f241d490bd" x="300" y="80" width="255" height="70" backcolor="#F5F7F9"/>
+		<element kind="staticText" uuid="1b2294ec-c19c-4f0d-bf0d-d95e211c2f67" x="310" y="85" width="200" height="14" fontName="Courier New" fontSize="10.0" bold="true">
+			<text><![CDATA[Billed to]]></text>
+		</element>
+		<element kind="textField" uuid="54b1957a-944c-49b3-a2e4-b7dafe7a00de" x="310" y="102" width="230" height="14" fontName="Courier New" fontSize="10.0">
+			<expression><![CDATA[$P{customerName}]]></expression>
+		</element>
+		<element kind="textField" uuid="c5305370-53a7-41e9-947a-7f92b7bce9d5" x="310" y="118" width="230" height="14" fontName="Courier New" fontSize="10.0">
+			<expression><![CDATA[$P{customerAddress}]]></expression>
+		</element>
+		<element kind="textField" uuid="6f2aa347-2002-4ba1-8ac1-493e441f5fd7" x="310" y="134" width="230" height="14" fontName="Courier New" fontSize="10.0">
+			<expression><![CDATA[$P{customerContact}]]></expression>
+		</element>
+	</pageHeader>
+	<columnHeader height="24">
+		<element kind="rectangle" uuid="285ed33e-016a-4161-a89b-d8fb87fc5c07" x="0" y="0" width="555" height="24" forecolor="#6FAFC3" backcolor="#B7DEE8"/>
+		<element kind="line" uuid="40349cec-57cb-402d-8dcb-e804f500d40b" x="0" y="0" width="1" height="24" forecolor="#6FAFC3"/>
+		<element kind="line" uuid="0912ffeb-3f5e-4611-b56e-2d337f4e84d4" x="70" y="0" width="1" height="24" forecolor="#6FAFC3"/>
+		<element kind="line" uuid="628feecf-f00f-4dad-954e-c2c587c3ac05" x="290" y="0" width="1" height="24" forecolor="#6FAFC3"/>
+		<element kind="line" uuid="2785e8d6-2fd1-4d93-84ec-abdb59f2f22d" x="370" y="0" width="1" height="24" forecolor="#6FAFC3"/>
+		<element kind="line" uuid="66cc69b2-1e96-476d-9dc5-d0310e66c9dd" x="430" y="0" width="1" height="24" forecolor="#6FAFC3"/>
+		<element kind="line" uuid="fca6e490-0f4f-4b7b-8f4f-fa2aa9b6bec4" x="555" y="0" width="1" height="24" forecolor="#6FAFC3"/>
+		<element kind="staticText" uuid="34ba46d6-3693-4a32-8b15-7e9fa66285d8" x="0" y="5" width="70" height="14" fontName="Courier New" fontSize="10.0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Code]]></text>
+		</element>
+		<element kind="staticText" uuid="7a139188-8b95-420d-b802-913711b927cc" x="70" y="5" width="220" height="14" fontName="Courier New" fontSize="10.0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Description]]></text>
+		</element>
+		<element kind="staticText" uuid="79509298-186f-4923-a7aa-261e06b32b00" x="290" y="5" width="80" height="14" fontName="Courier New" fontSize="10.0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Rate/Day]]></text>
+		</element>
+		<element kind="staticText" uuid="7776ebb6-6623-4b6f-914b-3df06796fd3e" x="370" y="5" width="60" height="14" fontName="Courier New" fontSize="10.0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Qty]]></text>
+		</element>
+		<element kind="staticText" uuid="20b528d1-0e71-484f-8257-7250a0ad74e7" x="430" y="5" width="125" height="14" fontName="Courier New" fontSize="10.0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Amount]]></text>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="22">
+			<element kind="line" uuid="f64a5592-df1c-437c-bf69-922297aecd33" x="0" y="21" width="555" height="1" forecolor="#6FAFC3"/>
+			<element kind="line" uuid="f6eb25dc-f5c8-4f78-bc5a-bed4c5b64d9a" x="70" y="0" width="1" height="22" forecolor="#6FAFC3"/>
+			<element kind="line" uuid="ddb3ffe2-7d9e-4d63-ba42-ba4f35134ebd" x="290" y="0" width="1" height="22" forecolor="#6FAFC3"/>
+			<element kind="line" uuid="43fe4e36-5ca7-4afa-8a26-2719b94e9065" x="370" y="0" width="1" height="22" forecolor="#6FAFC3"/>
+			<element kind="line" uuid="46e44ae6-26aa-4aba-8207-4ef5c7f365af" x="430" y="0" width="1" height="22" forecolor="#6FAFC3"/>
+			<element kind="textField" uuid="879a5310-725d-4fa2-9ac1-351aa91b1228" x="2" y="4" width="66" height="14" fontName="Courier New" fontSize="10.0">
+				<expression><![CDATA[$F{code}]]></expression>
+			</element>
+			<element kind="textField" uuid="c4a81e64-f33a-4d7f-8038-e7284d85affb" x="72" y="4" width="216" height="14" fontName="Courier New" fontSize="10.0">
+				<expression><![CDATA[$F{description}]]></expression>
+			</element>
+			<element kind="textField" uuid="5f1cef1a-1432-40de-be78-99d885977b38" x="292" y="4" width="76" height="14" fontName="Courier New" fontSize="10.0" hTextAlign="Right">
+				<expression><![CDATA[$F{rate}]]></expression>
+			</element>
+			<element kind="textField" uuid="b3e8e851-4fb7-45df-8bf1-6b4294945786" x="372" y="4" width="56" height="14" fontName="Courier New" fontSize="10.0" hTextAlign="Center">
+				<expression><![CDATA[$F{quantity}]]></expression>
+			</element>
+			<element kind="textField" uuid="80d9a7f1-d91f-4297-9d2e-2de90993ca2d" x="432" y="4" width="120" height="14" fontName="Courier New" fontSize="10.0" hTextAlign="Right">
+				<expression><![CDATA[$F{amount}]]></expression>
+			</element>
+		</band>
+	</detail>
+	<summary height="160">
+		<element kind="staticText" uuid="2b70f79e-b89d-4562-9f06-b11382cf0a6b" x="350" y="0" width="100" height="14" fontName="Courier New" fontSize="10.0">
+			<text><![CDATA[Subtotal]]></text>
+		</element>
+		<element kind="textField" uuid="eb926dd1-2403-40cb-8097-40cd8a05deda" x="450" y="0" width="100" height="14" fontName="Courier New" fontSize="10.0" hTextAlign="Right">
+			<expression><![CDATA[$P{subtotal}]]></expression>
+		</element>
+		<element kind="staticText" uuid="a5806f9b-cc05-4449-b0e7-22297af711dd" x="350" y="18" width="100" height="14" fontName="Courier New" fontSize="10.0">
+			<text><![CDATA[Tax]]></text>
+		</element>
+		<element kind="textField" uuid="89b42871-2a1d-44e1-9fc0-cfb2e16de9f6" x="450" y="18" width="100" height="14" fontName="Courier New" fontSize="10.0" hTextAlign="Right">
+			<expression><![CDATA[$P{tax}]]></expression>
+		</element>
+		<element kind="staticText" uuid="6d64b933-7211-458d-ae70-21574393f530" x="350" y="36" width="100" height="14" fontName="Courier New" fontSize="10.0">
+			<text><![CDATA[Discount]]></text>
+		</element>
+		<element kind="textField" uuid="bee910cf-74ff-4439-a122-70f847221cbf" x="450" y="36" width="100" height="14" fontName="Courier New" fontSize="10.0" hTextAlign="Right">
+			<expression><![CDATA[$P{discount}]]></expression>
+		</element>
+		<element kind="rectangle" uuid="fdab0176-7bb7-452a-9b14-d0d3ce079d16" x="350" y="58" width="205" height="26" backcolor="#B7DEE8"/>
+		<element kind="staticText" uuid="cd3ca4d3-5737-43e5-9c3a-c1b3743b7cb3" x="360" y="64" width="80" height="14" fontName="Courier New" fontSize="10.0" bold="true">
+			<text><![CDATA[Total]]></text>
+		</element>
+		<element kind="textField" uuid="92f86f41-81d3-425a-91b1-f57283215817" x="450" y="64" width="100" height="14" fontName="Courier New" fontSize="10.0" bold="true" hTextAlign="Right">
+			<expression><![CDATA[$P{total}]]></expression>
+		</element>
+		<element kind="staticText" uuid="ab3a539c-5e65-4851-bae0-c19b73d18cc0" x="0" y="120" width="555" height="20" fontName="Courier New" fontSize="11.0" bold="true" hTextAlign="Center">
+			<text><![CDATA[Thank you for choosing our car rental service!]]></text>
+		</element>
+	</summary>
+</jasperReport>

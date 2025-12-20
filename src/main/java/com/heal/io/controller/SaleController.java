@@ -3,10 +3,13 @@ package com.heal.io.controller;
 import com.heal.io.entity.*;
 import com.heal.io.repository.*;
 import com.heal.io.service.SaleService;
+import com.heal.io.service.SaleReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -30,6 +33,7 @@ public class SaleController {
 
     private final SaleRepository saleRepository;
     private final SaleService saleService;
+    private final SaleReportService saleReportService;
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
     private final ProductPackageRepository productPackageRepository;
@@ -106,6 +110,29 @@ public class SaleController {
                 .orElseThrow(() -> new RuntimeException("Sale not found"));
         model.addAttribute("sale", sale);
         return "sales/view";
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> downloadSaleInvoicePdf(@PathVariable Long id) {
+        try {
+            Sale sale = saleRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Sale not found"));
+            
+            byte[] pdfBytes = saleReportService.generateSaleInvoicePdf(sale);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", 
+                    "invoice-" + sale.getSaleNumber() + ".pdf");
+            headers.setContentLength(pdfBytes.length);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/{id}/edit")

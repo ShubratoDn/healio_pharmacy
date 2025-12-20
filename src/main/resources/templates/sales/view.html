@@ -58,6 +58,9 @@
                 <a th:href="@{/sales/{id}/edit(id=${sale.id})}" class="btn btn-warning">
                     <i class="bi bi-pencil me-2"></i>Edit
                 </a>
+                <a th:href="@{/sales/{id}/pdf(id=${sale.id})}" class="btn btn-danger" target="_blank">
+                    <i class="bi bi-file-pdf me-2"></i>Download PDF
+                </a>
                 <button onclick="window.print()" class="btn btn-outline-primary">
                     <i class="bi bi-printer me-2"></i>Print
                 </button>
