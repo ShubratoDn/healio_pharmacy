@@ -35,7 +35,7 @@ public class ProductPackage extends BaseEntity {
     @Column(name = "unit_of_measure", length = 50)
     private String unitOfMeasure;
 
-    @Column(name = "is_default", nullable = false)
-    private Boolean isDefault = false;
+    @Column(name = "low_stock")
+    private Integer lowStock;
 }
 

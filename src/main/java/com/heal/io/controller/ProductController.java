@@ -76,7 +76,7 @@ public class ProductController {
             @RequestParam(value = "unitPrices", required = false) List<String> unitPrices,
             @RequestParam(value = "quantities", required = false) List<String> quantities,
             @RequestParam(value = "units", required = false) List<String> units,
-            @RequestParam(value = "isDefaults", required = false) List<String> isDefaults,
+            @RequestParam(value = "lowStocks", required = false) List<String> lowStocks,
             RedirectAttributes redirectAttributes) {
         
         Product savedProduct;
@@ -163,10 +163,14 @@ public class ProductController {
                         if (units != null && i < units.size() && units.get(i) != null && !units.get(i).trim().isEmpty()) {
                             productPackage.setUnitOfMeasure(units.get(i).trim());
                         }
-                        if (isDefaults != null && i < isDefaults.size()) {
-                            productPackage.setIsDefault("on".equals(isDefaults.get(i)) || "true".equals(isDefaults.get(i)));
+                        if (lowStocks != null && i < lowStocks.size() && lowStocks.get(i) != null && !lowStocks.get(i).trim().isEmpty()) {
+                            try {
+                                productPackage.setLowStock(Integer.parseInt(lowStocks.get(i).trim()));
+                            } catch (NumberFormatException e) {
+                                productPackage.setLowStock(null);
+                            }
                         } else {
-                            productPackage.setIsDefault(false);
+                            productPackage.setLowStock(null);
                         }
                     } catch (Exception e) {
                         // Log error but continue

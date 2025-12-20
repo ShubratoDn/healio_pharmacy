@@ -267,7 +267,6 @@ public class StockInController {
                     map.put("unitPrice", pkg.getUnitPrice());
                     map.put("quantityPerPackage", pkg.getQuantityPerPackage());
                     map.put("unitOfMeasure", pkg.getUnitOfMeasure());
-                    map.put("isDefault", pkg.getIsDefault());
                     return map;
                 })
                 .collect(Collectors.toList());

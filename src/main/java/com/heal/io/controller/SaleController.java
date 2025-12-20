@@ -358,7 +358,6 @@ public class SaleController {
                     map.put("unitPrice", pkg.getUnitPrice());
                     map.put("quantityPerPackage", pkg.getQuantityPerPackage());
                     map.put("unitOfMeasure", pkg.getUnitOfMeasure());
-                    map.put("isDefault", pkg.getIsDefault());
                     
                     // Get available inventory for this package
                     int availableQty = saleService.getAvailableInventory(productId, pkg.getId());

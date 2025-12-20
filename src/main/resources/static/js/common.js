@@ -1,6 +1,98 @@
 function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('show');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.querySelector('.main-content');
+    
+    // Enable transitions when user clicks (not on page load)
+    if (!sidebar.classList.contains('transitions-enabled')) {
+        sidebar.classList.add('transitions-enabled');
+        if (mainContent) {
+            mainContent.classList.add('transitions-enabled');
+        }
+    }
+    
+    if (window.innerWidth <= 768) {
+        // On mobile, toggle show/hide
+        const isShowing = sidebar.classList.toggle('show');
+        localStorage.setItem('sidebarMobileShow', isShowing ? 'true' : 'false');
+    } else {
+        // On desktop, toggle collapsed/expanded
+        const isCollapsed = sidebar.classList.toggle('collapsed');
+        localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
+    }
 }
+
+// Restore sidebar state on page load (without transitions)
+(function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.querySelector('.main-content');
+        if (!sidebar) return;
+        
+        // Don't enable transitions on page load - only when user clicks
+        // This prevents the transition animation when restoring state
+        
+        if (window.innerWidth <= 768) {
+            // Mobile: restore show/hide state
+            const sidebarMobileShow = localStorage.getItem('sidebarMobileShow');
+            if (sidebarMobileShow === 'false') {
+                // Don't show by default on mobile if it was hidden
+                sidebar.classList.remove('show');
+            }
+        } else {
+            // Desktop: restore collapsed/expanded state
+            const sidebarCollapsed = localStorage.getItem('sidebarCollapsed');
+            if (sidebarCollapsed === 'true') {
+                sidebar.classList.add('collapsed');
+            } else {
+                sidebar.classList.remove('collapsed');
+            }
+        }
+        
+        // Handle window resize to maintain appropriate state
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+                // Temporarily disable transitions during resize
+                const hadTransitions = sidebar.classList.contains('transitions-enabled');
+                if (hadTransitions) {
+                    sidebar.classList.remove('transitions-enabled');
+                    if (mainContent) {
+                        mainContent.classList.remove('transitions-enabled');
+                    }
+                }
+                
+                if (window.innerWidth <= 768) {
+                    // Switched to mobile: remove collapsed class, use show/hide
+                    sidebar.classList.remove('collapsed');
+                    const sidebarMobileShow = localStorage.getItem('sidebarMobileShow');
+                    if (sidebarMobileShow === 'false') {
+                        sidebar.classList.remove('show');
+                    }
+                } else {
+                    // Switched to desktop: remove show class, use collapsed/expanded
+                    sidebar.classList.remove('show');
+                    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed');
+                    if (sidebarCollapsed === 'true') {
+                        sidebar.classList.add('collapsed');
+                    } else {
+                        sidebar.classList.remove('collapsed');
+                    }
+                }
+                
+                // Re-enable transitions after a short delay if they were enabled
+                if (hadTransitions) {
+                    setTimeout(function() {
+                        sidebar.classList.add('transitions-enabled');
+                        if (mainContent) {
+                            mainContent.classList.add('transitions-enabled');
+                        }
+                    }, 50);
+                }
+            }, 100);
+        });
+    });
+})();
 
 // Product Search functionality
 (function() {

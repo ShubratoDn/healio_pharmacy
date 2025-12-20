@@ -476,11 +476,12 @@
                         // Show only package name (description) in the select
                         option.textContent = pkg.description || 'Package';
                         
-                        // Select if it's the preselected package, or if it's default and no preselected
+                        // Select if it's the preselected package, or select first package if no preselected
                         if (preselectedPackageId && pkg.id == preselectedPackageId) {
                             option.selected = true;
                             selectedPackageId = pkg.id;
-                        } else if (!preselectedPackageId && pkg.isDefault) {
+                        } else if (!preselectedPackageId && !selectedPackageId && packages.length > 0 && packages[0].id === pkg.id) {
+                            // Select first package if no preselected package
                             option.selected = true;
                             selectedPackageId = pkg.id;
                         }

@@ -104,7 +104,7 @@
                                     <th>Unit Price (৳)</th>
                                     <th>Quantity</th>
                                     <th>Unit</th>
-                                    <th>Default</th>
+                                    <th>Low Stock</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -139,9 +139,9 @@
                                             <option value="container" th:selected="${pkg.unitOfMeasure == 'container'}">container</option>
                                         </select>
                                     </td>
-                                    <td class="text-center">
-                                        <input type="checkbox" th:name="isDefaults" th:checked="${pkg.isDefault}" 
-                                               class="form-check-input package-default" onchange="updateDefaultCheckbox(this)">
+                                    <td>
+                                        <input type="number" th:name="lowStocks" th:value="${pkg.lowStock}" 
+                                               min="0" class="form-control form-control-sm" placeholder="0">
                                     </td>
                                     <td>
                                         <button type="button" class="btn btn-danger btn-sm" onclick="removePackageRow(this)">
@@ -198,9 +198,9 @@
                         <option value="container">container</option>
                     </select>
                 </td>
-                <td class="text-center">
-                    <input type="checkbox" name="isDefaults" class="form-check-input package-default" 
-                           onchange="updateDefaultCheckbox(this)">
+                <td>
+                    <input type="number" name="lowStocks" min="0" 
+                           class="form-control form-control-sm" placeholder="0">
                 </td>
                 <td>
                     <button type="button" class="btn btn-danger btn-sm" onclick="removePackageRow(this)">
@@ -217,16 +217,6 @@
             row.remove();
         }
         
-        function updateDefaultCheckbox(checkbox) {
-            if (checkbox.checked) {
-                // Uncheck all other default checkboxes
-                document.querySelectorAll('.package-default').forEach(cb => {
-                    if (cb !== checkbox) {
-                        cb.checked = false;
-                    }
-                });
-            }
-        }
     </script>
 </body>
 </html>

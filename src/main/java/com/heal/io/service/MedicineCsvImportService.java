@@ -221,7 +221,6 @@ public class MedicineCsvImportService {
                                     .unitPrice(pkgInfo.unitPrice)
                                     .quantityPerPackage(pkgInfo.quantity)
                                     .unitOfMeasure(pkgInfo.unit)
-                                    .isDefault(packages.size() == 1)
                                     .build();
                             productPackageRepository.save(productPackage);
                         }
