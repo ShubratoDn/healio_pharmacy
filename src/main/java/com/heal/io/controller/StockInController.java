@@ -3,9 +3,12 @@ package com.heal.io.controller;
 import com.heal.io.entity.*;
 import com.heal.io.repository.*;
 import lombok.RequiredArgsConstructor;
+import com.heal.io.service.StockInVoucherService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -34,6 +37,7 @@ public class StockInController {
     private final ProductRepository productRepository;
     private final ProductPackageRepository productPackageRepository;
     private final InventoryRepository inventoryRepository;
+    private final StockInVoucherService stockInVoucherService;
 
     @GetMapping
     public String listStockIns(
@@ -190,6 +194,44 @@ public class StockInController {
         
         model.addAttribute("stockIn", stockIn);
         return "stock-in/view";
+    }
+    
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> downloadStockInVoucherPdf(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "attachment") String disposition) {
+        try {
+            StockIn stockIn = stockInRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Stock In not found"));
+            
+            // Initialize supplier and manufacturers to avoid lazy loading issues
+            if (stockIn.getSupplier() != null) {
+                stockIn.getSupplier().getName(); // Initialize supplier
+                if (stockIn.getSupplier().getManufacturers() != null) {
+                    stockIn.getSupplier().getManufacturers().size(); // Initialize manufacturers
+                }
+            }
+            
+            byte[] pdfBytes = stockInVoucherService.generateStockInVoucherPdf(stockIn);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            
+            String filename = "voucher-" + stockIn.getStockInNumber() + ".pdf";
+            if ("inline".equals(disposition)) {
+                headers.setContentDispositionFormData("inline", filename);
+            } else {
+                headers.setContentDispositionFormData("attachment", filename);
+            }
+            headers.setContentLength(pdfBytes.length);
+            
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
     
     @GetMapping("/api/products")

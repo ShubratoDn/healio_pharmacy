@@ -42,6 +42,7 @@ public class SaleReportDTO {
     @AllArgsConstructor
     public static class SaleItemReportDTO {
         private String productName;
+        private String strength;
         private Integer quantity;
         private BigDecimal unitPrice;
         private BigDecimal discountAmount;

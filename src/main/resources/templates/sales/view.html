@@ -118,33 +118,45 @@
                     <div class="info-card">
                         <h5 class="mb-3"><i class="bi bi-list-ul me-2"></i>Sale Items</h5>
                         <div th:if="*{items != null && !items.isEmpty()}">
-                            <div class="item-row" th:each="item, iterStat : *{items}">
-                                <div class="row align-items-center">
-                                    <div class="col-md-1 text-center">
-                                        <span class="badge bg-secondary" th:text="${iterStat.count}"></span>
-                                    </div>
-                                    <div class="col-md-5">
-                                        <strong th:text="${item.productName}"></strong>
-                                        <div class="text-muted small" th:if="${item.productPackage != null}">
-                                            <span th:text="${item.productPackage.packageDescription}"></span>
-                                        </div>
-                                        <div class="text-muted small" th:if="${item.batchNumber}">
-                                            Batch: <span th:text="${item.batchNumber}"></span>
-                                        </div>
-                                        <div class="text-muted small" th:if="${item.expiryDate}">
-                                            Expiry: <span th:text="${#temporals.format(item.expiryDate, 'yyyy-MM-dd')}"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2 text-center">
-                                        <span th:text="${item.quantity}"></span>
-                                    </div>
-                                    <div class="col-md-2 text-end">
-                                        ৳<span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 2)}"></span>
-                                    </div>
-                                    <div class="col-md-2 text-end">
-                                        <strong>৳<span th:text="${#numbers.formatDecimal(item.totalPrice, 0, 2)}"></span></strong>
-                                    </div>
-                                </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 5%;">#</th>
+                                            <th style="width: 40%;">Medicine</th>
+                                            <th style="width: 12%;" class="text-center">Qty</th>
+                                            <th style="width: 18%;" class="text-end">Unit Price</th>
+                                            <th style="width: 25%;" class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="item, iterStat : *{items}">
+                                            <td class="text-center">
+                                                <span class="badge bg-secondary" th:text="${iterStat.count}"></span>
+                                            </td>
+                                            <td>
+                                                <strong th:text="${item.productName}"></strong>
+                                                <span th:if="${item.product != null && item.product.strength != null && !item.product.strength.isEmpty()}" 
+                                                      class="text-muted" th:text="' [' + ${item.product.strength} + ']'"></span>
+                                                <div class="text-muted small" th:if="${item.batchNumber}">
+                                                    Batch: <span th:text="${item.batchNumber}"></span>
+                                                </div>
+                                                <div class="text-muted small" th:if="${item.expiryDate}">
+                                                    Expiry: <span th:text="${#temporals.format(item.expiryDate, 'yyyy-MM-dd')}"></span>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <span th:text="${item.quantity}"></span>
+                                            </td>
+                                            <td class="text-end">
+                                                ৳<span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 2)}"></span>
+                                            </td>
+                                            <td class="text-end">
+                                                <strong>৳<span th:text="${#numbers.formatDecimal(item.totalPrice, 0, 2)}"></span></strong>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                         <div th:if="*{items == null || items.isEmpty()}" class="text-center text-muted py-4">

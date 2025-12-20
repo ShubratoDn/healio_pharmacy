@@ -108,6 +108,17 @@ public class SaleController {
     public String viewSale(@PathVariable Long id, Model model) {
         Sale sale = saleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sale not found"));
+        
+        // Initialize product entities to access strength
+        if (sale.getItems() != null && !sale.getItems().isEmpty()) {
+            sale.getItems().forEach(item -> {
+                if (item.getProduct() != null) {
+                    item.getProduct().getName(); // Initialize product
+                    item.getProduct().getStrength(); // Initialize strength
+                }
+            });
+        }
+        
         model.addAttribute("sale", sale);
         return "sales/view";
     }
