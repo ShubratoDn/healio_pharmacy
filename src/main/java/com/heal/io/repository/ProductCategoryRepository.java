@@ -1,6 +1,8 @@
 package com.heal.io.repository;
 
 import com.heal.io.entity.ProductCategory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,5 +13,7 @@ import java.util.Optional;
 public interface ProductCategoryRepository extends JpaRepository<ProductCategory, Long> {
     Optional<ProductCategory> findByName(String name);
     List<ProductCategory> findByIsActiveTrue();
+    Page<ProductCategory> findByIsActiveTrue(Pageable pageable);
+    Page<ProductCategory> findByNameContainingIgnoreCaseAndIsActiveTrue(String name, Pageable pageable);
 }
 

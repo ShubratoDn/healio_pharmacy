@@ -21,6 +21,64 @@ function toggleSidebar() {
     }
 }
 
+function toggleNavSection(element) {
+    const navSection = element.closest('.nav-section');
+    if (navSection) {
+        navSection.classList.toggle('expanded');
+        
+        // Save expanded state to localStorage
+        const sectionId = element.getAttribute('data-section') || element.textContent.trim();
+        const isExpanded = navSection.classList.contains('expanded');
+        localStorage.setItem('navSection_' + sectionId, isExpanded ? 'true' : 'false');
+    }
+}
+
+function setupCollapsedHoverTooltips() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    
+    const navSections = sidebar.querySelectorAll('.nav-section');
+    
+    navSections.forEach(section => {
+        const toggleLink = section.querySelector('.nav-section-toggle');
+        const submenu = section.querySelector('.nav-submenu');
+        
+        if (!toggleLink || !submenu) return;
+        
+        let hideTimeout;
+        
+        function showTooltip() {
+            if (sidebar.classList.contains('collapsed')) {
+                clearTimeout(hideTimeout);
+                section.classList.add('show-tooltip');
+                updateTooltipPosition(toggleLink, submenu);
+            }
+        }
+        
+        function hideTooltip() {
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                section.classList.remove('show-tooltip');
+            }, 150);
+        }
+        
+        // Show tooltip on hover
+        toggleLink.addEventListener('mouseenter', showTooltip);
+        submenu.addEventListener('mouseenter', showTooltip);
+        
+        // Hide tooltip when mouse leaves
+        toggleLink.addEventListener('mouseleave', hideTooltip);
+        submenu.addEventListener('mouseleave', hideTooltip);
+    });
+}
+
+function updateTooltipPosition(toggleLink, submenu) {
+    const rect = toggleLink.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    submenu.style.top = (rect.top + scrollTop) + 'px';
+    submenu.style.left = '70px';
+}
+
 // Restore sidebar state on page load (without transitions)
 (function() {
     document.addEventListener('DOMContentLoaded', function() {
@@ -47,6 +105,23 @@ function toggleSidebar() {
                 sidebar.classList.remove('collapsed');
             }
         }
+        
+        // Auto-expand sections with active sub-menu items only
+        // Don't restore from localStorage - only expand if there's an active sub-menu item
+        const navSections = sidebar.querySelectorAll('.nav-section');
+        navSections.forEach(section => {
+            const activeSubLink = section.querySelector('.nav-submenu-link.active');
+            if (activeSubLink) {
+                // Only expand if there's an active sub-menu item
+                section.classList.add('expanded');
+            } else {
+                // Remove expanded class if no active sub-menu item
+                section.classList.remove('expanded');
+            }
+        });
+        
+        // Setup hover tooltip positioning for collapsed sidebar
+        setupCollapsedHoverTooltips();
         
         // Handle window resize to maintain appropriate state
         let resizeTimeout;

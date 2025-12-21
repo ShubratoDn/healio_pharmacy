@@ -13,22 +13,55 @@
     <div class="main-content">
         <div th:replace="~{fragments/navbar :: navbar(pageTitle='Inventory')}"></div>
 
-        <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h4 class="mb-0"><i class="bi bi-boxes me-2"></i>Inventory</h4>
-            <div class="d-flex gap-2">
-                <form method="get" action="/inventory" class="d-flex gap-2">
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="Search products..." 
-                           th:value="${search != null ? search : ''}"
-                           style="width: 250px;">
-                    <button type="submit" class="btn btn-outline-primary">
-                        <i class="bi bi-search"></i>
-                    </button>
-                    <a th:href="@{/inventory}" class="btn btn-outline-secondary" th:if="${search != null}">
-                        <i class="bi bi-x-circle"></i> Clear
-                    </a>
-                </form>
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <h4 class="mb-0"><i class="bi bi-boxes me-2"></i>Inventory</h4>
             </div>
+            
+            <!-- Search and Filter Form -->
+            <form method="get" action="/inventory" class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Search products, packages..." 
+                           th:value="${search != null ? search : ''}">
+                </div>
+                <div class="col-md-2">
+                    <select name="categoryId" class="form-select">
+                        <option value="">All Categories</option>
+                        <option th:each="cat : ${categories}" 
+                                th:value="${cat.id}" 
+                                th:text="${cat.name}"
+                                th:selected="${categoryId != null && categoryId == cat.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="manufacturerId" class="form-select">
+                        <option value="">All Manufacturers</option>
+                        <option th:each="mfg : ${manufacturers}" 
+                                th:value="${mfg.id}" 
+                                th:text="${mfg.name}"
+                                th:selected="${manufacturerId != null && manufacturerId == mfg.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="LOW_STOCK" th:selected="${status == 'LOW_STOCK'}">Low Stock</option>
+                        <option value="OUT_OF_STOCK" th:selected="${status == 'OUT_OF_STOCK'}">Out of Stock</option>
+                        <option value="IN_STOCK" th:selected="${status == 'IN_STOCK'}">In Stock</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>Search
+                        </button>
+                        <a th:href="@{/inventory}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i>Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
 
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
@@ -46,7 +79,6 @@
                             <th>Package</th>
                             <th>Category</th>
                             <th>Manufacturer</th>
-                            <th>Strength</th>
                             <th class="text-center">Total Quantity</th>
                             <th class="text-center">Available</th>
                             <th class="text-center">Status</th>
@@ -58,6 +90,8 @@
                             <td th:text="${data.product.id}"></td>
                             <td>
                                 <strong th:text="${data.product.name}"></strong>
+                                <span class="text-muted" th:if="${data.product.strength != null && !data.product.strength.isEmpty()}" 
+                                      th:text="${' [' + data.product.strength + ']'}"></span>
                                 <br>
                                 <small class="text-muted" th:if="${data.product.generic != null}" 
                                        th:text="${'Generic: ' + data.product.generic.name}"></small>
@@ -75,7 +109,6 @@
                             </td>
                             <td th:text="${data.product.productCategory?.name}"></td>
                             <td th:text="${data.product.manufacturer?.name}"></td>
-                            <td th:text="${data.product.strength}"></td>
                             <td class="text-center">
                                 <span class="badge bg-info" th:text="${data.totalQuantity}"></span>
                             </td>
@@ -96,7 +129,7 @@
                             </td>
                         </tr>
                         <tr th:if="${inventoryData.isEmpty()}">
-                            <td colspan="10" class="text-center text-muted py-4">
+                            <td colspan="9" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
                                 <p class="mt-2 mb-0">No products found in inventory</p>
                             </td>
@@ -112,7 +145,7 @@
                         <!-- Previous Button -->
                         <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
                             <a class="page-link" 
-                               th:href="@{/inventory(page=${currentPage > 0 ? currentPage - 1 : 0}, size=${pageSize}, search=${search})}"
+                               th:href="@{/inventory(page=${currentPage > 0 ? currentPage - 1 : 0}, size=${pageSize}, search=${search}, categoryId=${categoryId}, manufacturerId=${manufacturerId}, status=${status})}"
                                th:if="${currentPage > 0}">
                                 <i class="bi bi-chevron-left"></i> Previous
                             </a>
@@ -124,7 +157,7 @@
                         <!-- Always show first page -->
                         <li class="page-item" th:classappend="${currentPage == 0} ? 'active'">
                             <a class="page-link" 
-                               th:href="@{/inventory(page=0, size=${pageSize}, search=${search})}">1</a>
+                               th:href="@{/inventory(page=0, size=${pageSize}, search=${search}, categoryId=${categoryId}, manufacturerId=${manufacturerId}, status=${status})}">1</a>
                         </li>
                         
                         <!-- Calculate which pages to show -->
@@ -145,7 +178,7 @@
                                 class="page-item" 
                                 th:classappend="${pageNum == currentPage} ? 'active'">
                                 <a class="page-link" 
-                                   th:href="@{/inventory(page=${pageNum}, size=${pageSize}, search=${search})}"
+                                   th:href="@{/inventory(page=${pageNum}, size=${pageSize}, search=${search}, categoryId=${categoryId}, manufacturerId=${manufacturerId}, status=${status})}"
                                    th:text="${pageNum + 1}"></a>
                             </li>
                             
@@ -160,14 +193,14 @@
                             th:if="${products.totalPages > 1}"
                             th:classappend="${currentPage == products.totalPages - 1} ? 'active'">
                             <a class="page-link" 
-                               th:href="@{/inventory(page=${products.totalPages - 1}, size=${pageSize}, search=${search})}"
+                               th:href="@{/inventory(page=${products.totalPages - 1}, size=${pageSize}, search=${search}, categoryId=${categoryId}, manufacturerId=${manufacturerId}, status=${status})}"
                                th:text="${products.totalPages}"></a>
                         </li>
                         
                         <!-- Next Button -->
                         <li class="page-item" th:classappend="${currentPage == products.totalPages - 1} ? 'disabled'">
                             <a class="page-link" 
-                               th:href="@{/inventory(page=${currentPage < products.totalPages - 1 ? currentPage + 1 : products.totalPages - 1}, size=${pageSize}, search=${search})}"
+                               th:href="@{/inventory(page=${currentPage < products.totalPages - 1 ? currentPage + 1 : products.totalPages - 1}, size=${pageSize}, search=${search}, categoryId=${categoryId}, manufacturerId=${manufacturerId}, status=${status})}"
                                th:if="${currentPage < products.totalPages - 1}">
                                 Next <i class="bi bi-chevron-right"></i>
                             </a>

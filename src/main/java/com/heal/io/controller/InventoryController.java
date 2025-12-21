@@ -4,6 +4,8 @@ import com.heal.io.entity.Inventory;
 import com.heal.io.entity.Product;
 import com.heal.io.entity.ProductPackage;
 import com.heal.io.repository.InventoryRepository;
+import com.heal.io.repository.ProductCategoryRepository;
+import com.heal.io.repository.ManufacturerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,18 +28,23 @@ import java.util.stream.Collectors;
 public class InventoryController {
 
     private final InventoryRepository inventoryRepository;
+    private final ProductCategoryRepository categoryRepository;
+    private final ManufacturerRepository manufacturerRepository;
 
     @GetMapping
     public String listInventory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long manufacturerId,
+            @RequestParam(required = false) String status,
             Model model) {
         
         // Get all active inventory entries
         List<Inventory> allInventories = inventoryRepository.findAllActiveInventories();
         
-        // Filter by search if provided
+        // Filter by search criteria
         if (search != null && !search.isEmpty()) {
             String searchLower = search.toLowerCase();
             allInventories = allInventories.stream()
@@ -52,9 +60,30 @@ public class InventoryController {
                         boolean matchesGeneric = product.getGeneric() != null && 
                                                 product.getGeneric().getName() != null &&
                                                 product.getGeneric().getName().toLowerCase().contains(searchLower);
+                        boolean matchesPackage = inv.getProductPackage() != null &&
+                                                inv.getProductPackage().getPackageDescription() != null &&
+                                                inv.getProductPackage().getPackageDescription().toLowerCase().contains(searchLower);
                         
-                        return matchesName || matchesManufacturer || matchesGeneric;
+                        return matchesName || matchesManufacturer || matchesGeneric || matchesPackage;
                     })
+                    .collect(Collectors.toList());
+        }
+        
+        // Filter by category
+        if (categoryId != null) {
+            allInventories = allInventories.stream()
+                    .filter(inv -> inv.getProduct() != null && 
+                                 inv.getProduct().getProductCategory() != null &&
+                                 inv.getProduct().getProductCategory().getId().equals(categoryId))
+                    .collect(Collectors.toList());
+        }
+        
+        // Filter by manufacturer
+        if (manufacturerId != null) {
+            allInventories = allInventories.stream()
+                    .filter(inv -> inv.getProduct() != null && 
+                                 inv.getProduct().getManufacturer() != null &&
+                                 inv.getProduct().getManufacturer().getId().equals(manufacturerId))
                     .collect(Collectors.toList());
         }
         
@@ -98,6 +127,16 @@ public class InventoryController {
                         isLowStock = totalAvailable <= reorderLevel;
                     }
                     
+                    // Determine stock status: 0=Out of Stock, 1=Low Stock, 2=In Stock
+                    int stockStatus;
+                    if (totalAvailable == 0) {
+                        stockStatus = 0; // Out of Stock
+                    } else if (isLowStock) {
+                        stockStatus = 1; // Low Stock
+                    } else {
+                        stockStatus = 2; // In Stock
+                    }
+                    
                     Map<String, Object> data = new HashMap<>();
                     data.put("product", product);
                     data.put("productPackage", productPackage);
@@ -105,11 +144,45 @@ public class InventoryController {
                     data.put("totalAvailable", totalAvailable);
                     data.put("totalReserved", totalReserved);
                     data.put("isLowStock", isLowStock);
+                    data.put("stockStatus", stockStatus);
                     data.put("inventoryCount", inventories.size());
                     return data;
                 })
                 .filter(data -> data != null)
                 .collect(Collectors.toList());
+        
+        // Filter by status if provided
+        if (status != null && !status.isEmpty()) {
+            final String statusFilter = status.toUpperCase();
+            inventoryData = inventoryData.stream()
+                    .filter(data -> {
+                        int stockStatus = (Integer) data.get("stockStatus");
+                        return switch (statusFilter) {
+                            case "OUT_OF_STOCK" -> stockStatus == 0;
+                            case "LOW_STOCK" -> stockStatus == 1;
+                            case "IN_STOCK" -> stockStatus == 2;
+                            default -> true;
+                        };
+                    })
+                    .collect(Collectors.toList());
+        }
+        
+        // Sort: Low Stock first (1), then Out of Stock (0), then In Stock (2)
+        // Within each status, sort by stock quantity in ascending order
+        inventoryData.sort(Comparator.comparing((Map<String, Object> data) -> {
+            int stockStatusValue = (Integer) data.get("stockStatus");
+            // Custom order: 1 (Low Stock) < 0 (Out of Stock) < 2 (In Stock)
+            return switch (stockStatusValue) {
+                case 1 -> 0; // Low Stock first
+                case 0 -> 1; // Out of Stock second
+                case 2 -> 2; // In Stock last
+                default -> 3;
+            };
+        }).thenComparing(data -> {
+            // Secondary sort by stock quantity (available quantity) in ascending order
+            Integer totalAvailable = (Integer) data.get("totalAvailable");
+            return totalAvailable != null ? totalAvailable : 0;
+        }));
         
         // Manual pagination
         int totalElements = inventoryData.size();
@@ -131,6 +204,11 @@ public class InventoryController {
         model.addAttribute("pageSize", size);
         model.addAttribute("totalElements", totalElements);
         model.addAttribute("search", search);
+        model.addAttribute("categoryId", categoryId);
+        model.addAttribute("manufacturerId", manufacturerId);
+        model.addAttribute("status", status);
+        model.addAttribute("categories", categoryRepository.findByIsActiveTrue());
+        model.addAttribute("manufacturers", manufacturerRepository.findByIsActiveTrue());
         
         return "inventory/list";
     }

@@ -33,17 +33,19 @@ body {
     border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     overflow: hidden;
+    max-width: 420px;
+    margin: 0 auto;
 }
 
 .login-header {
     background: linear-gradient(135deg, #f5f7ff 0%, #faf8ff 100%);
     color: #333;
-    padding: 2rem;
+    padding: 10px;
     text-align: center;
 }
 
 .login-body {
-    padding: 2.5rem;
+    padding: 2rem;
     background: white;
 }
 
@@ -102,7 +104,7 @@ body {
 }
 
 .sidebar .logo {
-    padding: 20px;
+    /*padding: 20px;*/
     text-align: center;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
@@ -138,6 +140,10 @@ body {
 
 .sidebar.collapsed .logo-expanded {
     display: none !important;
+}
+
+.sidebar.collapsed{
+    padding-top: 0;
 }
 
 .sidebar.collapsed .logo-collapsed {
@@ -198,6 +204,138 @@ body {
 .sidebar .nav-link.active {
     background-color: rgba(102, 126, 234, 0.1);
     color: #667eea;
+}
+
+/* ============================================
+   Nav Section (Sub-menu) Styles
+   ============================================ */
+.sidebar .nav-section {
+    margin-bottom: 5px;
+}
+
+.sidebar .nav-section-toggle {
+    position: relative;
+    cursor: pointer;
+    justify-content: space-between;
+}
+
+.sidebar .nav-section-arrow {
+    margin-left: auto;
+    margin-right: 0;
+    font-size: 0.875rem;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 1;
+}
+
+.sidebar .nav-section.expanded .nav-section-arrow {
+    transform: rotate(180deg);
+}
+
+.sidebar.collapsed .nav-section-arrow {
+    display: none;
+    opacity: 0;
+}
+
+.sidebar.transitions-enabled .nav-section-arrow {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.sidebar .nav-submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding-left: 0;
+}
+
+.sidebar .nav-section.expanded .nav-submenu {
+    max-height: 500px;
+}
+
+.sidebar.collapsed .nav-submenu {
+    display: none !important;
+}
+
+.sidebar .nav-submenu-link {
+    padding-left: 40px;
+    font-size: 0.9rem;
+    margin: 2px 10px;
+}
+
+.sidebar.collapsed .nav-submenu-link {
+    display: none;
+}
+
+/* When collapsed, hide submenu completely */
+.sidebar.collapsed .nav-submenu {
+    max-height: 0 !important;
+    display: none !important;
+}
+
+/* When collapsed, make section toggle look like regular nav-link */
+.sidebar.collapsed .nav-section-toggle {
+    padding: 12px;
+    justify-content: center;
+    margin: 5px;
+}
+
+.sidebar.collapsed .nav-section-toggle .nav-section-arrow {
+    display: none;
+}
+
+/* Hover tooltip for collapsed sidebar sub-menus */
+.sidebar.collapsed .nav-section {
+    position: relative;
+}
+
+.sidebar.collapsed .nav-section.show-tooltip .nav-submenu {
+    display: block !important;
+    position: fixed;
+    left: 70px;
+    background: white;
+    min-width: 200px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    padding: 8px 0;
+    z-index: 1001;
+    margin-top: 0;
+    max-height: none !important;
+    animation: slideInRight 0.2s ease;
+}
+
+.sidebar.collapsed .nav-section.show-tooltip .nav-submenu-link {
+    display: flex !important;
+    padding: 10px 20px;
+    margin: 2px 0;
+    border-radius: 0;
+    font-size: 0.9rem;
+    color: rgba(0, 0, 0, 0.7);
+    white-space: nowrap;
+}
+
+.sidebar.collapsed .nav-section.show-tooltip .nav-submenu-link:hover,
+.sidebar.collapsed .nav-section.show-tooltip .nav-submenu-link.active {
+    background-color: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.sidebar.collapsed .nav-section.show-tooltip .nav-submenu-link i {
+    margin-right: 10px;
+    min-width: 20px;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.sidebar.transitions-enabled .nav-submenu {
+    transition: max-height 0.3s ease;
 }
 
 /* ============================================
@@ -687,9 +825,35 @@ body {
     }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) {
+    .login-card {
+        max-width: 100%;
+    }
+    
+    .login-header {
+        padding: 10px;
+    }
+    
+    .login-header img {
+        max-width: 150px !important;
+    }
+    
     .login-body {
         padding: 1.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .login-body {
+        padding: 1.25rem;
+    }
+    
+    .login-header {
+        padding: 10px;
+    }
+    
+    .login-header img {
+        max-width: 120px !important;
     }
     
     .main-content {

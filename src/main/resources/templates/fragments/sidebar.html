@@ -10,27 +10,83 @@
             <a class="nav-link" th:classappend="${activePage == 'dashboard'} ? 'active'" href="/dashboard">
                 <i class="bi bi-speedometer2"></i><span>Dashboard</span>
             </a>
-            <a class="nav-link" th:classappend="${activePage == 'products'} ? 'active'" href="/products">
-                <i class="bi bi-capsule"></i><span>Products</span>
-            </a>
-            <a class="nav-link" th:classappend="${activePage == 'sales'} ? 'active'" href="/sales">
-                <i class="bi bi-cart"></i><span>Sales</span>
-            </a>
-            <a class="nav-link" th:classappend="${activePage == 'stock-in'} ? 'active'" href="/stock-in">
-                <i class="bi bi-box-arrow-in-down"></i><span>Stock In</span>
-            </a>
-            <a class="nav-link" th:classappend="${activePage == 'inventory'} ? 'active'" href="/inventory">
-                <i class="bi bi-boxes"></i><span>Inventory</span>
-            </a>
-            <a class="nav-link" th:classappend="${activePage == 'customers'} ? 'active'" href="/customers">
-                <i class="bi bi-people"></i><span>Customers</span>
-            </a>
-            <a class="nav-link" th:classappend="${activePage == 'suppliers'} ? 'active'" href="/suppliers">
-                <i class="bi bi-truck"></i><span>Suppliers</span>
-            </a>
-            <a class="nav-link" th:classappend="${activePage == 'manufacturers'} ? 'active'" href="/manufacturers">
-                <i class="bi bi-building"></i><span>Manufacturers</span>
-            </a>
+            
+            <!-- Products Section -->
+            <div class="nav-section" th:classappend="${activePage == 'products' || activePage == 'categories'} ? 'expanded'">
+                <a class="nav-link nav-section-toggle" 
+                   th:classappend="${activePage == 'products' || activePage == 'categories'} ? 'active'"
+                   href="javascript:void(0)" onclick="toggleNavSection(this)">
+                    <i class="bi bi-capsule"></i><span>Products</span>
+                    <i class="bi bi-chevron-down nav-section-arrow"></i>
+                </a>
+                <div class="nav-submenu">
+                    <a class="nav-link nav-submenu-link" 
+                       th:classappend="${activePage == 'products'} ? 'active'" 
+                       href="/products">
+                        <i class="bi bi-capsule"></i><span>Products</span>
+                    </a>
+                    <a class="nav-link nav-submenu-link" 
+                       th:classappend="${activePage == 'categories'} ? 'active'" 
+                       href="/categories">
+                        <i class="bi bi-tags"></i><span>Categories</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Sales & Inventory Section -->
+            <div class="nav-section" th:classappend="${activePage == 'sales' || activePage == 'stock-in' || activePage == 'inventory'} ? 'expanded'">
+                <a class="nav-link nav-section-toggle" 
+                   th:classappend="${activePage == 'sales' || activePage == 'stock-in' || activePage == 'inventory'} ? 'active'"
+                   href="javascript:void(0)" onclick="toggleNavSection(this)">
+                    <i class="bi bi-cart"></i><span>Sales & Inventory</span>
+                    <i class="bi bi-chevron-down nav-section-arrow"></i>
+                </a>
+                <div class="nav-submenu">
+                    <a class="nav-link nav-submenu-link" 
+                       th:classappend="${activePage == 'sales'} ? 'active'" 
+                       href="/sales">
+                        <i class="bi bi-cart"></i><span>Sales</span>
+                    </a>
+                    <a class="nav-link nav-submenu-link" 
+                       th:classappend="${activePage == 'stock-in'} ? 'active'" 
+                       href="/stock-in">
+                        <i class="bi bi-box-arrow-in-down"></i><span>Stock In</span>
+                    </a>
+                    <a class="nav-link nav-submenu-link" 
+                       th:classappend="${activePage == 'inventory'} ? 'active'" 
+                       href="/inventory">
+                        <i class="bi bi-boxes"></i><span>Inventory</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Contacts Section -->
+            <div class="nav-section" th:classappend="${activePage == 'customers' || activePage == 'suppliers' || activePage == 'manufacturers'} ? 'expanded'">
+                <a class="nav-link nav-section-toggle" 
+                   th:classappend="${activePage == 'customers' || activePage == 'suppliers' || activePage == 'manufacturers'} ? 'active'"
+                   href="javascript:void(0)" onclick="toggleNavSection(this)">
+                    <i class="bi bi-people"></i><span>Contacts</span>
+                    <i class="bi bi-chevron-down nav-section-arrow"></i>
+                </a>
+                <div class="nav-submenu">
+                    <a class="nav-link nav-submenu-link" 
+                       th:classappend="${activePage == 'customers'} ? 'active'" 
+                       href="/customers">
+                        <i class="bi bi-people"></i><span>Customers</span>
+                    </a>
+                    <a class="nav-link nav-submenu-link" 
+                       th:classappend="${activePage == 'suppliers'} ? 'active'" 
+                       href="/suppliers">
+                        <i class="bi bi-truck"></i><span>Suppliers</span>
+                    </a>
+                    <a class="nav-link nav-submenu-link" 
+                       th:classappend="${activePage == 'manufacturers'} ? 'active'" 
+                       href="/manufacturers">
+                        <i class="bi bi-building"></i><span>Manufacturers</span>
+                    </a>
+                </div>
+            </div>
+            
             <a class="nav-link" th:classappend="${activePage == 'users'} ? 'active'" href="/users">
                 <i class="bi bi-person-gear"></i><span>Users</span>
             </a>
