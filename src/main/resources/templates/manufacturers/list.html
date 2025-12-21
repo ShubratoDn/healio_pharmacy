@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manufacturers - Healio</title>
-    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+<head th:replace="~{fragments/head :: head(title='Manufacturers', description='Manage manufacturer information for pharmaceutical products in your inventory.', keywords='manufacturers, manufacturer management, manufacturer list, pharmaceutical manufacturers')}">
 </head>
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='manufacturers')}"></div>

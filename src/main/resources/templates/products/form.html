@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${product.id != null} ? 'Edit Product' : 'Add Product'">Product Form - Healio</title>
-    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+<head th:replace="~{fragments/head :: head(title=${product.id != null ? 'Edit Product' : 'Add Product'}, description='Add or edit product information including name, strength, manufacturer, dosage form, and package details.', keywords='add product, edit product, product form, medicine form, product management')}">
 </head>
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='products')}"></div>

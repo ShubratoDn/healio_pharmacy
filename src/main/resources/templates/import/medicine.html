@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Import Medicines - Healio</title>
-    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+<head th:insert="~{fragments/head :: head(title='Import Medicines', description='Import medicines and products in bulk from CSV file to quickly populate your pharmacy inventory.', keywords='import medicines, CSV import, bulk import, medicine import, product import')}">
     <style>
         .upload-area {
             border: 2px dashed #667eea;

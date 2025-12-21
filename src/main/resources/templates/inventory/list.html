@@ -1,12 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory - Healio</title>
-    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+<head th:replace="~{fragments/head :: head(title='Inventory', description='View and manage inventory levels for all products. Track stock quantities, low stock alerts, and out of stock items.', keywords='inventory, stock levels, inventory management, stock tracking, low stock, out of stock')}">
 </head>
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='inventory')}"></div>

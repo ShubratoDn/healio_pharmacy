@@ -1,13 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock In - Healio</title>
-    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+<head th:insert="~{fragments/head :: head(title='Stock In', description='View and manage all stock in transactions. Track inventory receipts, supplier purchases, and stock entries.', keywords='stock in, inventory receipt, purchase, stock entry, supplier purchase, voucher')}">
     <link href="/lib/flatpickr/flatpickr.min.css" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .stock-in-list-card {
             background: white;
