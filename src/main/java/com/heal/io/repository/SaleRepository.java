@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -24,6 +23,15 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
     
     @Query(value = "SELECT COUNT(*) FROM sale WHERE DATE(sale_date) = CURRENT_DATE AND sale_status = 'COMPLETED'", nativeQuery = true)
     Long countTodaySales();
+    
+    @Query(value = "SELECT COALESCE(SUM(si.profit_amount), 0) FROM sale s " +
+           "INNER JOIN sale_item si ON s.id = si.sale_id " +
+           "WHERE DATE(s.sale_date) = CURRENT_DATE AND s.sale_status = 'COMPLETED'", nativeQuery = true)
+    Double getTodayTotalProfit();
+    
+    @Query(value = "SELECT COALESCE(SUM(s.discount_amount), 0) FROM sale s " +
+           "WHERE DATE(s.sale_date) = CURRENT_DATE AND s.sale_status = 'COMPLETED'", nativeQuery = true)
+    Double getTodayTotalDiscount();
     
     @Query("SELECT s FROM Sale s WHERE s.saleDate >= :startDate AND s.saleDate < :endDate")
     Page<Sale> findBySaleDateBetween(@Param("startDate") LocalDateTime startDate, 

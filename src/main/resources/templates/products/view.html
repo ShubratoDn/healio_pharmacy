@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${product.name + ' - Product Details'}">Product Details - Healio</title>
+    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .product-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        .info-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .info-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        .info-value {
+            font-size: 1.1rem;
+            color: #212529;
+            font-weight: 500;
+        }
+        .badge-custom {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            border-radius: 20px;
+        }
+        .package-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .package-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        .inventory-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .badge-in-stock {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .badge-low-stock {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .badge-out-of-stock {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/sidebar :: sidebar(activePage='products')}"></div>
+    <div class="main-content">
+        <div th:replace="~{fragments/navbar :: navbar(pageTitle='Product Details')}"></div>
+
+        <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h4 class="mb-0"><i class="bi bi-capsule me-2"></i>Product Details</h4>
+            <div class="d-flex gap-2">
+                <a th:href="@{/products/edit/{id}(id=${product.id})}" class="btn btn-warning">
+                    <i class="bi bi-pencil me-2"></i>Edit Product
+                </a>
+                <a href="/products" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Products
+                </a>
+            </div>
+        </div>
+
+        <!-- Product Header -->
+        <div class="product-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-2" th:text="${product.name}">Product Name</h2>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <span th:if="${product.strength != null && !product.strength.isEmpty()}" 
+                              class="badge badge-custom bg-light text-dark">
+                            <i class="bi bi-info-circle me-1"></i>Strength: <span th:text="${product.strength}"></span>
+                        </span>
+                        <span th:if="${product.productCategory != null}" 
+                              class="badge badge-custom bg-light text-dark">
+                            <i class="bi bi-tags me-1"></i><span th:text="${product.productCategory.name}"></span>
+                        </span>
+                        <span th:if="${product.requiresPrescription}" 
+                              class="badge badge-custom bg-warning text-dark">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Prescription Required
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <div class="d-inline-block bg-white bg-opacity-90 p-3 rounded shadow-sm">
+                        <div class="text-dark small" style="font-weight: 500; opacity: 0.8;">Total Inventory</div>
+                        <div class="h3 mb-0 text-primary" style="font-weight: 700;" th:text="${totalAvailable}">0</div>
+                        <div class="text-dark small" style="font-weight: 500; opacity: 0.8;">Available Units</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column: Product Information -->
+            <div class="col-lg-8">
+                <!-- Basic Information -->
+                <div class="info-card">
+                    <h5 class="mb-3"><i class="bi bi-info-circle me-2 text-primary"></i>Basic Information</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="info-label">Product Name</div>
+                            <div class="info-value" th:text="${product.name}">-</div>
+                        </div>
+                        <div class="col-md-6 mb-3" th:if="${product.strength != null && !product.strength.isEmpty()}">
+                            <div class="info-label">Strength</div>
+                            <div class="info-value" th:text="${product.strength}">-</div>
+                        </div>
+                        <div class="col-md-6 mb-3" th:if="${product.productCategory != null}">
+                            <div class="info-label">Category</div>
+                            <div class="info-value" th:text="${product.productCategory.name}">-</div>
+                        </div>
+                        <div class="col-md-6 mb-3" th:if="${product.manufacturer != null}">
+                            <div class="info-label">Manufacturer</div>
+                            <div class="info-value" th:text="${product.manufacturer.name}">-</div>
+                        </div>
+                        <div class="col-md-6 mb-3" th:if="${product.generic != null}">
+                            <div class="info-label">Generic Name</div>
+                            <div class="info-value" th:text="${product.generic.name}">-</div>
+                        </div>
+                        <div class="col-md-6 mb-3" th:if="${product.dosageForm != null}">
+                            <div class="info-label">Dosage Form</div>
+                            <div class="info-value" th:text="${product.dosageForm.name}">-</div>
+                        </div>
+                        <div class="col-md-6 mb-3" th:if="${product.medicineType != null}">
+                            <div class="info-label">Medicine Type</div>
+                            <div class="info-value" th:text="${product.medicineType.name}">-</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="info-label">Prescription Required</div>
+                            <div class="info-value">
+                                <span th:if="${product.requiresPrescription}" class="badge bg-warning text-dark">Yes</span>
+                                <span th:if="${!product.requiresPrescription}" class="badge bg-success">No</span>
+                            </div>
+                        </div>
+                        <div class="col-12 mb-0" th:if="${product.description != null && !product.description.isEmpty()}">
+                            <div class="info-label">Description</div>
+                            <div class="info-value" th:text="${product.description}">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Packages & Pricing -->
+                <div class="info-card">
+                    <h5 class="mb-3"><i class="bi bi-box me-2 text-primary"></i>Packages & Pricing</h5>
+                    <div th:if="${packages != null && !packages.isEmpty()}">
+                        <div th:each="pkg : ${packages}" class="package-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <div class="info-label">Package Description</div>
+                                    <div class="info-value fw-bold" th:text="${pkg.packageDescription}">-</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="info-label">Unit Price</div>
+                                    <div class="info-value" th:if="${pkg.unitPrice != null}">
+                                        ৳<span th:text="${#numbers.formatDecimal(pkg.unitPrice, 1, 2)}">0.00</span>
+                                    </div>
+                                    <div class="info-value text-muted" th:if="${pkg.unitPrice == null}">-</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="info-label">Purchase Price</div>
+                                    <div class="info-value text-success" th:if="${purchasePrices != null && purchasePrices.containsKey(pkg.id)}">
+                                        ৳<span th:text="${#numbers.formatDecimal(purchasePrices.get(pkg.id), 1, 2)}">0.00</span>
+                                    </div>
+                                    <div class="info-value text-muted" th:if="${purchasePrices == null || !purchasePrices.containsKey(pkg.id)}">-</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="info-label">Quantity</div>
+                                    <div class="info-value" th:if="${pkg.quantityPerPackage != null}">
+                                        <span th:text="${pkg.quantityPerPackage}"></span>
+                                        <span th:if="${pkg.unitOfMeasure != null}" th:text="${' ' + pkg.unitOfMeasure}"></span>
+                                    </div>
+                                    <div class="info-value text-muted" th:if="${pkg.quantityPerPackage == null}">-</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="info-label">Low Stock Level</div>
+                                    <div class="info-value" th:if="${pkg.lowStock != null}" th:text="${pkg.lowStock}">-</div>
+                                    <div class="info-value text-muted" th:if="${pkg.lowStock == null}">-</div>
+                                </div>
+                            </div>
+                            <!-- Inventory for this package -->
+                            <div th:if="${inventoryByPackage != null && inventoryByPackage.containsKey(pkg.id)}" class="mt-3 pt-3 border-top">
+                                <div class="info-label mb-2">Inventory</div>
+                                <div th:each="inv : ${inventoryByPackage.get(pkg.id)}" class="d-inline-block me-2 mb-2">
+                                    <span th:class="${'inventory-badge ' + (inv.availableQuantity == 0 ? 'badge-out-of-stock' : (inv.availableQuantity <= (inv.reorderLevel != null ? inv.reorderLevel : 10) ? 'badge-low-stock' : 'badge-in-stock'))}">
+                                        <span th:text="${inv.batchNumber != null ? inv.batchNumber + ': ' : ''}"></span>
+                                        <span th:text="${inv.availableQuantity}"></span> available
+                                        <span th:if="${inv.expiryDate != null}" 
+                                              th:text="${' (Exp: ' + #temporals.format(inv.expiryDate, 'dd/MM/yyyy') + ')'}"></span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${packages == null || packages.isEmpty()}" class="text-center text-muted py-4">
+                        <i class="bi bi-box-seam" style="font-size: 2rem;"></i>
+                        <p class="mt-2">No packages configured for this product</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Inventory Summary -->
+            <div class="col-lg-4">
+                <!-- Inventory Summary -->
+                <div class="info-card">
+                    <h5 class="mb-3"><i class="bi bi-boxes me-2 text-primary"></i>Inventory Summary</h5>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="info-label">Total Quantity</span>
+                            <span class="info-value" th:text="${totalQuantity}">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="info-label">Available Quantity</span>
+                            <span class="info-value text-success" th:text="${totalAvailable}">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="info-label">Reserved Quantity</span>
+                            <span class="info-value text-warning" 
+                                  th:text="${totalQuantity - totalAvailable}">0</span>
+                        </div>
+                    </div>
+                
+                    <div class="text-center">
+                        <span th:if="${stockStatus == 0}" class="badge bg-danger">Out of Stock</span>
+                        <span th:if="${stockStatus == 1}" class="badge bg-warning text-dark">Low Stock</span>
+                        <span th:if="${stockStatus == 2}" class="badge bg-success">In Stock</span>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="info-card">
+                    <h5 class="mb-3"><i class="bi bi-lightning-charge me-2 text-primary"></i>Quick Actions</h5>
+                    <div class="d-grid gap-2">
+                        <a th:href="@{/products/edit/{id}(id=${product.id})}" class="btn btn-warning">
+                            <i class="bi bi-pencil me-2"></i>Edit Product
+                        </a>
+                        <a th:href="@{/stock-in/new}" class="btn btn-success">
+                            <i class="bi bi-box-arrow-in-down me-2"></i>Stock In
+                        </a>
+                        <a href="/products" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/common.js}"></script>
+</body>
+</html>
+

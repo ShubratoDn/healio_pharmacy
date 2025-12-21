@@ -28,7 +28,7 @@
 
         <!-- Statistics Cards -->
         <div class="row">
-            <div class="col-md-3 col-sm-6 mb-3">
+            <div class="col-md-4 col-sm-6 mb-3">
                 <div class="stat-card primary">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -39,7 +39,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-sm-6 mb-3">
+            <div class="col-md-4 col-sm-6 mb-3">
                 <div class="stat-card success">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -50,25 +50,53 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-sm-6 mb-3">
-                <div class="stat-card warning">
+            <div class="col-md-4 col-sm-6 mb-3">
+                <a href="/inventory?status=LOW_STOCK" style="text-decoration: none; color: inherit;">
+                    <div class="stat-card warning" style="cursor: pointer;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Low Stock</h6>
+                                <h2 class="mb-0" th:text="${lowStockCount}">0</h2>
+                            </div>
+                            <i class="bi bi-exclamation-triangle stat-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Profit & Discount Cards -->
+        <div class="row">
+            <div class="col-md-4 col-sm-6 mb-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Low Stock</h6>
-                            <h2 class="mb-0" th:text="${lowStockCount}">0</h2>
+                            <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Daily Profit</h6>
+                            <h2 class="mb-0">৳<span th:text="${#numbers.formatDecimal(todayProfit, 0, 0)}">0</span></h2>
                         </div>
-                        <i class="bi bi-exclamation-triangle stat-icon"></i>
+                        <i class="bi bi-arrow-up-circle stat-icon"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-sm-6 mb-3">
-                <div class="stat-card info">
+            <div class="col-md-4 col-sm-6 mb-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Total Customers</h6>
-                            <h2 class="mb-0" th:text="${totalCustomers}">0</h2>
+                            <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Daily Discount</h6>
+                            <h2 class="mb-0">৳<span th:text="${#numbers.formatDecimal(todayDiscount, 0, 0)}">0</span></h2>
                         </div>
-                        <i class="bi bi-people stat-icon"></i>
+                        <i class="bi bi-tag stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6 mb-3">
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Total Profit</h6>
+                            <h2 class="mb-0">৳<span th:text="${#numbers.formatDecimal(totalProfit, 0, 0)}">0</span></h2>
+                        </div>
+                        <i class="bi bi-graph-up-arrow stat-icon"></i>
                     </div>
                 </div>
             </div>

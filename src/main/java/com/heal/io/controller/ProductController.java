@@ -30,6 +30,8 @@ public class ProductController {
     private final GenericRepository genericRepository;
     private final MedicineTypeRepository medicineTypeRepository;
     private final ProductPackageRepository productPackageRepository;
+    private final StockInItemRepository stockInItemRepository;
+    private final InventoryRepository inventoryRepository;
 
     @GetMapping
     public String listProducts(
@@ -186,6 +188,118 @@ public class ProductController {
         return "redirect:/products";
     }
 
+    @GetMapping("/{id}")
+    public String viewProduct(@PathVariable Long id, Model model) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        // Initialize lazy-loaded relationships
+        if (product.getProductCategory() != null) {
+            product.getProductCategory().getName();
+        }
+        if (product.getManufacturer() != null) {
+            product.getManufacturer().getName();
+        }
+        if (product.getGeneric() != null) {
+            product.getGeneric().getName();
+        }
+        if (product.getDosageForm() != null) {
+            product.getDosageForm().getName();
+        }
+        if (product.getMedicineType() != null) {
+            product.getMedicineType().getName();
+        }
+        
+        // Load packages
+        List<ProductPackage> packages = productPackageRepository.findByProductId(id);
+        packages.forEach(pkg -> {
+            // Initialize package
+            pkg.getPackageDescription();
+        });
+        
+        // Load inventory grouped by package
+        List<Inventory> inventories = inventoryRepository.findByProductId(id);
+        Map<Long, List<Inventory>> inventoryByPackage = inventories.stream()
+                .filter(inv -> inv.getIsActive() != null && inv.getIsActive())
+                .collect(Collectors.groupingBy(inv -> 
+                    inv.getProductPackage() != null ? inv.getProductPackage().getId() : 0L));
+        
+        // Calculate total inventory stats
+        int totalQuantity = inventories.stream()
+                .filter(inv -> inv.getIsActive() != null && inv.getIsActive())
+                .mapToInt(Inventory::getQuantity)
+                .sum();
+        int totalAvailable = inventories.stream()
+                .filter(inv -> inv.getIsActive() != null && inv.getIsActive())
+                .mapToInt(Inventory::getAvailableQuantity)
+                .sum();
+        
+        // Calculate stock status: 0=Out of Stock, 1=Low Stock, 2=In Stock
+        int stockStatus;
+        if (totalAvailable == 0) {
+            stockStatus = 0; // Out of Stock
+        } else {
+            // Determine low stock threshold - use the minimum lowStock from packages or default reorder level
+            Integer lowStockThreshold = null;
+            for (ProductPackage pkg : packages) {
+                if (pkg.getLowStock() != null) {
+                    if (lowStockThreshold == null || pkg.getLowStock() < lowStockThreshold) {
+                        lowStockThreshold = pkg.getLowStock();
+                    }
+                }
+            }
+            // If no package lowStock set, use default reorder level from inventory
+            if (lowStockThreshold == null && !inventories.isEmpty()) {
+                Inventory firstInv = inventories.stream()
+                        .filter(inv -> inv.getIsActive() != null && inv.getIsActive())
+                        .findFirst()
+                        .orElse(null);
+                if (firstInv != null) {
+                    lowStockThreshold = firstInv.getReorderLevel() != null ? firstInv.getReorderLevel() : 10;
+                } else {
+                    lowStockThreshold = 10; // Default
+                }
+            } else if (lowStockThreshold == null) {
+                lowStockThreshold = 10; // Default
+            }
+            
+            if (totalAvailable <= lowStockThreshold) {
+                stockStatus = 1; // Low Stock
+            } else {
+                stockStatus = 2; // In Stock
+            }
+        }
+        
+        // Get purchase prices for packages
+        Map<Long, BigDecimal> purchasePrices = new HashMap<>();
+        for (ProductPackage pkg : packages) {
+            List<BigDecimal> unitCosts = stockInItemRepository.findUnitCostsByProductAndPackageOrderByDateDesc(
+                    id, pkg.getId());
+            if (!unitCosts.isEmpty()) {
+                purchasePrices.put(pkg.getId(), unitCosts.get(0)); // Get the most recent price
+            }
+        }
+        
+        // Calculate percentage for progress bar
+        double percentage = 0.0;
+        if (totalQuantity > 0) {
+            percentage = Math.min((totalAvailable * 100.0 / totalQuantity), 100.0);
+        } else if (totalAvailable > 0) {
+            percentage = 100.0;
+        }
+        
+        model.addAttribute("product", product);
+        model.addAttribute("packages", packages);
+        model.addAttribute("inventoryByPackage", inventoryByPackage);
+        model.addAttribute("totalQuantity", totalQuantity);
+        model.addAttribute("totalAvailable", totalAvailable);
+        model.addAttribute("stockStatus", stockStatus);
+        model.addAttribute("inventoryPercentage", percentage);
+        model.addAttribute("purchasePrices", purchasePrices);
+        
+        return "products/view";
+    }
+
     @GetMapping("/edit/{id}")
     public String editProduct(@PathVariable Long id, Model model) {
         Product product = productRepository.findById(id)
@@ -196,7 +310,21 @@ public class ProductController {
         model.addAttribute("dosageForms", dosageFormRepository.findAll());
         model.addAttribute("generics", genericRepository.findAll());
         model.addAttribute("medicineTypes", medicineTypeRepository.findAll());
-        model.addAttribute("packages", productPackageRepository.findByProductId(id));
+        
+        List<ProductPackage> packages = productPackageRepository.findByProductId(id);
+        model.addAttribute("packages", packages);
+        
+        // Fetch last purchase price for each package
+        Map<Long, BigDecimal> purchasePrices = new HashMap<>();
+        for (ProductPackage pkg : packages) {
+            List<BigDecimal> unitCosts = stockInItemRepository.findUnitCostsByProductAndPackageOrderByDateDesc(
+                    id, pkg.getId());
+            if (!unitCosts.isEmpty()) {
+                purchasePrices.put(pkg.getId(), unitCosts.get(0)); // Get the most recent price
+            }
+        }
+        model.addAttribute("purchasePrices", purchasePrices);
+        
         return "products/form";
     }
 

@@ -43,14 +43,21 @@
                     <tbody>
                         <tr th:each="product : ${products.content}">
                             <td th:text="${product.id}"></td>
-                            <td th:text="${product.name}"></td>
+                            <td>
+                                <a th:href="@{/products/{id}(id=${product.id})}" class="text-decoration-none fw-bold text-primary" style="cursor: pointer;">
+                                    <span th:text="${product.name}"></span>
+                                    <span th:if="${product.strength != null && !product.strength.isEmpty()}" 
+                                          class="text-muted" th:text="${' [' + product.strength + ']'}"></span>
+                                </a>
+                            </td>
                             <td th:text="${product.productCategory?.name}"></td>
                             <td th:text="${product.manufacturer?.name}"></td>
                             <td th:text="${product.generic?.name}"></td>
                             <td th:text="${product.strength}"></td>
                             <td>
-                                <a th:href="@{/products/edit/{id}(id=${product.id})}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
-                                <a th:href="@{/products/delete/{id}(id=${product.id})}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')"><i class="bi bi-trash"></i></a>
+                                <a th:href="@{/products/{id}(id=${product.id})}" class="btn btn-sm btn-info" title="View"><i class="bi bi-eye"></i></a>
+                                <a th:href="@{/products/edit/{id}(id=${product.id})}" class="btn btn-sm btn-warning" title="Edit"><i class="bi bi-pencil"></i></a>
+                                <a th:href="@{/products/delete/{id}(id=${product.id})}" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure?')"><i class="bi bi-trash"></i></a>
                             </td>
                         </tr>
                         <tr th:if="${products.content.isEmpty()}">

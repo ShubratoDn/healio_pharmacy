@@ -364,13 +364,13 @@ function updateTooltipPosition(toggleLink, submenu) {
                     <div class="suggestion-item-header">
                         <i class="bi bi-capsule me-2 text-primary"></i>
                         <strong>${escapeHtml(product.name)}</strong>
+                        ${strength ? `<span class="text-muted ms-2">[${escapeHtml(strength)}]</span>` : ''}
                     </div>
                     <div class="suggestion-item-details">
                         <span class="badge bg-secondary me-2">${escapeHtml(category)}</span>
                         ${dosageForm ? `<span class="badge bg-info me-2"><i class="bi bi-capsule-pill me-1"></i>${escapeHtml(dosageForm)}</span>` : ''}
                         ${manufacturer !== 'N/A' ? `<span class="text-muted"><i class="bi bi-building me-1"></i>${escapeHtml(manufacturer)}</span>` : ''}
                         ${generic !== 'N/A' ? `<span class="text-muted ms-2"><i class="bi bi-pill me-1"></i>${escapeHtml(generic)}</span>` : ''}
-                        ${strength ? `<span class="text-muted ms-2"><i class="bi bi-info-circle me-1"></i>${escapeHtml(strength)}</span>` : ''}
                     </div>
                 </div>
             `;
@@ -391,7 +391,7 @@ function updateTooltipPosition(toggleLink, submenu) {
     }
     
     window.navigateToProduct = function(productId) {
-        window.location.href = `/products/edit/${productId}`;
+        window.location.href = `/products/${productId}`;
     };
     
     window.clearSearch = function() {
