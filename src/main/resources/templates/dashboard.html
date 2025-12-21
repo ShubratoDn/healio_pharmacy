@@ -7,6 +7,47 @@
     <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <style>
+        .chart-container {
+            height: 400px;
+            min-height: 400px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .filter-btn {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            background: #f8f9fa;
+        }
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
 </head>
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='dashboard')}"></div>
@@ -102,6 +143,56 @@
             </div>
         </div>
 
+        <!-- Charts Section -->
+        <div class="row mt-4">
+            <!-- Sales Trend Chart -->
+            <div class="col-lg-8 mb-3">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Sales Trend</h5>
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-days="7" onclick="updateSalesChart(7)">7 Days</button>
+                            <button class="filter-btn" data-days="30" onclick="updateSalesChart(30)">30 Days</button>
+                            <button class="filter-btn" data-days="90" onclick="updateSalesChart(90)">90 Days</button>
+                        </div>
+                    </div>
+                    <div id="salesChart" class="chart-container"></div>
+                </div>
+            </div>
+            
+            <!-- Profit & Discount Chart -->
+            <div class="col-lg-4 mb-3">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Profit Analysis</h5>
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-days="7" onclick="updateProfitChart(7)">7D</button>
+                            <button class="filter-btn" data-days="30" onclick="updateProfitChart(30)">30D</button>
+                            <button class="filter-btn" data-days="90" onclick="updateProfitChart(90)">90D</button>
+                        </div>
+                    </div>
+                    <div id="profitChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Products Chart -->
+        <div class="row mt-3">
+            <div class="col-12 mb-3">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Top Selling Products</h5>
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-days="7" onclick="updateTopProductsChart(7)">7 Days</button>
+                            <button class="filter-btn" data-days="30" onclick="updateTopProductsChart(30)">30 Days</button>
+                            <button class="filter-btn" data-days="90" onclick="updateTopProductsChart(90)">90 Days</button>
+                        </div>
+                    </div>
+                    <div id="topProductsChart" class="chart-container" style="height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Recent Activity -->
         <div class="row mt-4">
             <div class="col-md-6 mb-3">
@@ -136,5 +227,250 @@
     </div>
     <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
+    <script>
+        let salesChartInstance, profitChartInstance, topProductsChartInstance;
+        let currentSalesDays = 7, currentProfitDays = 7, currentTopProductsDays = 7;
+        
+        // Initialize charts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+        });
+        
+        function initializeCharts() {
+            // Initialize Sales Trend Chart
+            salesChartInstance = echarts.init(document.getElementById('salesChart'));
+            updateSalesChart(7);
+            
+            // Initialize Profit Chart
+            profitChartInstance = echarts.init(document.getElementById('profitChart'));
+            updateProfitChart(7);
+            
+            // Initialize Top Products Chart
+            topProductsChartInstance = echarts.init(document.getElementById('topProductsChart'));
+            updateTopProductsChart(7);
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                salesChartInstance.resize();
+                profitChartInstance.resize();
+                topProductsChartInstance.resize();
+            });
+        }
+        
+        function updateSalesChart(days) {
+            currentSalesDays = days;
+            updateFilterButtons('sales', days);
+            
+            fetch(`/api/dashboard/sales-by-date?days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            formatter: function(params) {
+                                return params[0].name + '<br/>' +
+                                       'Sales: ৳' + params[0].value.toLocaleString();
+                            }
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: data.dates,
+                            axisLabel: {
+                                rotate: 45
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                formatter: function(value) {
+                                    return '৳' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        series: [{
+                            name: 'Sales',
+                            type: 'line',
+                            smooth: true,
+                            data: data.amounts,
+                            areaStyle: {
+                                color: {
+                                    type: 'linear',
+                                    x: 0,
+                                    y: 0,
+                                    x2: 0,
+                                    y2: 1,
+                                    colorStops: [{
+                                        offset: 0, color: 'rgba(102, 126, 234, 0.3)'
+                                    }, {
+                                        offset: 1, color: 'rgba(102, 126, 234, 0.1)'
+                                    }]
+                                }
+                            },
+                            itemStyle: {
+                                color: '#667eea'
+                            },
+                            lineStyle: {
+                                width: 3
+                            }
+                        }]
+                    };
+                    salesChartInstance.setOption(option);
+                })
+                .catch(error => {
+                    console.error('Error loading sales chart:', error);
+                });
+        }
+        
+        function updateProfitChart(days) {
+            currentProfitDays = days;
+            updateFilterButtons('profit', days);
+            
+            fetch(`/api/dashboard/profit-discount?days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    const option = {
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: function(params) {
+                                return params.name + '<br/>' +
+                                       params.seriesName + ': ৳' + params.value.toLocaleString() + 
+                                       ' (' + params.percent + '%)';
+                            }
+                        },
+                        legend: {
+                            bottom: '5%',
+                            left: 'center'
+                        },
+                        series: [{
+                            name: 'Amount',
+                            type: 'pie',
+                            radius: ['40%', '70%'],
+                            avoidLabelOverlap: false,
+                            itemStyle: {
+                                borderRadius: 10,
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            },
+                            label: {
+                                show: true,
+                                formatter: function(params) {
+                                    return params.name + '\n৳' + params.value.toLocaleString();
+                                }
+                            },
+                            emphasis: {
+                                label: {
+                                    show: true,
+                                    fontSize: 14,
+                                    fontWeight: 'bold'
+                                }
+                            },
+                            data: [
+                                { value: data.profit, name: 'Profit', itemStyle: { color: '#667eea' } },
+                                { value: data.discount, name: 'Discount', itemStyle: { color: '#f5576c' } },
+                                { value: data.netProfit, name: 'Net Profit', itemStyle: { color: '#4facfe' } }
+                            ]
+                        }]
+                    };
+                    profitChartInstance.setOption(option);
+                })
+                .catch(error => {
+                    console.error('Error loading profit chart:', error);
+                });
+        }
+        
+        function updateTopProductsChart(days) {
+            currentTopProductsDays = days;
+            updateFilterButtons('topProducts', days);
+            
+            fetch(`/api/dashboard/top-products?days=${days}&limit=10`)
+                .then(response => response.json())
+                .then(data => {
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: {
+                                type: 'shadow'
+                            },
+                            formatter: function(params) {
+                                let result = params[0].name + '<br/>';
+                                params.forEach(function(item) {
+                                    if (item.seriesName === 'Quantity') {
+                                        result += item.seriesName + ': ' + item.value + ' units<br/>';
+                                    } else {
+                                        result += item.seriesName + ': ৳' + item.value.toLocaleString() + '<br/>';
+                                    }
+                                });
+                                return result;
+                            }
+                        },
+                        legend: {
+                            data: ['Quantity Sold', 'Revenue'],
+                            top: '5%'
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            top: '15%',
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'value'
+                        },
+                        yAxis: {
+                            type: 'category',
+                            data: data.products,
+                            axisLabel: {
+                                interval: 0,
+                                formatter: function(value) {
+                                    return value.length > 20 ? value.substring(0, 20) + '...' : value;
+                                }
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'Quantity Sold',
+                                type: 'bar',
+                                data: data.quantities,
+                                itemStyle: {
+                                    color: '#667eea'
+                                }
+                            },
+                            {
+                                name: 'Revenue',
+                                type: 'bar',
+                                data: data.revenues,
+                                itemStyle: {
+                                    color: '#4facfe'
+                                },
+                                yAxisIndex: 0
+                            }
+                        ]
+                    };
+                    topProductsChartInstance.setOption(option);
+                })
+                .catch(error => {
+                    console.error('Error loading top products chart:', error);
+                });
+        }
+        
+        function updateFilterButtons(chartType, days) {
+            const buttons = document.querySelectorAll(`[onclick*="${chartType === 'sales' ? 'updateSalesChart' : chartType === 'profit' ? 'updateProfitChart' : 'updateTopProductsChart'}"]`);
+            buttons.forEach(btn => {
+                if (parseInt(btn.getAttribute('data-days')) === days) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

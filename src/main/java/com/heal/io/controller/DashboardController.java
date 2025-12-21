@@ -4,10 +4,18 @@ import com.heal.io.entity.Inventory;
 import com.heal.io.entity.ProductPackage;
 import com.heal.io.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -77,6 +85,94 @@ public class DashboardController {
         model.addAttribute("lowStockCount", lowStockCount);
         model.addAttribute("todaySalesCount", saleRepository.countTodaySales() != null ? saleRepository.countTodaySales() : 0L);
         return "dashboard";
+    }
+    
+    @GetMapping("/api/dashboard/sales-by-date")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getSalesByDate(
+            @RequestParam(defaultValue = "7") int days) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days - 1);
+        
+        List<Object[]> results = saleRepository.getSalesByDateRange(startDate, endDate.plusDays(1));
+        
+        List<String> dates = new ArrayList<>();
+        List<Double> amounts = new ArrayList<>();
+        
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd");
+        
+        // Fill in all dates in range, even if no sales
+        for (int i = 0; i < days; i++) {
+            LocalDate date = startDate.plusDays(i);
+            dates.add(date.format(formatter));
+            amounts.add(0.0);
+        }
+        
+        // Update with actual sales data
+        for (Object[] result : results) {
+            LocalDate saleDate = ((java.sql.Date) result[0]).toLocalDate();
+            BigDecimal totalAmount = (BigDecimal) result[1];
+            
+            int index = (int) java.time.temporal.ChronoUnit.DAYS.between(startDate, saleDate);
+            if (index >= 0 && index < days) {
+                amounts.set(index, totalAmount.doubleValue());
+            }
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("dates", dates);
+        response.put("amounts", amounts);
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/api/dashboard/top-products")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getTopProducts(
+            @RequestParam(defaultValue = "7") int days,
+            @RequestParam(defaultValue = "10") int limit) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days - 1);
+        
+        List<Object[]> results = saleRepository.getTopProductsByQuantity(startDate, endDate.plusDays(1), limit);
+        
+        List<String> productNames = new ArrayList<>();
+        List<Integer> quantities = new ArrayList<>();
+        List<Double> revenues = new ArrayList<>();
+        
+        for (Object[] result : results) {
+            productNames.add((String) result[0]);
+            quantities.add(((Number) result[1]).intValue());
+            revenues.add(((BigDecimal) result[2]).doubleValue());
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("products", productNames);
+        response.put("quantities", quantities);
+        response.put("revenues", revenues);
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/api/dashboard/profit-discount")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getProfitAndDiscount(
+            @RequestParam(defaultValue = "7") int days) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days - 1);
+        
+        Object[] result = saleRepository.getProfitAndDiscountByDateRange(startDate, endDate.plusDays(1));
+        
+        BigDecimal totalProfit = result[0] != null ? (BigDecimal) result[0] : BigDecimal.ZERO;
+        BigDecimal totalDiscount = result[1] != null ? (BigDecimal) result[1] : BigDecimal.ZERO;
+        BigDecimal totalNetProfit = totalProfit.subtract(totalDiscount);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("profit", totalProfit.doubleValue());
+        response.put("discount", totalDiscount.doubleValue());
+        response.put("netProfit", totalNetProfit.doubleValue());
+        
+        return ResponseEntity.ok(response);
     }
 }
 
