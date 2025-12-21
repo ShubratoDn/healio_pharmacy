@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(title='Login', description='Login to Healio Pharmacy Management System to access your pharmacy operations dashboard.', keywords='login, pharmacy login, pharmacy management login, sign in')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Healio Pharmacy Management</title>
+    <link rel="icon" type="image/png" href="/icon.png">
+    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body class="login-page">
     <div class="container">

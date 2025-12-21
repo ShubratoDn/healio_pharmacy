@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:insert="~{fragments/head :: head(title=${sale.id != null ? 'Edit Sale' : 'New Sale'}, description='Create or edit a sale transaction. Add products, calculate totals, apply discounts, and process payments.', keywords='new sale, create sale, edit sale, sale form, transaction, invoice')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Sale - Healio</title>
+    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="/lib/flatpickr/flatpickr.min.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .sale-form-container {
             display: grid;

@@ -1,9 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:insert="~{fragments/head :: head(title=${stockIn.id != null ? 'Edit Stock In' : 'New Stock In'}, description='Create or edit a stock in transaction. Add products received from suppliers, update inventory quantities, and manage purchase details.', keywords='new stock in, create stock in, edit stock in, stock in form, purchase form, inventory receipt')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Stock In - Healio</title>
+    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link href="/lib/select2/select2.min.css" rel="stylesheet" />
     <link href="/lib/select2/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <link href="/lib/flatpickr/flatpickr.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .summary-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

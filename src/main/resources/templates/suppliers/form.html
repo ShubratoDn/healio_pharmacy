@@ -1,8 +1,14 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head th:insert="~{fragments/head :: head(title=${supplier.id != null ? 'Edit Supplier' : 'Add Supplier'}, description='Add or edit supplier information including contact details, address, and associated manufacturers.', keywords='add supplier, edit supplier, supplier form, supplier management')}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${supplier.id != null} ? 'Edit Supplier' : 'Add Supplier'">Supplier Form - Healio</title>
+    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link href="/lib/select2/select2.min.css" rel="stylesheet" />
     <link href="/lib/select2/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .select2-container {
             width: 100% !important;
