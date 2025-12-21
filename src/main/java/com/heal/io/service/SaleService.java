@@ -201,6 +201,39 @@ public class SaleService {
     }
 
     /**
+     * Restore inventory from original sale items (used when editing a sale)
+     */
+    @Transactional
+    public void restoreInventoryFromSale(Sale originalSale) {
+        if (originalSale == null || originalSale.getItems() == null || originalSale.getItems().isEmpty()) {
+            return;
+        }
+        
+        // Load the sale with items to ensure we have the original items with inventory references
+        Sale saleWithItems = saleRepository.findById(originalSale.getId())
+                .orElse(null);
+        
+        if (saleWithItems == null || saleWithItems.getItems() == null) {
+            return;
+        }
+        
+        for (SaleItem originalItem : saleWithItems.getItems()) {
+            if (originalItem.getInventory() == null || originalItem.getQuantity() == null || originalItem.getQuantity() <= 0) {
+                continue;
+            }
+            
+            Inventory inventory = originalItem.getInventory();
+            Integer quantity = originalItem.getQuantity();
+            
+            // Restore the quantity that was deducted
+            inventory.setQuantity(inventory.getQuantity() + quantity);
+            inventory.setReservedQuantity(Math.max(0, inventory.getReservedQuantity() - quantity));
+            
+            inventoryRepository.save(inventory);
+        }
+    }
+
+    /**
      * Calculate profit for sale items
      */
     public void calculateProfit(SaleItem item) {

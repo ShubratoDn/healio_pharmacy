@@ -279,12 +279,21 @@ public class SaleController {
             
             // Update inventory if sale is completed
             if ("COMPLETED".equals(sale.getSaleStatus())) {
+                // If editing an existing sale, first restore the original inventory
+                if (existingSale != null && "COMPLETED".equals(existingSale.getSaleStatus())) {
+                    saleService.restoreInventoryFromSale(existingSale);
+                }
+                
+                // Then update inventory with new quantities
                 saleService.updateInventoryForSale(sale);
                 
                 // Calculate profit for each item
                 for (SaleItem item : sale.getItems()) {
                     saleService.calculateProfit(item);
                 }
+            } else if (existingSale != null && "COMPLETED".equals(existingSale.getSaleStatus())) {
+                // If sale status changed from COMPLETED to something else, restore inventory
+                saleService.restoreInventoryFromSale(existingSale);
             }
             
             saleRepository.save(sale);

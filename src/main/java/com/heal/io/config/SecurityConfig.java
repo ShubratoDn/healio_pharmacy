@@ -77,11 +77,16 @@ public class SecurityConfig {
                         .failureUrl("/login?error=true")
                         .permitAll()
                 )
+                .rememberMe(remember -> remember
+                        .key("healio-remember-me-key")
+                        .tokenValiditySeconds(86400 * 7) // 7 days
+                        .userDetailsService(userDetailsService)
+                )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
+                        .deleteCookies("JSESSIONID", "remember-me")
                         .permitAll()
                 );
 
