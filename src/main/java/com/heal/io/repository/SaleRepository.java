@@ -42,7 +42,9 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
        Page<Sale> findAllByOrderBySaleDateDesc(Pageable pageable);
 
-       @Query(value = "SELECT DATE(s.sale_date) as saleDate, COALESCE(SUM(s.total_amount), 0) as totalAmount " +
+       @Query(value = "SELECT DATE(s.sale_date) as saleDate, COALESCE(SUM(s.total_amount), 0) as totalAmount, " +
+                     "COALESCE(SUM((SELECT SUM(si.profit_amount) FROM sale_item si WHERE si.sale_id = s.id)), 0) as totalProfit "
+                     +
                      "FROM sale s WHERE s.sale_date >= :startDate AND s.sale_date < :endDate AND s.sale_status = 'COMPLETED' "
                      +
                      "GROUP BY DATE(s.sale_date) ORDER BY DATE(s.sale_date)", nativeQuery = true)

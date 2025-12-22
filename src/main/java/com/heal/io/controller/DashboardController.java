@@ -110,6 +110,7 @@ public class DashboardController {
 
         List<String> dates = new ArrayList<>();
         List<Double> amounts = new ArrayList<>();
+        List<Double> profits = new ArrayList<>();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd");
 
@@ -118,22 +119,26 @@ public class DashboardController {
             LocalDate date = startDate.plusDays(i);
             dates.add(date.format(formatter));
             amounts.add(0.0);
+            profits.add(0.0);
         }
 
         // Update with actual sales data
         for (Object[] result : results) {
             LocalDate saleDate = ((java.sql.Date) result[0]).toLocalDate();
             BigDecimal totalAmount = (BigDecimal) result[1];
+            BigDecimal totalProfit = (BigDecimal) result[2];
 
             int index = (int) java.time.temporal.ChronoUnit.DAYS.between(startDate, saleDate);
             if (index >= 0 && index < days) {
                 amounts.set(index, totalAmount.doubleValue());
+                profits.set(index, totalProfit.doubleValue());
             }
         }
 
         Map<String, Object> response = new HashMap<>();
         response.put("dates", dates);
         response.put("amounts", amounts);
+        response.put("profits", profits);
 
         return ResponseEntity.ok(response);
     }
