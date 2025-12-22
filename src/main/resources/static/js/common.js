@@ -1,7 +1,7 @@
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const mainContent = document.querySelector('.main-content');
-    
+
     // Enable transitions when user clicks (not on page load)
     if (!sidebar.classList.contains('transitions-enabled')) {
         sidebar.classList.add('transitions-enabled');
@@ -9,7 +9,7 @@ function toggleSidebar() {
             mainContent.classList.add('transitions-enabled');
         }
     }
-    
+
     if (window.innerWidth <= 768) {
         // On mobile, toggle show/hide
         const isShowing = sidebar.classList.toggle('show');
@@ -25,7 +25,7 @@ function toggleNavSection(element) {
     const navSection = element.closest('.nav-section');
     if (navSection) {
         navSection.classList.toggle('expanded');
-        
+
         // Save expanded state to localStorage
         const sectionId = element.getAttribute('data-section') || element.textContent.trim();
         const isExpanded = navSection.classList.contains('expanded');
@@ -36,17 +36,17 @@ function toggleNavSection(element) {
 function setupCollapsedHoverTooltips() {
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) return;
-    
+
     const navSections = sidebar.querySelectorAll('.nav-section');
-    
+
     navSections.forEach(section => {
         const toggleLink = section.querySelector('.nav-section-toggle');
         const submenu = section.querySelector('.nav-submenu');
-        
+
         if (!toggleLink || !submenu) return;
-        
+
         let hideTimeout;
-        
+
         function showTooltip() {
             if (sidebar.classList.contains('collapsed')) {
                 clearTimeout(hideTimeout);
@@ -54,18 +54,18 @@ function setupCollapsedHoverTooltips() {
                 updateTooltipPosition(toggleLink, submenu);
             }
         }
-        
+
         function hideTooltip() {
             clearTimeout(hideTimeout);
             hideTimeout = setTimeout(() => {
                 section.classList.remove('show-tooltip');
             }, 150);
         }
-        
+
         // Show tooltip on hover
         toggleLink.addEventListener('mouseenter', showTooltip);
         submenu.addEventListener('mouseenter', showTooltip);
-        
+
         // Hide tooltip when mouse leaves
         toggleLink.addEventListener('mouseleave', hideTooltip);
         submenu.addEventListener('mouseleave', hideTooltip);
@@ -80,15 +80,15 @@ function updateTooltipPosition(toggleLink, submenu) {
 }
 
 // Restore sidebar state on page load (without transitions)
-(function() {
-    document.addEventListener('DOMContentLoaded', function() {
+(function () {
+    document.addEventListener('DOMContentLoaded', function () {
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.querySelector('.main-content');
         if (!sidebar) return;
-        
+
         // Don't enable transitions on page load - only when user clicks
         // This prevents the transition animation when restoring state
-        
+
         if (window.innerWidth <= 768) {
             // Mobile: restore show/hide state
             const sidebarMobileShow = localStorage.getItem('sidebarMobileShow');
@@ -105,7 +105,7 @@ function updateTooltipPosition(toggleLink, submenu) {
                 sidebar.classList.remove('collapsed');
             }
         }
-        
+
         // Auto-expand sections with active sub-menu items only
         // Don't restore from localStorage - only expand if there's an active sub-menu item
         const navSections = sidebar.querySelectorAll('.nav-section');
@@ -119,15 +119,15 @@ function updateTooltipPosition(toggleLink, submenu) {
                 section.classList.remove('expanded');
             }
         });
-        
+
         // Setup hover tooltip positioning for collapsed sidebar
         setupCollapsedHoverTooltips();
-        
+
         // Handle window resize to maintain appropriate state
         let resizeTimeout;
-        window.addEventListener('resize', function() {
+        window.addEventListener('resize', function () {
             clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(function() {
+            resizeTimeout = setTimeout(function () {
                 // Temporarily disable transitions during resize
                 const hadTransitions = sidebar.classList.contains('transitions-enabled');
                 if (hadTransitions) {
@@ -136,7 +136,7 @@ function updateTooltipPosition(toggleLink, submenu) {
                         mainContent.classList.remove('transitions-enabled');
                     }
                 }
-                
+
                 if (window.innerWidth <= 768) {
                     // Switched to mobile: remove collapsed class, use show/hide
                     sidebar.classList.remove('collapsed');
@@ -154,10 +154,10 @@ function updateTooltipPosition(toggleLink, submenu) {
                         sidebar.classList.remove('collapsed');
                     }
                 }
-                
+
                 // Re-enable transitions after a short delay if they were enabled
                 if (hadTransitions) {
-                    setTimeout(function() {
+                    setTimeout(function () {
                         sidebar.classList.add('transitions-enabled');
                         if (mainContent) {
                             mainContent.classList.add('transitions-enabled');
@@ -170,41 +170,41 @@ function updateTooltipPosition(toggleLink, submenu) {
 })();
 
 // Product Search functionality
-(function() {
+(function () {
     let searchTimeout;
     let searchInput, searchClearBtn, searchSuggestions;
     let highlightedIndex = -1;
     let isSuggestionsVisible = false;
     let isNavigating = false; // Flag to prevent input handler from resetting highlight during navigation
-    
+
     // Initialize search when DOM is ready
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         searchInput = document.getElementById('productSearchInput');
         searchClearBtn = document.getElementById('searchClearBtn');
         searchSuggestions = document.getElementById('searchSuggestions');
-        
+
         if (searchInput) {
             initializeSearch();
         }
     });
-    
+
     function initializeSearch() {
         // Show/hide clear button based on input
-        searchInput.addEventListener('input', function() {
+        searchInput.addEventListener('input', function () {
             if (this.value.length > 0) {
                 searchClearBtn.style.display = 'block';
             } else {
                 searchClearBtn.style.display = 'none';
                 hideSuggestions();
             }
-            
+
             // Reset navigation flag when user types (typing means they're not navigating)
             isNavigating = false;
             handleSearchInput(this.value);
         });
-        
+
         // Handle keyboard navigation
-        searchInput.addEventListener('keydown', function(e) {
+        searchInput.addEventListener('keydown', function (e) {
             // Only handle navigation keys if suggestions are visible
             if (!isSuggestionsVisible) {
                 // Allow Enter to submit form if suggestions are not visible
@@ -213,10 +213,10 @@ function updateTooltipPosition(toggleLink, submenu) {
                 }
                 return;
             }
-            
+
             const suggestionItems = searchSuggestions.querySelectorAll('.suggestion-item:not(.no-results)');
-            
-            switch(e.key) {
+
+            switch (e.key) {
                 case 'ArrowDown':
                     e.preventDefault();
                     e.stopPropagation();
@@ -229,7 +229,7 @@ function updateTooltipPosition(toggleLink, submenu) {
                         scrollToHighlighted(suggestionItems[highlightedIndex]);
                     }
                     break;
-                    
+
                 case 'ArrowUp':
                     e.preventDefault();
                     e.stopPropagation();
@@ -242,7 +242,7 @@ function updateTooltipPosition(toggleLink, submenu) {
                         scrollToHighlighted(suggestionItems[highlightedIndex]);
                     }
                     break;
-                    
+
                 case 'Enter':
                     e.preventDefault();
                     if (highlightedIndex >= 0 && suggestionItems.length > 0 && suggestionItems[highlightedIndex]) {
@@ -257,7 +257,7 @@ function updateTooltipPosition(toggleLink, submenu) {
                         if (form) form.submit();
                     }
                     break;
-                    
+
                 case 'Escape':
                     e.preventDefault();
                     hideSuggestions();
@@ -265,17 +265,17 @@ function updateTooltipPosition(toggleLink, submenu) {
             }
         });
     }
-    
+
     function handleSearchInput(value) {
         clearTimeout(searchTimeout);
         const query = value.trim();
         const queryWithoutSpaces = query.replace(/\s/g, '');
-        
+
         // Reset highlight when user types (not when navigating)
         if (!isNavigating) {
             highlightedIndex = -1;
         }
-        
+
         if (queryWithoutSpaces.length >= 2) {
             searchTimeout = setTimeout(() => {
                 loadSearchSuggestions(query);
@@ -284,19 +284,19 @@ function updateTooltipPosition(toggleLink, submenu) {
             hideSuggestions();
         }
     }
-    
+
     function showSuggestions() {
         if (searchSuggestions.style.display !== 'none' && searchSuggestions.querySelectorAll('.suggestion-item:not(.no-results)').length > 0) {
             isSuggestionsVisible = true;
         }
     }
-    
+
     function hideSuggestions() {
         searchSuggestions.style.display = 'none';
         isSuggestionsVisible = false;
         highlightedIndex = -1;
     }
-    
+
     function updateHighlight(suggestionItems) {
         suggestionItems.forEach((item, index) => {
             if (index === highlightedIndex) {
@@ -306,20 +306,20 @@ function updateTooltipPosition(toggleLink, submenu) {
             }
         });
     }
-    
+
     function scrollToHighlighted(element) {
         if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     }
-    
+
     function loadSearchSuggestions(query) {
         const queryWithoutSpaces = query.replace(/\s/g, '');
         if (queryWithoutSpaces.length < 2) {
             searchSuggestions.style.display = 'none';
             return;
         }
-        
+
         fetch(`/products/api/search?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
@@ -341,21 +341,20 @@ function updateTooltipPosition(toggleLink, submenu) {
                 searchSuggestions.style.display = 'none';
             });
     }
-    
+
     function displaySearchResults(results) {
         let html = '';
         // Only reset highlight if user is not currently navigating
         if (!isNavigating) {
             highlightedIndex = -1;
         }
-        
+
         results.forEach((product, index) => {
-            const category = product.category || 'N/A';
-            const manufacturer = product.manufacturer || 'N/A';
-            const generic = product.generic || 'N/A';
+            const manufacturer = product.manufacturer || '';
+            const generic = product.generic || '';
             const dosageForm = product.dosageForm || '';
             const strength = product.strength || '';
-            
+
             html += `
                 <div class="suggestion-item" 
                      data-product-id="${product.id}"
@@ -367,47 +366,46 @@ function updateTooltipPosition(toggleLink, submenu) {
                         ${strength ? `<span class="text-muted ms-2">[${escapeHtml(strength)}]</span>` : ''}
                     </div>
                     <div class="suggestion-item-details">
-                        <span class="badge bg-secondary me-2">${escapeHtml(category)}</span>
                         ${dosageForm ? `<span class="badge bg-info me-2"><i class="bi bi-capsule-pill me-1"></i>${escapeHtml(dosageForm)}</span>` : ''}
-                        ${manufacturer !== 'N/A' ? `<span class="text-muted"><i class="bi bi-building me-1"></i>${escapeHtml(manufacturer)}</span>` : ''}
-                        ${generic !== 'N/A' ? `<span class="text-muted ms-2"><i class="bi bi-pill me-1"></i>${escapeHtml(generic)}</span>` : ''}
+                        ${manufacturer ? `<span class="text-muted"><i class="bi bi-building me-1"></i>${escapeHtml(manufacturer)}</span>` : ''}
+                        ${generic ? `<span class="text-muted ms-2"><i class="bi bi-pill me-1"></i>${escapeHtml(generic)}</span>` : ''}
                     </div>
                 </div>
             `;
         });
-        
+
         searchSuggestions.innerHTML = html;
         searchSuggestions.style.display = 'block';
         isSuggestionsVisible = true;
-        
+
         // Add mouse hover support
         const suggestionItems = searchSuggestions.querySelectorAll('.suggestion-item:not(.no-results)');
         suggestionItems.forEach((item, index) => {
-            item.addEventListener('mouseenter', function() {
+            item.addEventListener('mouseenter', function () {
                 highlightedIndex = index;
                 updateHighlight(suggestionItems);
             });
         });
     }
-    
-    window.navigateToProduct = function(productId) {
+
+    window.navigateToProduct = function (productId) {
         window.location.href = `/products/${productId}`;
     };
-    
-    window.clearSearch = function() {
+
+    window.clearSearch = function () {
         searchInput.value = '';
         searchClearBtn.style.display = 'none';
         hideSuggestions();
     };
-    
+
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-    
+
     // Close suggestions when clicking outside
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', function (event) {
         if (!event.target.closest('.navbar-search-container')) {
             hideSuggestions();
         }
@@ -428,9 +426,9 @@ function updateTooltipPosition(toggleLink, submenu) {
 //   - data-required="true" - if field is required (defaults to today if empty)
 //   - data-default-today="true" - set today as default if empty
 //   - data-hidden-input="id" - ID of hidden input for form submission (auto-detected if not specified)
-(function() {
+(function () {
     'use strict';
-    
+
     // Format date for display: "18-Apr-2025"
     function formatDateForDisplay(date) {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -439,7 +437,7 @@ function updateTooltipPosition(toggleLink, submenu) {
         const year = date.getFullYear();
         return `${day}-${month}-${year}`;
     }
-    
+
     // Format datetime for display: "18-Apr-2025 10:25 AM"
     function formatDateTimeForDisplay(date) {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -454,7 +452,7 @@ function updateTooltipPosition(toggleLink, submenu) {
         const minutesStr = minutes < 10 ? '0' + minutes : minutes;
         return `${day}-${month}-${year} ${hours}:${minutesStr} ${ampm}`;
     }
-    
+
     // Parse date from display format or hidden input
     function parseInitialDate(inputElement, hiddenElement) {
         // First try to get from hidden input (backend format: yyyy-MM-dd or yyyy-MM-ddTHH:mm)
@@ -466,17 +464,17 @@ function updateTooltipPosition(toggleLink, submenu) {
                 return new Date(dateStr + 'T00:00:00');
             }
         }
-        
+
         // Try to parse from display input (format: dd-MMM-yyyy or dd-MMM-yyyy HH:mm AM/PM)
         if (inputElement.value) {
             const dateStr = inputElement.value.trim();
             if (!dateStr) return null;
-            
+
             // Try to parse "dd-MMM-yyyy" format
             const parts = dateStr.split(' ');
             const datePart = parts[0];
             const dateParts = datePart.split('-');
-            
+
             if (dateParts.length === 3) {
                 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                 const monthIndex = months.indexOf(dateParts[1]);
@@ -484,7 +482,7 @@ function updateTooltipPosition(toggleLink, submenu) {
                     const day = parseInt(dateParts[0]);
                     const month = monthIndex;
                     const year = parseInt(dateParts[2]);
-                    
+
                     // If there's a time part, parse it
                     if (parts.length >= 3) {
                         const timePart = parts[1];
@@ -495,25 +493,25 @@ function updateTooltipPosition(toggleLink, submenu) {
                         if (ampm === 'AM' && hour24 === 12) hour24 = 0;
                         return new Date(year, month, day, hour24, minutes);
                     }
-                    
+
                     return new Date(year, month, day);
                 }
             }
         }
-        
+
         return null;
     }
-    
+
     // Initialize Flatpickr for a date/datetime field
     function initializeDatePicker(inputElement) {
         if (!inputElement || inputElement.hasAttribute('data-flatpickr-initialized')) {
             return;
         }
-        
+
         const isDateTime = inputElement.classList.contains('datetime-picker');
         const isRequired = inputElement.getAttribute('data-required') === 'true' || inputElement.hasAttribute('required');
         const defaultToday = inputElement.getAttribute('data-default-today') === 'true' || isRequired;
-        
+
         // Find or create hidden input for form submission
         let hiddenElement = null;
         const hiddenInputId = inputElement.getAttribute('data-hidden-input');
@@ -530,15 +528,15 @@ function updateTooltipPosition(toggleLink, submenu) {
                 hiddenElement = inputElement.parentElement.querySelector('input[type="hidden"]');
             }
         }
-        
+
         // Parse initial date
         let initialDate = parseInitialDate(inputElement, hiddenElement);
-        
+
         // Set default to today if required and no date exists
         if (!initialDate && defaultToday) {
             initialDate = new Date();
         }
-        
+
         // Configure Flatpickr options
         const flatpickrOptions = {
             enableTime: isDateTime,
@@ -547,23 +545,23 @@ function updateTooltipPosition(toggleLink, submenu) {
             defaultDate: initialDate,
             allowInput: false,
             clickOpens: true,
-            onChange: function(selectedDates, dateStr, instance) {
+            onChange: function (selectedDates, dateStr, instance) {
                 if (selectedDates.length > 0) {
                     const date = selectedDates[0];
-                    
+
                     // Update display with custom format
                     if (isDateTime) {
                         inputElement.value = formatDateTimeForDisplay(date);
                     } else {
                         inputElement.value = formatDateForDisplay(date);
                     }
-                    
+
                     // Update hidden input for form submission in backend format
                     if (hiddenElement) {
                         const year = date.getFullYear();
                         const month = String(date.getMonth() + 1).padStart(2, '0');
                         const day = String(date.getDate()).padStart(2, '0');
-                        
+
                         if (isDateTime) {
                             const hours = String(date.getHours()).padStart(2, '0');
                             const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -599,7 +597,7 @@ function updateTooltipPosition(toggleLink, submenu) {
                     }
                 }
             },
-            onReady: function(selectedDates, dateStr, instance) {
+            onReady: function (selectedDates, dateStr, instance) {
                 // Format initial display value
                 if (selectedDates.length > 0) {
                     const date = selectedDates[0];
@@ -608,7 +606,7 @@ function updateTooltipPosition(toggleLink, submenu) {
                     } else {
                         inputElement.value = formatDateForDisplay(date);
                     }
-                    
+
                     // Initialize hidden input if it exists and is empty
                     if (hiddenElement && !hiddenElement.value) {
                         const year = date.getFullYear();
@@ -625,16 +623,16 @@ function updateTooltipPosition(toggleLink, submenu) {
                 }
             }
         };
-        
+
         // Initialize Flatpickr
         const flatpickrInstance = flatpickr(inputElement, flatpickrOptions);
-        
+
         // Mark as initialized
         inputElement.setAttribute('data-flatpickr-initialized', 'true');
-        
+
         return flatpickrInstance;
     }
-    
+
     // Initialize all date pickers on page load
     function initializeAllDatePickers() {
         // Check if Flatpickr is loaded
@@ -642,14 +640,14 @@ function updateTooltipPosition(toggleLink, submenu) {
             console.warn('Flatpickr is not loaded. Date pickers will not be initialized.');
             return;
         }
-        
+
         // Find all date picker inputs
         const dateInputs = document.querySelectorAll('.date-picker, .datetime-picker');
-        dateInputs.forEach(function(input) {
+        dateInputs.forEach(function (input) {
             initializeDatePicker(input);
         });
     }
-    
+
     // Initialize on DOM ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeAllDatePickers);
@@ -657,12 +655,12 @@ function updateTooltipPosition(toggleLink, submenu) {
         // DOM is already ready
         initializeAllDatePickers();
     }
-    
+
     // Re-initialize after dynamic content is added (for AJAX-loaded content)
-    window.reinitializeDatePickers = function() {
+    window.reinitializeDatePickers = function () {
         initializeAllDatePickers();
     };
-    
+
     // Export function for manual initialization
     window.initializeDatePicker = initializeDatePicker;
 })();

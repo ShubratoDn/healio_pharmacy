@@ -4,7 +4,7 @@ import com.heal.io.entity.Inventory;
 import com.heal.io.entity.Product;
 import com.heal.io.entity.ProductPackage;
 import com.heal.io.repository.InventoryRepository;
-import com.heal.io.repository.ProductCategoryRepository;
+import com.heal.io.repository.DosageFormRepository;
 import com.heal.io.repository.ManufacturerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class InventoryController {
 
     private final InventoryRepository inventoryRepository;
-    private final ProductCategoryRepository categoryRepository;
+    private final DosageFormRepository dosageFormRepository;
     private final ManufacturerRepository manufacturerRepository;
 
     @GetMapping
@@ -36,57 +36,58 @@ public class InventoryController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long dosageFormId,
             @RequestParam(required = false) Long manufacturerId,
             @RequestParam(required = false) String status,
             Model model) {
-        
+
         // Get all active inventory entries
         List<Inventory> allInventories = inventoryRepository.findAllActiveInventories();
-        
+
         // Filter by search criteria
         if (search != null && !search.isEmpty()) {
             String searchLower = search.toLowerCase();
             allInventories = allInventories.stream()
                     .filter(inv -> {
                         Product product = inv.getProduct();
-                        if (product == null) return false;
-                        
-                        boolean matchesName = product.getName() != null && 
-                                             product.getName().toLowerCase().contains(searchLower);
-                        boolean matchesManufacturer = product.getManufacturer() != null && 
-                                                     product.getManufacturer().getName() != null &&
-                                                     product.getManufacturer().getName().toLowerCase().contains(searchLower);
-                        boolean matchesGeneric = product.getGeneric() != null && 
-                                                product.getGeneric().getName() != null &&
-                                                product.getGeneric().getName().toLowerCase().contains(searchLower);
+                        if (product == null)
+                            return false;
+
+                        boolean matchesName = product.getName() != null &&
+                                product.getName().toLowerCase().contains(searchLower);
+                        boolean matchesManufacturer = product.getManufacturer() != null &&
+                                product.getManufacturer().getName() != null &&
+                                product.getManufacturer().getName().toLowerCase().contains(searchLower);
+                        boolean matchesGeneric = product.getGeneric() != null &&
+                                product.getGeneric().getName() != null &&
+                                product.getGeneric().getName().toLowerCase().contains(searchLower);
                         boolean matchesPackage = inv.getProductPackage() != null &&
-                                                inv.getProductPackage().getPackageDescription() != null &&
-                                                inv.getProductPackage().getPackageDescription().toLowerCase().contains(searchLower);
-                        
+                                inv.getProductPackage().getPackageDescription() != null &&
+                                inv.getProductPackage().getPackageDescription().toLowerCase().contains(searchLower);
+
                         return matchesName || matchesManufacturer || matchesGeneric || matchesPackage;
                     })
                     .collect(Collectors.toList());
         }
-        
-        // Filter by category
-        if (categoryId != null) {
+
+        // Filter by dosage form
+        if (dosageFormId != null) {
             allInventories = allInventories.stream()
-                    .filter(inv -> inv.getProduct() != null && 
-                                 inv.getProduct().getProductCategory() != null &&
-                                 inv.getProduct().getProductCategory().getId().equals(categoryId))
+                    .filter(inv -> inv.getProduct() != null &&
+                            inv.getProduct().getDosageForm() != null &&
+                            inv.getProduct().getDosageForm().getId().equals(dosageFormId))
                     .collect(Collectors.toList());
         }
-        
+
         // Filter by manufacturer
         if (manufacturerId != null) {
             allInventories = allInventories.stream()
-                    .filter(inv -> inv.getProduct() != null && 
-                                 inv.getProduct().getManufacturer() != null &&
-                                 inv.getProduct().getManufacturer().getId().equals(manufacturerId))
+                    .filter(inv -> inv.getProduct() != null &&
+                            inv.getProduct().getManufacturer() != null &&
+                            inv.getProduct().getManufacturer().getId().equals(manufacturerId))
                     .collect(Collectors.toList());
         }
-        
+
         // Group inventory by product and package
         Map<String, List<Inventory>> groupedInventories = allInventories.stream()
                 .collect(Collectors.groupingBy(inv -> {
@@ -94,30 +95,31 @@ public class InventoryController {
                     Long packageId = inv.getProductPackage() != null ? inv.getProductPackage().getId() : 0L;
                     return productId + "_" + packageId;
                 }));
-        
+
         // Create inventory data for each product-package combination
         List<Map<String, Object>> inventoryData = groupedInventories.entrySet().stream()
                 .map(entry -> {
                     List<Inventory> inventories = entry.getValue();
-                    if (inventories.isEmpty()) return null;
-                    
+                    if (inventories.isEmpty())
+                        return null;
+
                     Inventory firstInv = inventories.get(0);
                     Product product = firstInv.getProduct();
                     ProductPackage productPackage = firstInv.getProductPackage();
-                    
+
                     // Aggregate quantities for this product-package combination
                     int totalQuantity = inventories.stream()
                             .mapToInt(Inventory::getQuantity)
                             .sum();
-                    
+
                     int totalAvailable = inventories.stream()
                             .mapToInt(Inventory::getAvailableQuantity)
                             .sum();
-                    
+
                     int totalReserved = inventories.stream()
                             .mapToInt(Inventory::getReservedQuantity)
                             .sum();
-                    
+
                     // Check if low stock
                     boolean isLowStock = false;
                     if (productPackage != null && productPackage.getLowStock() != null) {
@@ -126,7 +128,7 @@ public class InventoryController {
                         Integer reorderLevel = firstInv.getReorderLevel() != null ? firstInv.getReorderLevel() : 10;
                         isLowStock = totalAvailable <= reorderLevel;
                     }
-                    
+
                     // Determine stock status: 0=Out of Stock, 1=Low Stock, 2=In Stock
                     int stockStatus;
                     if (totalAvailable == 0) {
@@ -136,7 +138,7 @@ public class InventoryController {
                     } else {
                         stockStatus = 2; // In Stock
                     }
-                    
+
                     Map<String, Object> data = new HashMap<>();
                     data.put("product", product);
                     data.put("productPackage", productPackage);
@@ -150,7 +152,7 @@ public class InventoryController {
                 })
                 .filter(data -> data != null)
                 .collect(Collectors.toList());
-        
+
         // Filter by status if provided
         if (status != null && !status.isEmpty()) {
             final String statusFilter = status.toUpperCase();
@@ -166,7 +168,7 @@ public class InventoryController {
                     })
                     .collect(Collectors.toList());
         }
-        
+
         // Sort: Low Stock first (1), then Out of Stock (0), then In Stock (2)
         // Within each status, sort by stock quantity in ascending order
         inventoryData.sort(Comparator.comparing((Map<String, Object> data) -> {
@@ -183,20 +185,20 @@ public class InventoryController {
             Integer totalAvailable = (Integer) data.get("totalAvailable");
             return totalAvailable != null ? totalAvailable : 0;
         }));
-        
+
         // Manual pagination
         int totalElements = inventoryData.size();
         int totalPages = (int) Math.ceil((double) totalElements / size);
         int start = page * size;
         int end = Math.min(start + size, totalElements);
-        
-        List<Map<String, Object>> paginatedData = start < totalElements 
-            ? inventoryData.subList(start, end)
-            : List.of();
-        
+
+        List<Map<String, Object>> paginatedData = start < totalElements
+                ? inventoryData.subList(start, end)
+                : List.of();
+
         // Create a dummy Page object for pagination display
         Page<Map<String, Object>> pageResult = new PageImpl<>(paginatedData, PageRequest.of(page, size), totalElements);
-        
+
         model.addAttribute("inventoryData", paginatedData);
         model.addAttribute("products", pageResult);
         model.addAttribute("currentPage", page);
@@ -204,13 +206,12 @@ public class InventoryController {
         model.addAttribute("pageSize", size);
         model.addAttribute("totalElements", totalElements);
         model.addAttribute("search", search);
-        model.addAttribute("categoryId", categoryId);
+        model.addAttribute("dosageFormId", dosageFormId);
         model.addAttribute("manufacturerId", manufacturerId);
         model.addAttribute("status", status);
-        model.addAttribute("categories", categoryRepository.findByIsActiveTrue());
-        model.addAttribute("manufacturers", manufacturerRepository.findByIsActiveTrue());
-        
+        model.addAttribute("dosageForms", dosageFormRepository.findAll());
+        model.addAttribute("manufacturers", manufacturerRepository.findAll());
+
         return "inventory/list";
     }
 }
-

@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 public class ProductController {
 
     private final ProductRepository productRepository;
-    private final ProductCategoryRepository categoryRepository;
     private final ManufacturerRepository manufacturerRepository;
     private final DosageFormRepository dosageFormRepository;
     private final GenericRepository genericRepository;
@@ -60,7 +59,6 @@ public class ProductController {
     @GetMapping("/new")
     public String showProductForm(Model model) {
         model.addAttribute("product", new Product());
-        model.addAttribute("categories", categoryRepository.findByIsActiveTrue());
         model.addAttribute("manufacturers", manufacturerRepository.findByIsActiveTrue());
         model.addAttribute("dosageForms", dosageFormRepository.findAll());
         model.addAttribute("generics", genericRepository.findAll());
@@ -80,62 +78,57 @@ public class ProductController {
             @RequestParam(value = "units", required = false) List<String> units,
             @RequestParam(value = "lowStocks", required = false) List<String> lowStocks,
             RedirectAttributes redirectAttributes) {
-        
+
         Product savedProduct;
         if (product.getId() != null) {
             Product existing = productRepository.findById(product.getId())
                     .orElseThrow(() -> new RuntimeException("Product not found"));
-            // Preserve existing relationships if not provided
-            if (product.getProductCategory() != null && product.getProductCategory().getId() != null) {
-                existing.setProductCategory(categoryRepository.findById(product.getProductCategory().getId()).orElse(null));
-            }
-            if (product.getManufacturer() != null && product.getManufacturer().getId() != null) {
-                existing.setManufacturer(manufacturerRepository.findById(product.getManufacturer().getId()).orElse(null));
-            }
-            if (product.getMedicineType() != null && product.getMedicineType().getId() != null) {
-                existing.setMedicineType(medicineTypeRepository.findById(product.getMedicineType().getId()).orElse(null));
-            }
-            if (product.getDosageForm() != null && product.getDosageForm().getId() != null) {
-                existing.setDosageForm(dosageFormRepository.findById(product.getDosageForm().getId()).orElse(null));
-            }
-            if (product.getGeneric() != null && product.getGeneric().getId() != null) {
-                existing.setGeneric(genericRepository.findById(product.getGeneric().getId()).orElse(null));
-            }
+            // Handle relationships
+            existing.setManufacturer((product.getManufacturer() != null && product.getManufacturer().getId() != null)
+                    ? manufacturerRepository.findById(product.getManufacturer().getId()).orElse(null)
+                    : null);
+            existing.setMedicineType((product.getMedicineType() != null && product.getMedicineType().getId() != null)
+                    ? medicineTypeRepository.findById(product.getMedicineType().getId()).orElse(null)
+                    : null);
+            existing.setDosageForm((product.getDosageForm() != null && product.getDosageForm().getId() != null)
+                    ? dosageFormRepository.findById(product.getDosageForm().getId()).orElse(null)
+                    : null);
+            existing.setGeneric((product.getGeneric() != null && product.getGeneric().getId() != null)
+                    ? genericRepository.findById(product.getGeneric().getId()).orElse(null)
+                    : null);
             existing.setName(product.getName());
             existing.setStrength(product.getStrength());
             existing.setDescription(product.getDescription());
             existing.setRequiresPrescription(product.getRequiresPrescription());
             savedProduct = productRepository.save(existing);
-            
+
             // Delete existing packages that are not in the submitted list
             List<ProductPackage> existingPackages = productPackageRepository.findByProductId(savedProduct.getId());
             if (packageIds != null) {
                 existingPackages.stream()
-                    .filter(pkg -> !packageIds.contains(pkg.getId()))
-                    .forEach(productPackageRepository::delete);
+                        .filter(pkg -> !packageIds.contains(pkg.getId()))
+                        .forEach(productPackageRepository::delete);
             } else {
                 existingPackages.forEach(productPackageRepository::delete);
             }
         } else {
-            // Load full entities for new product
-            if (product.getProductCategory() != null && product.getProductCategory().getId() != null) {
-                product.setProductCategory(categoryRepository.findById(product.getProductCategory().getId()).orElse(null));
-            }
-            if (product.getManufacturer() != null && product.getManufacturer().getId() != null) {
-                product.setManufacturer(manufacturerRepository.findById(product.getManufacturer().getId()).orElse(null));
-            }
-            if (product.getMedicineType() != null && product.getMedicineType().getId() != null) {
-                product.setMedicineType(medicineTypeRepository.findById(product.getMedicineType().getId()).orElse(null));
-            }
-            if (product.getDosageForm() != null && product.getDosageForm().getId() != null) {
-                product.setDosageForm(dosageFormRepository.findById(product.getDosageForm().getId()).orElse(null));
-            }
-            if (product.getGeneric() != null && product.getGeneric().getId() != null) {
-                product.setGeneric(genericRepository.findById(product.getGeneric().getId()).orElse(null));
-            }
+            // Handle relationships - ensure transient objects from Spring binding are
+            // cleared
+            product.setManufacturer((product.getManufacturer() != null && product.getManufacturer().getId() != null)
+                    ? manufacturerRepository.findById(product.getManufacturer().getId()).orElse(null)
+                    : null);
+            product.setMedicineType((product.getMedicineType() != null && product.getMedicineType().getId() != null)
+                    ? medicineTypeRepository.findById(product.getMedicineType().getId()).orElse(null)
+                    : null);
+            product.setDosageForm((product.getDosageForm() != null && product.getDosageForm().getId() != null)
+                    ? dosageFormRepository.findById(product.getDosageForm().getId()).orElse(null)
+                    : null);
+            product.setGeneric((product.getGeneric() != null && product.getGeneric().getId() != null)
+                    ? genericRepository.findById(product.getGeneric().getId()).orElse(null)
+                    : null);
             savedProduct = productRepository.save(product);
         }
-        
+
         // Save packages
         if (packageDescriptions != null && !packageDescriptions.isEmpty()) {
             for (int i = 0; i < packageDescriptions.size(); i++) {
@@ -150,22 +143,27 @@ public class ProductController {
                         // Create new package
                         productPackage = new ProductPackage();
                     }
-                    
+
                     productPackage.setProduct(savedProduct);
                     productPackage.setPackageDescription(description.trim());
-                    productPackage.setPackageSize((packageSizes != null && i < packageSizes.size()) ? packageSizes.get(i) : null);
-                    
+                    productPackage.setPackageSize(
+                            (packageSizes != null && i < packageSizes.size()) ? packageSizes.get(i) : null);
+
                     try {
-                        if (unitPrices != null && i < unitPrices.size() && unitPrices.get(i) != null && !unitPrices.get(i).trim().isEmpty()) {
+                        if (unitPrices != null && i < unitPrices.size() && unitPrices.get(i) != null
+                                && !unitPrices.get(i).trim().isEmpty()) {
                             productPackage.setUnitPrice(new BigDecimal(unitPrices.get(i).trim()));
                         }
-                        if (quantities != null && i < quantities.size() && quantities.get(i) != null && !quantities.get(i).trim().isEmpty()) {
+                        if (quantities != null && i < quantities.size() && quantities.get(i) != null
+                                && !quantities.get(i).trim().isEmpty()) {
                             productPackage.setQuantityPerPackage(Integer.parseInt(quantities.get(i).trim()));
                         }
-                        if (units != null && i < units.size() && units.get(i) != null && !units.get(i).trim().isEmpty()) {
+                        if (units != null && i < units.size() && units.get(i) != null
+                                && !units.get(i).trim().isEmpty()) {
                             productPackage.setUnitOfMeasure(units.get(i).trim());
                         }
-                        if (lowStocks != null && i < lowStocks.size() && lowStocks.get(i) != null && !lowStocks.get(i).trim().isEmpty()) {
+                        if (lowStocks != null && i < lowStocks.size() && lowStocks.get(i) != null
+                                && !lowStocks.get(i).trim().isEmpty()) {
                             try {
                                 productPackage.setLowStock(Integer.parseInt(lowStocks.get(i).trim()));
                             } catch (NumberFormatException e) {
@@ -178,12 +176,12 @@ public class ProductController {
                         // Log error but continue
                         redirectAttributes.addFlashAttribute("error", "Error saving package: " + e.getMessage());
                     }
-                    
+
                     productPackageRepository.save(productPackage);
                 }
             }
         }
-        
+
         redirectAttributes.addFlashAttribute("success", "Product saved successfully!");
         return "redirect:/products";
     }
@@ -192,11 +190,8 @@ public class ProductController {
     public String viewProduct(@PathVariable Long id, Model model) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
-        
+
         // Initialize lazy-loaded relationships
-        if (product.getProductCategory() != null) {
-            product.getProductCategory().getName();
-        }
         if (product.getManufacturer() != null) {
             product.getManufacturer().getName();
         }
@@ -209,21 +204,21 @@ public class ProductController {
         if (product.getMedicineType() != null) {
             product.getMedicineType().getName();
         }
-        
+
         // Load packages
         List<ProductPackage> packages = productPackageRepository.findByProductId(id);
         packages.forEach(pkg -> {
             // Initialize package
             pkg.getPackageDescription();
         });
-        
+
         // Load inventory grouped by package
         List<Inventory> inventories = inventoryRepository.findByProductId(id);
         Map<Long, List<Inventory>> inventoryByPackage = inventories.stream()
                 .filter(inv -> inv.getIsActive() != null && inv.getIsActive())
-                .collect(Collectors.groupingBy(inv -> 
-                    inv.getProductPackage() != null ? inv.getProductPackage().getId() : 0L));
-        
+                .collect(Collectors
+                        .groupingBy(inv -> inv.getProductPackage() != null ? inv.getProductPackage().getId() : 0L));
+
         // Calculate total inventory stats
         int totalQuantity = inventories.stream()
                 .filter(inv -> inv.getIsActive() != null && inv.getIsActive())
@@ -233,13 +228,14 @@ public class ProductController {
                 .filter(inv -> inv.getIsActive() != null && inv.getIsActive())
                 .mapToInt(Inventory::getAvailableQuantity)
                 .sum();
-        
+
         // Calculate stock status: 0=Out of Stock, 1=Low Stock, 2=In Stock
         int stockStatus;
         if (totalAvailable == 0) {
             stockStatus = 0; // Out of Stock
         } else {
-            // Determine low stock threshold - use the minimum lowStock from packages or default reorder level
+            // Determine low stock threshold - use the minimum lowStock from packages or
+            // default reorder level
             Integer lowStockThreshold = null;
             for (ProductPackage pkg : packages) {
                 if (pkg.getLowStock() != null) {
@@ -262,14 +258,14 @@ public class ProductController {
             } else if (lowStockThreshold == null) {
                 lowStockThreshold = 10; // Default
             }
-            
+
             if (totalAvailable <= lowStockThreshold) {
                 stockStatus = 1; // Low Stock
             } else {
                 stockStatus = 2; // In Stock
             }
         }
-        
+
         // Get purchase prices for packages
         Map<Long, BigDecimal> purchasePrices = new HashMap<>();
         for (ProductPackage pkg : packages) {
@@ -279,7 +275,7 @@ public class ProductController {
                 purchasePrices.put(pkg.getId(), unitCosts.get(0)); // Get the most recent price
             }
         }
-        
+
         // Calculate percentage for progress bar
         double percentage = 0.0;
         if (totalQuantity > 0) {
@@ -287,7 +283,7 @@ public class ProductController {
         } else if (totalAvailable > 0) {
             percentage = 100.0;
         }
-        
+
         model.addAttribute("product", product);
         model.addAttribute("packages", packages);
         model.addAttribute("inventoryByPackage", inventoryByPackage);
@@ -296,7 +292,7 @@ public class ProductController {
         model.addAttribute("stockStatus", stockStatus);
         model.addAttribute("inventoryPercentage", percentage);
         model.addAttribute("purchasePrices", purchasePrices);
-        
+
         return "products/view";
     }
 
@@ -305,15 +301,14 @@ public class ProductController {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         model.addAttribute("product", product);
-        model.addAttribute("categories", categoryRepository.findByIsActiveTrue());
         model.addAttribute("manufacturers", manufacturerRepository.findByIsActiveTrue());
         model.addAttribute("dosageForms", dosageFormRepository.findAll());
         model.addAttribute("generics", genericRepository.findAll());
         model.addAttribute("medicineTypes", medicineTypeRepository.findAll());
-        
+
         List<ProductPackage> packages = productPackageRepository.findByProductId(id);
         model.addAttribute("packages", packages);
-        
+
         // Fetch last purchase price for each package
         Map<Long, BigDecimal> purchasePrices = new HashMap<>();
         for (ProductPackage pkg : packages) {
@@ -324,7 +319,7 @@ public class ProductController {
             }
         }
         model.addAttribute("purchasePrices", purchasePrices);
-        
+
         return "products/form";
     }
 
@@ -344,25 +339,24 @@ public class ProductController {
         if (q == null || q.trim().isEmpty()) {
             return ResponseEntity.ok(List.of());
         }
-        
+
         Pageable pageable = PageRequest.of(0, 10); // Limit to 10 results for dropdown
         Page<Product> products = productRepository.searchProducts(q.trim(), pageable);
-        
+
         List<Map<String, Object>> results = products.getContent().stream()
                 .map(product -> {
                     Map<String, Object> result = new HashMap<>();
                     result.put("id", product.getId());
                     result.put("name", product.getName());
-                    result.put("category", product.getProductCategory() != null ? product.getProductCategory().getName() : "");
-                    result.put("manufacturer", product.getManufacturer() != null ? product.getManufacturer().getName() : "");
+                    result.put("manufacturer",
+                            product.getManufacturer() != null ? product.getManufacturer().getName() : "");
                     result.put("generic", product.getGeneric() != null ? product.getGeneric().getName() : "");
                     result.put("dosageForm", product.getDosageForm() != null ? product.getDosageForm().getName() : "");
                     result.put("strength", product.getStrength() != null ? product.getStrength() : "");
                     return result;
                 })
                 .collect(Collectors.toList());
-        
+
         return ResponseEntity.ok(results);
     }
 }
-

@@ -549,11 +549,16 @@
                 const stockBadge = product.availableQuantity > 0
                     ? `<span class="badge bg-success inventory-badge">Stock: ${product.availableQuantity}</span>`
                     : `<span class="badge bg-danger inventory-badge">Out of Stock</span>`;
+                const details = [];
+                if (product.manufacturer) details.push(product.manufacturer);
+                if (product.generic) details.push(product.generic);
+                if (product.strength) details.push(product.strength);
+
                 item.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <strong>${product.name}</strong><br>
-                            <small>${product.manufacturer || ''} | ${product.generic || ''} ${product.strength || ''}</small>
+                            <small>${details.join(' | ')}</small>
                         </div>
                         ${stockBadge}
                     </div>

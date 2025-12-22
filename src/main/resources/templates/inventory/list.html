@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +9,7 @@
     <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
+
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='inventory')}"></div>
     <div class="main-content">
@@ -17,30 +19,25 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <h4 class="mb-0"><i class="bi bi-boxes me-2"></i>Inventory</h4>
             </div>
-            
+
             <!-- Search and Filter Form -->
             <form method="get" action="/inventory" class="row g-3">
                 <div class="col-md-3">
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="Search products, packages..." 
-                           th:value="${search != null ? search : ''}">
+                    <input type="text" name="search" class="form-control" placeholder="Search products, packages..."
+                        th:value="${search != null ? search : ''}">
                 </div>
                 <div class="col-md-2">
-                    <select name="categoryId" class="form-select">
-                        <option value="">All Categories</option>
-                        <option th:each="cat : ${categories}" 
-                                th:value="${cat.id}" 
-                                th:text="${cat.name}"
-                                th:selected="${categoryId != null && categoryId == cat.id}"></option>
+                    <select name="dosageFormId" class="form-select">
+                        <option value="">All Dosage Forms</option>
+                        <option th:each="form : ${dosageForms}" th:value="${form.id}" th:text="${form.name}"
+                            th:selected="${dosageFormId != null && dosageFormId == form.id}"></option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <select name="manufacturerId" class="form-select">
                         <option value="">All Manufacturers</option>
-                        <option th:each="mfg : ${manufacturers}" 
-                                th:value="${mfg.id}" 
-                                th:text="${mfg.name}"
-                                th:selected="${manufacturerId != null && manufacturerId == mfg.id}"></option>
+                        <option th:each="mfg : ${manufacturers}" th:value="${mfg.id}" th:text="${mfg.name}"
+                            th:selected="${manufacturerId != null && manufacturerId == mfg.id}"></option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -77,7 +74,7 @@
                             <th>ID</th>
                             <th>Product Name</th>
                             <th>Package</th>
-                            <th>Category</th>
+                            <th>Dosage Form</th>
                             <th>Manufacturer</th>
                             <th class="text-center">Total Quantity</th>
                             <th class="text-center">Available</th>
@@ -90,24 +87,28 @@
                             <td th:text="${data.product.id}"></td>
                             <td>
                                 <strong th:text="${data.product.name}"></strong>
-                                <span class="text-muted" th:if="${data.product.strength != null && !data.product.strength.isEmpty()}" 
-                                      th:text="${' [' + data.product.strength + ']'}"></span>
+                                <span class="text-muted"
+                                    th:if="${data.product.strength != null && !data.product.strength.isEmpty()}"
+                                    th:text="${' [' + data.product.strength + ']'}"></span>
                                 <br>
-                                <small class="text-muted" th:if="${data.product.generic != null}" 
-                                       th:text="${'Generic: ' + data.product.generic.name}"></small>
+                                <small class="text-muted" th:if="${data.product.generic != null}"
+                                    th:text="${'Generic: ' + data.product.generic.name}"></small>
                             </td>
                             <td>
-                                <span th:if="${data.productPackage != null}" 
-                                      th:text="${data.productPackage.packageDescription}"></span>
+                                <span th:if="${data.productPackage != null}"
+                                    th:text="${data.productPackage.packageDescription}"></span>
                                 <span th:if="${data.productPackage == null}" class="text-muted">No Package</span>
                                 <br>
-                                <small class="text-muted" th:if="${data.productPackage != null && data.productPackage.unitPrice != null}">
-                                    <span th:text="${'৳' + #numbers.formatDecimal(data.productPackage.unitPrice, 1, 2)}"></span>
-                                    <span th:if="${data.productPackage.unitOfMeasure != null && !data.productPackage.unitOfMeasure.isEmpty()}"
-                                          th:text="${' / ' + data.productPackage.unitOfMeasure}"></span>
+                                <small class="text-muted"
+                                    th:if="${data.productPackage != null && data.productPackage.unitPrice != null}">
+                                    <span
+                                        th:text="${'৳' + #numbers.formatDecimal(data.productPackage.unitPrice, 1, 2)}"></span>
+                                    <span
+                                        th:if="${data.productPackage.unitOfMeasure != null && !data.productPackage.unitOfMeasure.isEmpty()}"
+                                        th:text="${' / ' + data.productPackage.unitOfMeasure}"></span>
                                 </small>
                             </td>
-                            <td th:text="${data.product.productCategory?.name}"></td>
+                            <td th:text="${data.product.dosageForm?.name}"></td>
                             <td th:text="${data.product.manufacturer?.name}"></td>
                             <td class="text-center">
                                 <span class="badge bg-info" th:text="${data.totalQuantity}"></span>
@@ -117,13 +118,14 @@
                             </td>
                             <td class="text-center">
                                 <span th:if="${data.totalAvailable == 0}" class="badge bg-danger">Out of Stock</span>
-                                <span th:if="${data.totalAvailable > 0 && data.isLowStock}" class="badge bg-warning">Low Stock</span>
-                                <span th:if="${data.totalAvailable > 0 && !data.isLowStock}" class="badge bg-success">In Stock</span>
+                                <span th:if="${data.totalAvailable > 0 && data.isLowStock}" class="badge bg-warning">Low
+                                    Stock</span>
+                                <span th:if="${data.totalAvailable > 0 && !data.isLowStock}" class="badge bg-success">In
+                                    Stock</span>
                             </td>
                             <td class="text-end">
-                                <a th:href="@{/products/edit/{id}(id=${data.product.id})}" 
-                                   class="btn btn-sm btn-warning" 
-                                   title="Edit Product">
+                                <a th:href="@{/products/edit/{id}(id=${data.product.id})}"
+                                    class="btn btn-sm btn-warning" title="Edit Product">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                             </td>
@@ -144,76 +146,80 @@
                     <ul class="pagination justify-content-center mb-2">
                         <!-- Previous Button -->
                         <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                            <a class="page-link" 
-                               th:href="@{/inventory(page=${currentPage > 0 ? currentPage - 1 : 0}, size=${pageSize}, search=${search}, categoryId=${categoryId}, manufacturerId=${manufacturerId}, status=${status})}"
-                               th:if="${currentPage > 0}">
+                            <a class="page-link"
+                                th:href="@{/inventory(page=${currentPage > 0 ? currentPage - 1 : 0}, size=${pageSize}, search=${search}, dosageFormId=${dosageFormId}, manufacturerId=${manufacturerId}, status=${status})}"
+                                th:if="${currentPage > 0}">
                                 <i class="bi bi-chevron-left"></i> Previous
                             </a>
-                            <span class="page-link" th:if="${currentPage == 0}" style="color: #6c757d; cursor: not-allowed; background-color: #f8f9fa;">
+                            <span class="page-link" th:if="${currentPage == 0}"
+                                style="color: #6c757d; cursor: not-allowed; background-color: #f8f9fa;">
                                 <i class="bi bi-chevron-left"></i> Previous
                             </span>
                         </li>
-                        
+
                         <!-- Always show first page -->
                         <li class="page-item" th:classappend="${currentPage == 0} ? 'active'">
-                            <a class="page-link" 
-                               th:href="@{/inventory(page=0, size=${pageSize}, search=${search}, categoryId=${categoryId}, manufacturerId=${manufacturerId}, status=${status})}">1</a>
+                            <a class="page-link"
+                                th:href="@{/inventory(page=0, size=${pageSize}, search=${search}, dosageFormId=${dosageFormId}, manufacturerId=${manufacturerId}, status=${status})}">1</a>
                         </li>
-                        
+
                         <!-- Calculate which pages to show -->
-                        <th:block th:with="
+                        <th:block
+                            th:with="
                             showEllipsisBefore=${currentPage > 4},
                             showEllipsisAfter=${currentPage < products.totalPages - 5},
                             startPage=${currentPage <= 4 ? 1 : (currentPage > products.totalPages - 5 ? (products.totalPages > 5 ? products.totalPages - 4 : 1) : currentPage - 2)},
                             endPage=${currentPage <= 4 ? (products.totalPages > 5 ? 5 : products.totalPages - 1) : (currentPage > products.totalPages - 5 ? products.totalPages - 2 : currentPage + 2)}">
-                            
+
                             <!-- Show ellipsis before middle pages -->
                             <li class="page-item disabled" th:if="${showEllipsisBefore}">
-                                <span class="page-link" style="background-color: #f8f9fa; color: #6c757d; border: none; cursor: default;">...</span>
+                                <span class="page-link"
+                                    style="background-color: #f8f9fa; color: #6c757d; border: none; cursor: default;">...</span>
                             </li>
-                            
+
                             <!-- Show pages around current page -->
-                            <li th:each="pageNum : ${#numbers.sequence(startPage, endPage)}" 
-                                th:if="${pageNum > 0 && pageNum < products.totalPages - 1}"
-                                class="page-item" 
+                            <li th:each="pageNum : ${#numbers.sequence(startPage, endPage)}"
+                                th:if="${pageNum > 0 && pageNum < products.totalPages - 1}" class="page-item"
                                 th:classappend="${pageNum == currentPage} ? 'active'">
-                                <a class="page-link" 
-                                   th:href="@{/inventory(page=${pageNum}, size=${pageSize}, search=${search}, categoryId=${categoryId}, manufacturerId=${manufacturerId}, status=${status})}"
-                                   th:text="${pageNum + 1}"></a>
+                                <a class="page-link"
+                                    th:href="@{/inventory(page=${pageNum}, size=${pageSize}, search=${search}, dosageFormId=${dosageFormId}, manufacturerId=${manufacturerId}, status=${status})}"
+                                    th:text="${pageNum + 1}"></a>
                             </li>
-                            
+
                             <!-- Show ellipsis after middle pages -->
                             <li class="page-item disabled" th:if="${showEllipsisAfter && products.totalPages > 6}">
-                                <span class="page-link" style="background-color: #f8f9fa; color: #6c757d; border: none; cursor: default;">...</span>
+                                <span class="page-link"
+                                    style="background-color: #f8f9fa; color: #6c757d; border: none; cursor: default;">...</span>
                             </li>
                         </th:block>
-                        
+
                         <!-- Always show last page (if more than 1 page) -->
-                        <li class="page-item" 
-                            th:if="${products.totalPages > 1}"
+                        <li class="page-item" th:if="${products.totalPages > 1}"
                             th:classappend="${currentPage == products.totalPages - 1} ? 'active'">
-                            <a class="page-link" 
-                               th:href="@{/inventory(page=${products.totalPages - 1}, size=${pageSize}, search=${search}, categoryId=${categoryId}, manufacturerId=${manufacturerId}, status=${status})}"
-                               th:text="${products.totalPages}"></a>
+                            <a class="page-link"
+                                th:href="@{/inventory(page=${products.totalPages - 1}, size=${pageSize}, search=${search}, dosageFormId=${dosageFormId}, manufacturerId=${manufacturerId}, status=${status})}"
+                                th:text="${products.totalPages}"></a>
                         </li>
-                        
+
                         <!-- Next Button -->
                         <li class="page-item" th:classappend="${currentPage == products.totalPages - 1} ? 'disabled'">
-                            <a class="page-link" 
-                               th:href="@{/inventory(page=${currentPage < products.totalPages - 1 ? currentPage + 1 : products.totalPages - 1}, size=${pageSize}, search=${search}, categoryId=${categoryId}, manufacturerId=${manufacturerId}, status=${status})}"
-                               th:if="${currentPage < products.totalPages - 1}">
+                            <a class="page-link"
+                                th:href="@{/inventory(page=${currentPage < products.totalPages - 1 ? currentPage + 1 : products.totalPages - 1}, size=${pageSize}, search=${search}, dosageFormId=${dosageFormId}, manufacturerId=${manufacturerId}, status=${status})}"
+                                th:if="${currentPage < products.totalPages - 1}">
                                 Next <i class="bi bi-chevron-right"></i>
                             </a>
-                            <span class="page-link" th:if="${currentPage == products.totalPages - 1}" style="color: #6c757d; cursor: not-allowed; background-color: #f8f9fa;">
+                            <span class="page-link" th:if="${currentPage == products.totalPages - 1}"
+                                style="color: #6c757d; cursor: not-allowed; background-color: #f8f9fa;">
                                 Next <i class="bi bi-chevron-right"></i>
                             </span>
                         </li>
                     </ul>
                 </nav>
-                
+
                 <!-- Showing X of Y text -->
                 <div class="text-center text-muted mt-2">
-                    <span th:text="'Showing ' + ${products.numberOfElements} + ' of ' + ${products.totalElements} + ' items'"></span>
+                    <span
+                        th:text="'Showing ' + ${products.numberOfElements} + ' of ' + ${products.totalElements} + ' items'"></span>
                 </div>
             </div>
         </div>
@@ -221,5 +227,5 @@
     <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
 </body>
-</html>
 
+</html>

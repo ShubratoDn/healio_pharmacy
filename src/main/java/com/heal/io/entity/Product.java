@@ -28,7 +28,7 @@ public class Product extends BaseEntity {
     private String slug;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_category_id", nullable = false)
+    @JoinColumn(name = "product_category_id", nullable = true)
     private ProductCategory productCategory;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -65,4 +65,3 @@ public class Product extends BaseEntity {
     @Builder.Default
     private List<Inventory> inventories = new ArrayList<>();
 }
-

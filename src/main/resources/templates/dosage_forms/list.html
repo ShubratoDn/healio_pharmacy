@@ -1,21 +1,24 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Categories - Healio</title>
+    <title>Dosage Forms - Healio</title>
     <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
+
 <body>
-    <div th:replace="~{fragments/sidebar :: sidebar(activePage='categories')}"></div>
+    <div th:replace="~{fragments/sidebar :: sidebar(activePage='dosage_forms')}"></div>
     <div class="main-content">
-        <div th:replace="~{fragments/navbar :: navbar(pageTitle='Product Categories')}"></div>
+        <div th:replace="~{fragments/navbar :: navbar(pageTitle='Dosage Forms')}"></div>
 
         <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
-            <h4 class="mb-0"><i class="bi bi-tags me-2"></i>Product Categories</h4>
-            <a href="/categories/new" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Add Category</a>
+            <h4 class="mb-0"><i class="bi bi-capsule me-2"></i>Dosage Forms</h4>
+            <a href="/dosage-forms/new" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Add Dosage
+                Form</a>
         </div>
 
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
@@ -32,9 +35,8 @@
             <form method="get" class="mb-3">
                 <div class="row g-2">
                     <div class="col-md-10">
-                        <input type="text" name="search" class="form-control" 
-                               placeholder="Search categories by name..." 
-                               th:value="${search}">
+                        <input type="text" name="search" class="form-control"
+                            placeholder="Search dosage forms by name..." th:value="${search}">
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">
@@ -55,58 +57,54 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="category : ${categories.content}">
-                            <td th:text="${category.id}"></td>
+                        <tr th:each="form : ${dosageForms.content}">
+                            <td th:text="${form.id}"></td>
                             <td>
-                                <strong th:text="${category.name}"></strong>
+                                <strong th:text="${form.name}"></strong>
                             </td>
                             <td>
-                                <span th:text="${category.description != null && !category.description.isEmpty() ? category.description : '-'}" 
-                                      class="text-muted"></span>
+                                <span
+                                    th:text="${form.description != null && !form.description.isEmpty() ? form.description : '-'}"
+                                    class="text-muted"></span>
                             </td>
                             <td>
-                                <a th:href="@{/categories/edit/{id}(id=${category.id})}" 
-                                   class="btn btn-sm btn-warning" 
-                                   title="Edit Category">
+                                <a th:href="@{/dosage-forms/edit/{id}(id=${form.id})}" class="btn btn-sm btn-warning"
+                                    title="Edit Dosage Form">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a th:href="@{/categories/delete/{id}(id=${category.id})}" 
-                                   class="btn btn-sm btn-danger" 
-                                   onclick="return confirm('Are you sure you want to delete this category?')" 
-                                   title="Delete Category">
+                                <a th:href="@{/dosage-forms/delete/{id}(id=${form.id})}" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Are you sure you want to delete this dosage form?')"
+                                    title="Delete Dosage Form">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </td>
                         </tr>
-                        <tr th:if="${categories.content.isEmpty()}">
+                        <tr th:if="${dosageForms.content.isEmpty()}">
                             <td colspan="4" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
-                                <p class="mt-2 mb-0">No categories found</p>
+                                <p class="mt-2 mb-0">No dosage forms found</p>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <nav th:if="${categories.totalPages > 1}">
+            <nav th:if="${dosageForms.totalPages > 1}">
                 <ul class="pagination justify-content-center">
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                        <a class="page-link" 
-                           th:href="@{/categories(page=${currentPage > 0 ? currentPage - 1 : 0}, search=${search})}">
+                        <a class="page-link"
+                            th:href="@{/dosage-forms(page=${currentPage > 0 ? currentPage - 1 : 0}, search=${search})}">
                             Previous
                         </a>
                     </li>
-                    <li class="page-item" 
-                        th:each="i : ${#numbers.sequence(0, categories.totalPages - 1)}" 
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, dosageForms.totalPages - 1)}"
                         th:classappend="${i == currentPage} ? 'active'">
-                        <a class="page-link" 
-                           th:href="@{/categories(page=${i}, search=${search})}" 
-                           th:text="${i + 1}"></a>
+                        <a class="page-link" th:href="@{/dosage-forms(page=${i}, search=${search})}"
+                            th:text="${i + 1}"></a>
                     </li>
-                    <li class="page-item" 
-                        th:classappend="${currentPage == categories.totalPages - 1} ? 'disabled'">
-                        <a class="page-link" 
-                           th:href="@{/categories(page=${currentPage < categories.totalPages - 1 ? currentPage + 1 : categories.totalPages - 1}, search=${search})}">
+                    <li class="page-item" th:classappend="${currentPage == dosageForms.totalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                            th:href="@{/dosage-forms(page=${currentPage < dosageForms.totalPages - 1 ? currentPage + 1 : dosageForms.totalPages - 1}, search=${search})}">
                             Next
                         </a>
                     </li>
@@ -117,6 +115,5 @@
     <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
 </body>
+
 </html>
-
-

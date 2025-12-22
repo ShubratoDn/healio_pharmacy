@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${dosageForm.id != null} ? 'Edit Dosage Form' : 'Add Dosage Form'">Dosage Form - Healio</title>
+    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div th:replace="~{fragments/sidebar :: sidebar(activePage='dosage_forms')}"></div>
+    <div class="main-content">
+        <div
+            th:replace="~{fragments/navbar :: navbar(pageTitle=${dosageForm.id != null ? 'Edit Dosage Form' : 'Add Dosage Form'})}">
+        </div>
+
+        <div class="page-header">
+            <h4>
+                <i class="bi bi-capsule me-2"></i>
+                <span th:text="${dosageForm.id != null} ? 'Edit Dosage Form' : 'Add New Dosage Form'"></span>
+            </h4>
+        </div>
+
+        <div class="content-card">
+            <form th:action="@{/dosage-forms/save}" th:object="${dosageForm}" method="post">
+                <input type="hidden" th:field="*{id}" />
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Dosage Form Name <span class="text-danger">*</span></label>
+                        <input type="text" th:field="*{name}" class="form-control" required
+                            placeholder="Enter dosage form name (e.g. Tablet, Capsule)">
+                        <small class="form-text text-muted">Dosage form name must be unique</small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea th:field="*{description}" class="form-control" rows="4"
+                        placeholder="Enter dosage form description (optional)"></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/dosage-forms" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Save Dosage Form
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/common.js}"></script>
+</body>
+
+</html>

@@ -14,21 +14,25 @@
 
             <!-- Products Section -->
             <div class="nav-section"
-                th:classappend="${activePage == 'products' || activePage == 'categories'} ? 'expanded'">
+                th:classappend="${activePage == 'products' || activePage == 'dosage_forms' || activePage == 'new-product'} ? 'expanded'">
                 <a class="nav-link nav-section-toggle"
-                    th:classappend="${activePage == 'products' || activePage == 'categories'} ? 'active'"
+                    th:classappend="${activePage == 'products' || activePage == 'dosage_forms' || activePage == 'new-product'} ? 'active'"
                     href="javascript:void(0)" onclick="toggleNavSection(this)">
                     <i class="bi bi-capsule"></i><span>Products</span>
                     <i class="bi bi-chevron-down nav-section-arrow"></i>
                 </a>
                 <div class="nav-submenu">
+                    <a class="nav-link nav-submenu-link" th:classappend="${activePage == 'new-product'} ? 'active'"
+                        href="/products/new">
+                        <i class="bi bi-plus-circle"></i><span>Add New Product</span>
+                    </a>
                     <a class="nav-link nav-submenu-link" th:classappend="${activePage == 'products'} ? 'active'"
                         href="/products">
-                        <i class="bi bi-capsule"></i><span>Products</span>
+                        <i class="bi bi-capsule"></i><span>Product List</span>
                     </a>
-                    <a class="nav-link nav-submenu-link" th:classappend="${activePage == 'categories'} ? 'active'"
-                        href="/categories">
-                        <i class="bi bi-tags"></i><span>Categories</span>
+                    <a class="nav-link nav-submenu-link" th:classappend="${activePage == 'dosage_forms'} ? 'active'"
+                        href="/dosage-forms">
+                        <i class="bi bi-capsule-pill"></i><span>Dosage Forms</span>
                     </a>
                 </div>
             </div>

@@ -144,14 +144,14 @@ public class DashboardController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/api/dashboard/sales-by-category")
+    @GetMapping("/api/dashboard/sales-by-dosage-form")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> getSalesByCategory(
+    public ResponseEntity<Map<String, Object>> getSalesByDosageForm(
             @RequestParam(defaultValue = "30") int days) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(days - 1);
 
-        List<Object[]> results = saleRepository.getSalesByCategory(startDate, endDate.plusDays(1));
+        List<Object[]> results = saleRepository.getSalesByDosageForm(startDate, endDate.plusDays(1));
 
         List<Map<String, Object>> data = new ArrayList<>();
 
