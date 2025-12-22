@@ -130,10 +130,12 @@
                                     <thead>
                                         <tr>
                                             <th style="width: 5%;">#</th>
-                                            <th style="width: 40%;">Medicine</th>
-                                            <th style="width: 12%;" class="text-center">Qty</th>
-                                            <th style="width: 18%;" class="text-end">Unit Price</th>
-                                            <th style="width: 25%;" class="text-end">Total</th>
+                                            <th style="width: 30%;">Medicine</th>
+                                            <th style="width: 15%;">Package</th>
+                                            <th style="width: 8%;" class="text-center">Qty</th>
+                                            <th style="width: 12%;" class="text-end">Unit Price</th>
+                                            <th style="width: 12%;" class="text-end">Discount</th>
+                                            <th style="width: 18%;" class="text-end">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -155,11 +157,25 @@
                                                         th:text="${#temporals.format(item.expiryDate, 'yyyy-MM-dd')}"></span>
                                                 </div>
                                             </td>
+                                            <td>
+                                                <span th:if="${item.productPackage != null}"
+                                                    th:text="${item.productPackage.packageDescription}"></span>
+                                                <span th:if="${item.productPackage == null}" class="text-muted">-</span>
+                                            </td>
                                             <td class="text-center">
                                                 <span th:text="${item.quantity}"></span>
                                             </td>
                                             <td class="text-end">
                                                 ৳<span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 2)}"></span>
+                                            </td>
+                                            <td class="text-end">
+                                                <span th:if="${item.discountAmount != null && item.discountAmount > 0}"
+                                                    class="text-danger">
+                                                    -৳<span
+                                                        th:text="${#numbers.formatDecimal(item.discountAmount, 0, 2)}"></span>
+                                                </span>
+                                                <span th:if="${item.discountAmount == null || item.discountAmount == 0}"
+                                                    class="text-muted">-</span>
                                             </td>
                                             <td class="text-end">
                                                 <strong>৳<span
@@ -193,10 +209,28 @@
                                         th:text="${#numbers.formatDecimal(sale.getGrossSubtotal(), 0, 2)}"></span></strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2"
-                                th:if="${sale.getTotalDiscount().compareTo(T(java.math.BigDecimal).ZERO) > 0}">
-                                <span class="text-danger">Discount:</span>
+                                th:if="${sale.getTotalItemDiscount().compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                                <span class="text-danger">Product Discount:</span>
+                                <strong class="text-danger">-৳<span
+                                        th:text="${#numbers.formatDecimal(sale.getTotalItemDiscount(), 0, 2)}"></span></strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2"
+                                th:if="${sale.getTotalItemDiscount().compareTo(T(java.math.BigDecimal).ZERO) > 0 && sale.discountAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                                <span class="text-info">Overall Discount:</span>
+                                <strong class="text-info">-৳<span
+                                        th:text="${#numbers.formatDecimal(sale.discountAmount, 0, 2)}"></span></strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2"
+                                th:if="${sale.getTotalItemDiscount().compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                                <span class="text-danger"><strong>Total Discount:</strong></span>
                                 <strong class="text-danger">-৳<span
                                         th:text="${#numbers.formatDecimal(sale.getTotalDiscount(), 0, 2)}"></span></strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2"
+                                th:if="${sale.getTotalItemDiscount().compareTo(T(java.math.BigDecimal).ZERO) == 0 && sale.discountAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                                <span class="text-danger">Discount:</span>
+                                <strong class="text-danger">-৳<span
+                                        th:text="${#numbers.formatDecimal(sale.discountAmount, 0, 2)}"></span></strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2"
                                 th:if="*{taxAmount != null && taxAmount > 0}">

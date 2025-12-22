@@ -323,8 +323,16 @@
                             <span>Subtotal:</span>
                             <span id="summarySubtotal">৳0.00</span>
                         </div>
+                        <div class="summary-item" id="summaryProductDiscountContainer" style="display: none;">
+                            <span>Product Discount:</span>
+                            <span id="summaryProductDiscount">৳0.00</span>
+                        </div>
+                        <div class="summary-item" id="summaryOverallDiscountContainer" style="display: none;">
+                            <span>Overall Discount:</span>
+                            <span id="summaryOverallDiscount">৳0.00</span>
+                        </div>
                         <div class="summary-item">
-                            <span>Discount:</span>
+                            <span id="summaryDiscountLabel">Discount:</span>
                             <span id="summaryDiscount">৳0.00</span>
                             <small id="summaryDiscountPercent" class="d-block text-end" style="opacity: 0.8;"></small>
                         </div>
@@ -743,7 +751,34 @@
             const total = subtotal - overallDiscount + tax;
 
             document.getElementById('summarySubtotal').textContent = `৳${grossSubtotal.toFixed(2)}`;
-            document.getElementById('summaryDiscount').textContent = `৳${(totalItemDiscount + overallDiscount).toFixed(2)}`;
+
+            // Logic for discount breakdown in summary
+            const productDiscountContainer = document.getElementById('summaryProductDiscountContainer');
+            const overallDiscountContainer = document.getElementById('summaryOverallDiscountContainer');
+            const summaryDiscountLabel = document.getElementById('summaryDiscountLabel');
+            const totalDiscountAmount = totalItemDiscount + overallDiscount;
+
+            if (totalItemDiscount > 0) {
+                // Show breakdown if there are item discounts
+                productDiscountContainer.style.display = 'flex';
+                document.getElementById('summaryProductDiscount').textContent = `৳${totalItemDiscount.toFixed(2)}`;
+
+                if (overallDiscount > 0) {
+                    overallDiscountContainer.style.display = 'flex';
+                    document.getElementById('summaryOverallDiscount').textContent = `৳${overallDiscount.toFixed(2)}`;
+                } else {
+                    overallDiscountContainer.style.display = 'none';
+                }
+
+                summaryDiscountLabel.innerHTML = '<strong>Total Discount:</strong>';
+            } else {
+                // Standard single discount line
+                productDiscountContainer.style.display = 'none';
+                overallDiscountContainer.style.display = 'none';
+                summaryDiscountLabel.textContent = 'Discount:';
+            }
+
+            document.getElementById('summaryDiscount').textContent = `৳${totalDiscountAmount.toFixed(2)}`;
 
             // Show discount percentage if applicable
             if (discountPercent > 0) {
