@@ -35,6 +35,7 @@
 	<parameter name="QR_CODE_IMAGE" class="java.io.InputStream"/>
 	<parameter name="DUE_AMOUNT" class="java.math.BigDecimal"/>
 	<parameter name="TOTAL_DISCOUNT_AMOUNT" class="java.math.BigDecimal"/>
+	<parameter name="AMOUNT_IN_WORDS" class="java.lang.String"/>
 	<field name="productName" class="java.lang.String"/>
 	<field name="strength" class="java.lang.String"/>
 	<field name="quantity" class="java.lang.Integer"/>
@@ -479,8 +480,22 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$P{TOTAL_AMOUNT}]]></textFieldExpression>
 			</textField>
+			<staticText>
+				<reportElement x="0" y="72" width="100" height="14" uuid="d80c2cf0-d037-4e11-8c7f-c8540e4614d4"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="Courier New" size="9" isBold="true" pdfFontName="Courier-Bold"/>
+				</textElement>
+				<text><![CDATA[Amount in Words:]]></text>
+			</staticText>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement x="0" y="100" width="340" height="50" uuid="48c95816-ef47-4392-a27c-e286ed662b0f"/>
+				<reportElement x="0" y="86" width="340" height="14" uuid="e80c2cf0-d037-4e11-8c7f-c8540e4614d4"/>
+				<textElement>
+					<font fontName="Courier New" size="9" isItalic="true" pdfFontName="Courier-Oblique"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{AMOUNT_IN_WORDS}]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="0" y="110" width="340" height="50" uuid="48c95816-ef47-4392-a27c-e286ed662b0f"/>
 				<textElement>
 					<font fontName="Courier New" size="9" pdfFontName="Courier"/>
 				</textElement>

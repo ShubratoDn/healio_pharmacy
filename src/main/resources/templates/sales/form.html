@@ -405,7 +405,11 @@
         /*<![CDATA[*/
         let saleItems = [];
         let customerSearchTimeout;
+        let currentCustomerIndex = -1;
+        let currentCustomerResults = [];
         let productSearchTimeout;
+        let currentProductIndex = -1;
+        let currentProductResults = [];
         let selectedCustomer = null;
 
         // Initialize sale data for editing
@@ -430,6 +434,8 @@
                     if (suggestionsContainer) {
                         suggestionsContainer.style.display = 'none';
                     }
+                    currentCustomerResults = [];
+                    currentCustomerIndex = -1;
                     return;
                 }
 
@@ -454,11 +460,49 @@
                         });
                 }, 300);
             });
+
+            customerSearchInput.addEventListener('keydown', function (e) {
+                const container = document.getElementById('customerSuggestions');
+                if (container.style.display === 'none' || currentCustomerResults.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    currentCustomerIndex = (currentCustomerIndex + 1) % currentCustomerResults.length;
+                    highlightCustomerSuggestion(currentCustomerIndex);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    currentCustomerIndex = (currentCustomerIndex - 1 + currentCustomerResults.length) % currentCustomerResults.length;
+                    highlightCustomerSuggestion(currentCustomerIndex);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (currentCustomerIndex >= 0 && currentCustomerIndex < currentCustomerResults.length) {
+                        selectCustomer(currentCustomerResults[currentCustomerIndex]);
+                    }
+                } else if (e.key === 'Escape') {
+                    container.style.display = 'none';
+                    currentCustomerIndex = -1;
+                }
+            });
+        }
+
+        function highlightCustomerSuggestion(index) {
+            const container = document.getElementById('customerSuggestions');
+            const items = container.querySelectorAll('.product-suggestion-item');
+            items.forEach((item, i) => {
+                if (i === index) {
+                    item.classList.add('selected');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
         }
 
         function displayCustomerSuggestions(customers) {
             const container = document.getElementById('customerSuggestions');
             container.innerHTML = '';
+            currentCustomerResults = customers;
+            currentCustomerIndex = -1;
 
             if (customers.length === 0) {
                 container.innerHTML = '<div class="product-suggestion-item">No customers found</div>';
@@ -466,7 +510,7 @@
                 return;
             }
 
-            customers.forEach(customer => {
+            customers.forEach((customer, index) => {
                 const item = document.createElement('div');
                 item.className = 'product-suggestion-item';
                 item.innerHTML = `
@@ -474,6 +518,10 @@
                     <small>${customer.phone || ''} ${customer.email || ''}</small>
                 `;
                 item.onclick = () => selectCustomer(customer);
+                item.onmouseover = () => {
+                    currentCustomerIndex = index;
+                    highlightCustomerSuggestion(index);
+                };
                 container.appendChild(item);
             });
 
@@ -517,6 +565,8 @@
                     if (suggestionsContainer) {
                         suggestionsContainer.style.display = 'none';
                     }
+                    currentProductResults = [];
+                    currentProductIndex = -1;
                     return;
                 }
 
@@ -541,11 +591,49 @@
                         });
                 }, 300);
             });
+
+            productSearchInput.addEventListener('keydown', function (e) {
+                const container = document.getElementById('productSuggestions');
+                if (container.style.display === 'none' || currentProductResults.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    currentProductIndex = (currentProductIndex + 1) % currentProductResults.length;
+                    highlightProductSuggestion(currentProductIndex);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    currentProductIndex = (currentProductIndex - 1 + currentProductResults.length) % currentProductResults.length;
+                    highlightProductSuggestion(currentProductIndex);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (currentProductIndex >= 0 && currentProductIndex < currentProductResults.length) {
+                        addProductToSale(currentProductResults[currentProductIndex]);
+                    }
+                } else if (e.key === 'Escape') {
+                    container.style.display = 'none';
+                    currentProductIndex = -1;
+                }
+            });
+        }
+
+        function highlightProductSuggestion(index) {
+            const container = document.getElementById('productSuggestions');
+            const items = container.querySelectorAll('.product-suggestion-item');
+            items.forEach((item, i) => {
+                if (i === index) {
+                    item.classList.add('selected');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
         }
 
         function displayProductSuggestions(products) {
             const container = document.getElementById('productSuggestions');
             container.innerHTML = '';
+            currentProductResults = products;
+            currentProductIndex = -1;
 
             if (products.length === 0) {
                 container.innerHTML = '<div class="product-suggestion-item">No products found</div>';
@@ -553,7 +641,7 @@
                 return;
             }
 
-            products.forEach(product => {
+            products.forEach((product, index) => {
                 const item = document.createElement('div');
                 item.className = 'product-suggestion-item';
                 const stockBadge = product.availableQuantity > 0
@@ -574,6 +662,10 @@
                     </div>
                 `;
                 item.onclick = () => addProductToSale(product);
+                item.onmouseover = () => {
+                    currentProductIndex = index;
+                    highlightProductSuggestion(index);
+                };
                 container.appendChild(item);
             });
 

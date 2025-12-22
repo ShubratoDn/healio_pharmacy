@@ -9,6 +9,7 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.heal.io.dto.SaleReportDTO;
 import com.heal.io.entity.Sale;
 import com.heal.io.entity.SaleItem;
+import com.heal.io.util.NumberToWordConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
@@ -208,6 +209,7 @@ public class SaleReportService {
             parameters.put("QR_CODE_IMAGE", qrCodeStream);
             parameters.put("TOTAL_DISCOUNT_AMOUNT", totalDiscountAmount);
             parameters.put("DUE_AMOUNT", dueAmount);
+            parameters.put("AMOUNT_IN_WORDS", NumberToWordConverter.convertAmount(reportData.getTotalAmount()));
 
             // Prepare items data source
             List<Map<String, Object>> itemsData = reportData.getItems().stream()

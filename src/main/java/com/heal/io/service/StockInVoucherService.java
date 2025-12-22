@@ -9,6 +9,7 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.heal.io.dto.StockInVoucherDTO;
 import com.heal.io.entity.StockIn;
 import com.heal.io.entity.StockInItem;
+import com.heal.io.util.NumberToWordConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
@@ -45,13 +46,13 @@ public class StockInVoucherService {
             // Load the JRXML template
             ClassPathResource resource = new ClassPathResource(REPORT_TEMPLATE);
             InputStream templateStream = resource.getInputStream();
-            
+
             // Compile the report
             JasperReport jasperReport = JasperCompileManager.compileReport(templateStream);
-            
+
             // Convert StockIn entity to DTO
             StockInVoucherDTO reportData = convertToVoucherDTO(stockIn);
-            
+
             // Load logo image
             InputStream logoStream = null;
             try {
@@ -62,7 +63,7 @@ public class StockInVoucherService {
             } catch (Exception e) {
                 log.warn("Could not load logo image: {}", e.getMessage());
             }
-            
+
             // Generate QR code
             InputStream qrCodeStream = null;
             try {
@@ -71,23 +72,22 @@ public class StockInVoucherService {
             } catch (Exception e) {
                 log.warn("Could not generate QR code: {}", e.getMessage());
             }
-            
+
             // Calculate due amount for partial payments
             BigDecimal dueAmount = BigDecimal.ZERO;
-            if ("PARTIAL".equals(reportData.getPaymentStatus()) && 
-                reportData.getFinalAmount() != null && reportData.getPaidAmount() != null) {
+            if ("PARTIAL".equals(reportData.getPaymentStatus()) &&
+                    reportData.getFinalAmount() != null && reportData.getPaidAmount() != null) {
                 dueAmount = reportData.getFinalAmount().subtract(
-                    reportData.getPaidAmount() != null ? reportData.getPaidAmount() : BigDecimal.ZERO
-                );
+                        reportData.getPaidAmount() != null ? reportData.getPaidAmount() : BigDecimal.ZERO);
             }
-            
+
             // Prepare parameters
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("COMPANY_NAME", "Rupganj Pharmacy");
             parameters.put("COMPANY_ADDRESS", "892/1, Beside Shahidbagh Mosque, Rajarbagh, Dhaka - 1217");
             parameters.put("COMPANY_PHONE", "01966551343");
             parameters.put("COMPANY_EMAIL", "");
-            
+
             // Add stock-in data as parameters
             parameters.put("STOCK_IN_NUMBER", reportData.getStockInNumber());
             parameters.put("STOCK_IN_DATE", reportData.getStockInDate());
@@ -110,13 +110,15 @@ public class StockInVoucherService {
             parameters.put("LOGO_IMAGE", logoStream);
             parameters.put("QR_CODE_IMAGE", qrCodeStream);
             parameters.put("DUE_AMOUNT", dueAmount);
-            
+            parameters.put("AMOUNT_IN_WORDS", NumberToWordConverter.convertAmount(reportData.getFinalAmount()));
+
             // Prepare items data source
             List<Map<String, Object>> itemsData = reportData.getItems().stream()
                     .map(item -> {
                         Map<String, Object> itemMap = new HashMap<>();
                         itemMap.put("productName", item.getProductName());
-                        itemMap.put("packageDescription", item.getPackageDescription() != null ? item.getPackageDescription() : "");
+                        itemMap.put("packageDescription",
+                                item.getPackageDescription() != null ? item.getPackageDescription() : "");
                         itemMap.put("strength", item.getStrength() != null ? item.getStrength() : "");
                         itemMap.put("quantity", item.getQuantity());
                         itemMap.put("unitCost", item.getUnitCost());
@@ -128,19 +130,18 @@ public class StockInVoucherService {
                         return itemMap;
                     })
                     .collect(Collectors.toList());
-            
+
             JRBeanCollectionDataSource itemsDS = new JRBeanCollectionDataSource(itemsData);
-            
+
             // Fill the report with data
             JasperPrint jasperPrint = JasperFillManager.fillReport(
                     jasperReport,
                     parameters,
-                    itemsDS
-            );
-            
+                    itemsDS);
+
             // Export to PDF
             return JasperExportManager.exportReportToPdf(jasperPrint);
-            
+
         } catch (Exception e) {
             log.error("Error generating stock-in voucher PDF", e);
             throw new RuntimeException("Failed to generate PDF voucher: " + e.getMessage(), e);
@@ -152,12 +153,15 @@ public class StockInVoucherService {
      */
     private StockInVoucherDTO convertToVoucherDTO(StockIn stockIn) {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        
-        List<StockInItem> stockInItems = stockIn.getItems() != null ? stockIn.getItems() : java.util.Collections.emptyList();
+
+        List<StockInItem> stockInItems = stockIn.getItems() != null ? stockIn.getItems()
+                : java.util.Collections.emptyList();
         List<StockInVoucherDTO.StockInItemVoucherDTO> items = stockInItems.stream()
                 .map(item -> StockInVoucherDTO.StockInItemVoucherDTO.builder()
                         .productName(item.getProduct() != null ? item.getProduct().getName() : "")
-                        .packageDescription(item.getProductPackage() != null ? item.getProductPackage().getPackageDescription() : null)
+                        .packageDescription(
+                                item.getProductPackage() != null ? item.getProductPackage().getPackageDescription()
+                                        : null)
                         .strength(item.getProduct() != null ? item.getProduct().getStrength() : null)
                         .quantity(item.getQuantity())
                         .unitCost(item.getUnitCost() != null ? item.getUnitCost() : BigDecimal.ZERO)
@@ -168,7 +172,7 @@ public class StockInVoucherService {
                         .location(item.getLocation())
                         .build())
                 .collect(Collectors.toList());
-        
+
         // Extract manufacturer names from supplier
         String manufacturerNames = null;
         if (stockIn.getSupplier() != null) {
@@ -182,7 +186,7 @@ public class StockInVoucherService {
                 }
             }
         }
-        
+
         return StockInVoucherDTO.builder()
                 .stockInNumber(stockIn.getStockInNumber())
                 .stockInDate(stockIn.getStockInDate())
@@ -205,7 +209,7 @@ public class StockInVoucherService {
                 .items(items)
                 .build();
     }
-    
+
     /**
      * Build QR code content string from stock-in data
      */
@@ -225,7 +229,7 @@ public class StockInVoucherService {
         }
         return sb.toString();
     }
-    
+
     /**
      * Generate QR code image as InputStream
      */
@@ -234,18 +238,18 @@ public class StockInVoucherService {
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
         hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
         hints.put(EncodeHintType.MARGIN, 1);
-        
+
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix = qrCodeWriter.encode(content, BarcodeFormat.QR_CODE, width, height, hints);
-        
+
         BufferedImage qrImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         qrImage.createGraphics();
-        
+
         Graphics2D graphics = (Graphics2D) qrImage.getGraphics();
         graphics.setColor(Color.WHITE);
         graphics.fillRect(0, 0, width, height);
         graphics.setColor(Color.BLACK);
-        
+
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 if (bitMatrix.get(i, j)) {
@@ -253,10 +257,9 @@ public class StockInVoucherService {
                 }
             }
         }
-        
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(qrImage, "PNG", baos);
         return new ByteArrayInputStream(baos.toByteArray());
     }
 }
-
