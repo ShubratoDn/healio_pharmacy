@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -132,428 +133,423 @@
         }
     </style>
 </head>
+
 <body>
-<div th:replace="~{fragments/sidebar :: sidebar(activePage='sales')}"></div>
-<div class="main-content">
-    <div th:replace="~{fragments/navbar :: navbar(pageTitle=${sale.id != null ? 'Edit Sale' : 'New Sale'})}"></div>
+    <div th:replace="~{fragments/sidebar :: sidebar(activePage=${sale.id != null ? 'sales' : 'new-sale'})}"></div>
+    <div class="main-content">
+        <div th:replace="~{fragments/navbar :: navbar(pageTitle=${sale.id != null ? 'Edit Sale' : 'New Sale'})}"></div>
 
-    <div class="page-header d-flex justify-content-between align-items-center">
-        <h4 class="mb-0">
-            <i class="bi me-2" th:classappend="${sale.id != null ? 'bi-pencil' : 'bi-cart-plus'}"></i>
-            <span th:text="${sale.id != null ? 'Edit Sale' : 'New Sale'}"></span>
-        </h4>
-        <a href="/sales" class="btn btn-secondary"><i class="bi bi-arrow-left me-2"></i>Back to Sales</a>
-    </div>
-
-    <form th:action="@{/sales/save}" th:object="${sale}" method="post" id="saleForm"
-          th:data-sale-id="${sale.id}"
-          th:data-customer-id="${sale.customer != null ? sale.customer.id : ''}"
-          th:data-customer-name="${sale.customer != null ? sale.customer.name : (sale.customerName != null ? sale.customerName : '')}"
-          th:data-customer-phone="${sale.customer != null ? sale.customer.phone : (sale.customerPhone != null ? sale.customerPhone : '')}"
-          th:data-discount-amount="${sale.discountAmount != null ? sale.discountAmount : 0}"
-          th:data-discount-percentage="${sale.discountPercentage != null ? sale.discountPercentage : 0}">
-        <input type="hidden" th:field="*{id}"/>
-        <input type="hidden" th:field="*{saleNumber}" id="saleNumber"/>
-        <input type="hidden" name="customerId" id="customerId"/>
-
-        <div class="sale-form-container">
-            <!-- Main Form Area -->
-            <div>
-                <!-- Customer Selection -->
-                <div class="content-card mb-3">
-                    <h5 class="mb-3"><i class="bi bi-person me-2"></i>Customer Information</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-12 position-relative">
-                            <label class="form-label">Search Customer</label>
-                            <input type="text" id="customerSearch" class="form-control"
-                                   placeholder="Search by name, phone, or code...">
-                            <div id="customerSuggestions" class="product-suggestions" style="margin: 0 10px"></div>
-                        </div>
-                    </div>
-                    <div id="customerInfo" class="customer-info-card" style="display: none;">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong id="customerName"></strong><br>
-                                <small id="customerPhone"></small>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearCustomer()">
-                                <i class="bi bi-x"></i> Clear
-                            </button>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <input type="text" th:field="*{customerName}" class="form-control"
-                                   placeholder="Customer Name (for walk-in)" id="customerNameInput">
-                        </div>
-                        <div class="col-md-6">
-                            <input type="text" th:field="*{customerPhone}" class="form-control"
-                                   placeholder="Phone Number" id="customerPhoneInput">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Product Search and Items -->
-                <div class="content-card mb-3">
-                    <h5 class="mb-3"><i class="bi bi-capsule me-2"></i>Products</h5>
-
-
-                    <div class="items-table">
-                        <table class="table table-bordered mt-3" id="itemsTable">
-                            <thead>
-                            <tr>
-                                <th style="width: 30%;">Product</th>
-                                <th style="width: 10%;">Package</th>
-                                <th style="width: 8%;">Qty</th>
-                                <th style="width: 12%;">Unit Price</th>
-                                <th style="width: 10%;">Discount</th>
-                                <th style="width: 12%;">Total</th>
-                                <th style="width: 8%;">Action</th>
-                            </tr>
-                            </thead>
-                            <tbody id="itemsTableBody">
-                            <!-- Items will be added dynamically -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="product-search-container">
-                        <input type="text" id="productSearch" class="form-control"
-                               placeholder="Search products by name, manufacturer, or generic...">
-                        <div id="productSuggestions" class="product-suggestions"></div>
-                    </div>
-                </div>
-
-                <!-- Discount and Tax Section -->
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="content-card">
-                            <h5 class="mb-3"><i class="bi bi-cash-coin me-2"></i>Tax</h5>
-                            <div class="mb-3">
-                                <label class="form-label">Tax Amount</label>
-                                <input type="number" step="0.01" th:field="*{taxAmount}"
-                                       class="form-control" id="taxAmount" value="0"
-                                       onchange="updateSummary()" oninput="updateSummary()"
-                                       placeholder="Enter tax amount">
-                                <small class="text-muted">Enter tax amount if applicable</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="content-card">
-                            <h5 class="mb-3"><i class="bi bi-percent me-2"></i>Discount</h5>
-                            <div class="mb-3">
-                                <div class="btn-group w-100 mb-2" role="group">
-                                    <input type="radio" class="btn-check" name="discountType" id="discountTypeAmount"
-                                           value="amount" checked>
-                                    <label class="btn btn-outline-primary" for="discountTypeAmount">Amount</label>
-
-                                    <input type="radio" class="btn-check" name="discountType" id="discountTypePercent"
-                                           value="percent">
-                                    <label class="btn btn-outline-primary" for="discountTypePercent">Percentage</label>
-                                </div>
-                                <div class="input-group">
-                                    <input type="number" step="0.01" class="form-control"
-                                           id="discountInput" value="0"
-                                           placeholder="Enter discount" onchange="updateDiscount()"
-                                           oninput="updateDiscount()">
-                                    <span class="input-group-text" id="discountUnit">৳</span>
-                                </div>
-                                <small class="text-muted" id="discountHelper">Enter discount amount</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sale Details -->
-                <div class="content-card">
-                    <h5 class="mb-3"><i class="bi bi-info-circle me-2"></i>Sale Details</h5>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Sale Date <span class="text-danger">*</span></label>
-                            <input type="text" 
-                                   class="form-control datetime-picker" 
-                                   id="saleDate"
-                                   placeholder="dd-MMM-yyyy hh:mm AM/PM"
-                                   data-required="true"
-                                   data-default-today="true"
-                                   data-hidden-input="saleDateHidden"
-                                   th:value="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'dd-MMM-yyyy hh:mm a') : ''}">
-                            <input type="hidden" 
-                                   name="saleDate" 
-                                   id="saleDateHidden"
-                                   required
-                                   th:value="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'yyyy-MM-dd') + 'T' + #temporals.format(sale.saleDate, 'HH:mm') : ''}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Payment Method <span class="text-danger">*</span></label>
-                            <select th:field="*{paymentMethod}" class="form-select" required>
-                                <option value="CASH">Cash</option>
-                                <option value="CARD">Card</option>
-                                <option value="MOBILE_BANKING">Mobile Banking</option>
-                                <option value="CREDIT">Credit</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Payment Status</label>
-                            <select th:field="*{paymentStatus}" class="form-select" id="paymentStatus" onchange="handlePaymentStatusChange()">
-                                <option value="PAID">Paid</option>
-                                <option value="PENDING">Pending</option>
-                                <option value="PARTIAL">Partial</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Sale Status</label>
-                            <select th:field="*{saleStatus}" class="form-select">
-                                <option value="COMPLETED">Completed</option>
-                                <option value="PENDING">Pending</option>
-                                <option value="CANCELLED">Cancelled</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea th:field="*{notes}" class="form-control" rows="3"></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Summary Sidebar -->
-            <div class="summary-sidebar">
-                <div class="summary-card">
-                    <h5 class="mb-3"><i class="bi bi-calculator me-2"></i>Summary</h5>
-                    <div class="summary-item">
-                        <span>Subtotal:</span>
-                        <span id="summarySubtotal">৳0.00</span>
-                    </div>
-                    <div class="summary-item">
-                        <span>Discount:</span>
-                        <span id="summaryDiscount">৳0.00</span>
-                        <small id="summaryDiscountPercent" class="d-block text-end" style="opacity: 0.8;"></small>
-                    </div>
-                    <div class="summary-item">
-                        <span>Tax:</span>
-                        <span id="summaryTax">৳0.00</span>
-                    </div>
-                    <div class="summary-item">
-                        <span>Total:</span>
-                        <span id="summaryTotal">৳0.00</span>
-                    </div>
-                </div>
-
-                <div class="content-card mt-3" id="paymentSection">
-                    <h6 class="mb-3">Payment</h6>
-                    <div class="mb-3" id="paidAmountContainer" style="display: none;">
-                        <label class="form-label">Paid Amount</label>
-                        <input type="number" step="0.01" th:field="*{paidAmount}"
-                               class="form-control" id="paidAmount" value="0" onchange="calculateReceivable()" oninput="calculateReceivable()">
-                    </div>
-                    <div class="mb-3" id="receivableAmountContainer" style="display: none;">
-                        <label class="form-label">Receivable Amount</label>
-                        <input type="text" class="form-control" id="receivableAmount" readonly
-                               style="background-color: #f8f9fa; font-weight: bold; color: #dc3545;">
-                    </div>
-                    <input type="hidden" th:field="*{subtotal}" id="subtotal">
-                    <input type="hidden" th:field="*{discountAmount}" id="discountAmount">
-                    <input type="hidden" th:field="*{discountPercentage}" id="discountPercentage">
-                    <input type="hidden" th:field="*{taxAmount}" id="taxAmount">
-                    <input type="hidden" th:field="*{totalAmount}" id="totalAmount">
-                    <input type="hidden" th:field="*{changeAmount}" id="changeAmount" value="0">
-                </div>
-
-                <div class="d-grid gap-2 mt-3">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="bi bi-check-circle me-2"></i>Complete Sale
-                    </button>
-                    <a href="/sales" class="btn btn-secondary">
-                        <i class="bi bi-x-circle me-2"></i>Cancel
-                    </a>
-                </div>
-            </div>
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="bi me-2" th:classappend="${sale.id != null ? 'bi-pencil' : 'bi-cart-plus'}"></i>
+                <span th:text="${sale.id != null ? 'Edit Sale' : 'New Sale'}"></span>
+            </h4>
+            <a href="/sales" class="btn btn-secondary"><i class="bi bi-arrow-left me-2"></i>Back to Sales</a>
         </div>
-    </form>
-</div>
 
-<!-- Sale items data for editing - using hidden divs to avoid Thymeleaf inline JS parsing issues -->
-<div th:if="${sale.id != null && sale.items != null && !sale.items.isEmpty()}" id="saleItemsDataContainer" style="display: none;">
-    <div th:each="item : ${sale.items}" class="sale-item-data"
-         th:data-product-id="${item.product != null ? item.product.id : ''}"
-         th:data-product-name="${item.productName}"
-         th:data-package-id="${item.productPackage != null ? item.productPackage.id : ''}"
-         th:data-package-description="${item.productPackage != null ? item.productPackage.packageDescription : ''}"
-         th:data-quantity="${item.quantity}"
-         th:data-unit-price="${item.unitPrice}"
-         th:data-discount-amount="${item.discountAmount != null ? item.discountAmount : 0}"
-         th:data-batch-number="${item.batchNumber != null ? item.batchNumber : ''}"
-         th:data-expiry-date="${item.expiryDate != null ? item.expiryDate.toString() : ''}"
-         th:data-inventory-id="${item.inventory != null ? item.inventory.id : ''}">
+        <form th:action="@{/sales/save}" th:object="${sale}" method="post" id="saleForm" th:data-sale-id="${sale.id}"
+            th:data-customer-id="${sale.customer != null ? sale.customer.id : ''}"
+            th:data-customer-name="${sale.customer != null ? sale.customer.name : (sale.customerName != null ? sale.customerName : '')}"
+            th:data-customer-phone="${sale.customer != null ? sale.customer.phone : (sale.customerPhone != null ? sale.customerPhone : '')}"
+            th:data-discount-amount="${sale.discountAmount != null ? sale.discountAmount : 0}"
+            th:data-discount-percentage="${sale.discountPercentage != null ? sale.discountPercentage : 0}">
+            <input type="hidden" th:field="*{id}" />
+            <input type="hidden" th:field="*{saleNumber}" id="saleNumber" />
+            <input type="hidden" name="customerId" id="customerId" />
+
+            <div class="sale-form-container">
+                <!-- Main Form Area -->
+                <div>
+                    <!-- Customer Selection -->
+                    <div class="content-card mb-3">
+                        <h5 class="mb-3"><i class="bi bi-person me-2"></i>Customer Information</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-12 position-relative">
+                                <label class="form-label">Search Customer</label>
+                                <input type="text" id="customerSearch" class="form-control"
+                                    placeholder="Search by name, phone, or code...">
+                                <div id="customerSuggestions" class="product-suggestions" style="margin: 0 10px"></div>
+                            </div>
+                        </div>
+                        <div id="customerInfo" class="customer-info-card" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong id="customerName"></strong><br>
+                                    <small id="customerPhone"></small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    onclick="clearCustomer()">
+                                    <i class="bi bi-x"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="text" th:field="*{customerName}" class="form-control"
+                                    placeholder="Customer Name (for walk-in)" id="customerNameInput">
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" th:field="*{customerPhone}" class="form-control"
+                                    placeholder="Phone Number" id="customerPhoneInput">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Product Search and Items -->
+                    <div class="content-card mb-3">
+                        <h5 class="mb-3"><i class="bi bi-capsule me-2"></i>Products</h5>
+
+
+                        <div class="items-table">
+                            <table class="table table-bordered mt-3" id="itemsTable">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 30%;">Product</th>
+                                        <th style="width: 10%;">Package</th>
+                                        <th style="width: 8%;">Qty</th>
+                                        <th style="width: 12%;">Unit Price</th>
+                                        <th style="width: 10%;">Discount</th>
+                                        <th style="width: 12%;">Total</th>
+                                        <th style="width: 8%;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody">
+                                    <!-- Items will be added dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="product-search-container">
+                            <input type="text" id="productSearch" class="form-control"
+                                placeholder="Search products by name, manufacturer, or generic...">
+                            <div id="productSuggestions" class="product-suggestions"></div>
+                        </div>
+                    </div>
+
+                    <!-- Discount and Tax Section -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="content-card">
+                                <h5 class="mb-3"><i class="bi bi-cash-coin me-2"></i>Tax</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Tax Amount</label>
+                                    <input type="number" step="0.01" th:field="*{taxAmount}" class="form-control"
+                                        id="taxAmount" value="0" onchange="updateSummary()" oninput="updateSummary()"
+                                        placeholder="Enter tax amount">
+                                    <small class="text-muted">Enter tax amount if applicable</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="content-card">
+                                <h5 class="mb-3"><i class="bi bi-percent me-2"></i>Discount</h5>
+                                <div class="mb-3">
+                                    <div class="btn-group w-100 mb-2" role="group">
+                                        <input type="radio" class="btn-check" name="discountType"
+                                            id="discountTypeAmount" value="amount" checked>
+                                        <label class="btn btn-outline-primary" for="discountTypeAmount">Amount</label>
+
+                                        <input type="radio" class="btn-check" name="discountType"
+                                            id="discountTypePercent" value="percent">
+                                        <label class="btn btn-outline-primary"
+                                            for="discountTypePercent">Percentage</label>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" class="form-control" id="discountInput"
+                                            value="0" placeholder="Enter discount" onchange="updateDiscount()"
+                                            oninput="updateDiscount()">
+                                        <span class="input-group-text" id="discountUnit">৳</span>
+                                    </div>
+                                    <small class="text-muted" id="discountHelper">Enter discount amount</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sale Details -->
+                    <div class="content-card">
+                        <h5 class="mb-3"><i class="bi bi-info-circle me-2"></i>Sale Details</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Sale Date <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control datetime-picker" id="saleDate"
+                                    placeholder="dd-MMM-yyyy hh:mm AM/PM" data-required="true" data-default-today="true"
+                                    data-hidden-input="saleDateHidden"
+                                    th:value="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'dd-MMM-yyyy hh:mm a') : ''}">
+                                <input type="hidden" name="saleDate" id="saleDateHidden" required
+                                    th:value="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'yyyy-MM-dd') + 'T' + #temporals.format(sale.saleDate, 'HH:mm') : ''}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                                <select th:field="*{paymentMethod}" class="form-select" required>
+                                    <option value="CASH">Cash</option>
+                                    <option value="CARD">Card</option>
+                                    <option value="MOBILE_BANKING">Mobile Banking</option>
+                                    <option value="CREDIT">Credit</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Payment Status</label>
+                                <select th:field="*{paymentStatus}" class="form-select" id="paymentStatus"
+                                    onchange="handlePaymentStatusChange()">
+                                    <option value="PAID">Paid</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="PARTIAL">Partial</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Sale Status</label>
+                                <select th:field="*{saleStatus}" class="form-select">
+                                    <option value="COMPLETED">Completed</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="CANCELLED">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea th:field="*{notes}" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Sidebar -->
+                <div class="summary-sidebar">
+                    <div class="summary-card">
+                        <h5 class="mb-3"><i class="bi bi-calculator me-2"></i>Summary</h5>
+                        <div class="summary-item">
+                            <span>Subtotal:</span>
+                            <span id="summarySubtotal">৳0.00</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>Discount:</span>
+                            <span id="summaryDiscount">৳0.00</span>
+                            <small id="summaryDiscountPercent" class="d-block text-end" style="opacity: 0.8;"></small>
+                        </div>
+                        <div class="summary-item">
+                            <span>Tax:</span>
+                            <span id="summaryTax">৳0.00</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>Total:</span>
+                            <span id="summaryTotal">৳0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="content-card mt-3" id="paymentSection">
+                        <h6 class="mb-3">Payment</h6>
+                        <div class="mb-3" id="paidAmountContainer" style="display: none;">
+                            <label class="form-label">Paid Amount</label>
+                            <input type="number" step="0.01" th:field="*{paidAmount}" class="form-control"
+                                id="paidAmount" value="0" onchange="calculateReceivable()"
+                                oninput="calculateReceivable()">
+                        </div>
+                        <div class="mb-3" id="receivableAmountContainer" style="display: none;">
+                            <label class="form-label">Receivable Amount</label>
+                            <input type="text" class="form-control" id="receivableAmount" readonly
+                                style="background-color: #f8f9fa; font-weight: bold; color: #dc3545;">
+                        </div>
+                        <input type="hidden" th:field="*{subtotal}" id="subtotal">
+                        <input type="hidden" th:field="*{discountAmount}" id="discountAmount">
+                        <input type="hidden" th:field="*{discountPercentage}" id="discountPercentage">
+                        <input type="hidden" th:field="*{taxAmount}" id="taxAmount">
+                        <input type="hidden" th:field="*{totalAmount}" id="totalAmount">
+                        <input type="hidden" th:field="*{changeAmount}" id="changeAmount" value="0">
+                    </div>
+
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>Complete Sale
+                        </button>
+                        <a href="/sales" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
-</div>
 
-<script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
-<script src="/lib/flatpickr/flatpickr.min.js"></script>
-<script th:src="@{/js/common.js}"></script>
-<script th:inline="javascript">
-    /*<![CDATA[*/
-    let saleItems = [];
-    let customerSearchTimeout;
-    let productSearchTimeout;
-    let selectedCustomer = null;
-    
-    // Initialize sale data for editing
-    const saleId = /*[[${sale.id}]]*/ null;
-    const isEditMode = saleId != null;
-    /*]]>*/
+    <!-- Sale items data for editing - using hidden divs to avoid Thymeleaf inline JS parsing issues -->
+    <div th:if="${sale.id != null && sale.items != null && !sale.items.isEmpty()}" id="saleItemsDataContainer"
+        style="display: none;">
+        <div th:each="item : ${sale.items}" class="sale-item-data"
+            th:data-product-id="${item.product != null ? item.product.id : ''}"
+            th:data-product-name="${item.productName}"
+            th:data-package-id="${item.productPackage != null ? item.productPackage.id : ''}"
+            th:data-package-description="${item.productPackage != null ? item.productPackage.packageDescription : ''}"
+            th:data-quantity="${item.quantity}" th:data-unit-price="${item.unitPrice}"
+            th:data-discount-amount="${item.discountAmount != null ? item.discountAmount : 0}"
+            th:data-batch-number="${item.batchNumber != null ? item.batchNumber : ''}"
+            th:data-expiry-date="${item.expiryDate != null ? item.expiryDate.toString() : ''}"
+            th:data-inventory-id="${item.inventory != null ? item.inventory.id : ''}">
+        </div>
+    </div>
 
-    // Customer Search - Initialize when DOM is ready
-    function initializeCustomerSearch() {
-        const customerSearchInput = document.getElementById('customerSearch');
-        if (!customerSearchInput) {
-            console.error('Customer search input not found');
-            return;
-        }
-        
-        customerSearchInput.addEventListener('input', function (e) {
-            clearTimeout(customerSearchTimeout);
-            const query = e.target.value.trim();
+    <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/lib/flatpickr/flatpickr.min.js"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        let saleItems = [];
+        let customerSearchTimeout;
+        let productSearchTimeout;
+        let selectedCustomer = null;
 
-            if (query.length < 2) {
-                const suggestionsContainer = document.getElementById('customerSuggestions');
-                if (suggestionsContainer) {
-                    suggestionsContainer.style.display = 'none';
-                }
+        // Initialize sale data for editing
+        const saleId = /*[[${sale.id}]]*/ null;
+        const isEditMode = saleId != null;
+        /*]]>*/
+
+        // Customer Search - Initialize when DOM is ready
+        function initializeCustomerSearch() {
+            const customerSearchInput = document.getElementById('customerSearch');
+            if (!customerSearchInput) {
+                console.error('Customer search input not found');
                 return;
             }
 
-            customerSearchTimeout = setTimeout(() => {
-                fetch(`/sales/api/customers/search?q=${encodeURIComponent(query)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        displayCustomerSuggestions(data);
-                    })
-                    .catch(error => {
-                        console.error('Customer search error:', error);
-                        const container = document.getElementById('customerSuggestions');
-                        if (container) {
-                            container.innerHTML = '<div class="product-suggestion-item text-danger">Error searching customers. Please try again.</div>';
-                            container.style.display = 'block';
-                        }
-                    });
-            }, 300);
-        });
-    }
+            customerSearchInput.addEventListener('input', function (e) {
+                clearTimeout(customerSearchTimeout);
+                const query = e.target.value.trim();
 
-    function displayCustomerSuggestions(customers) {
-        const container = document.getElementById('customerSuggestions');
-        container.innerHTML = '';
+                if (query.length < 2) {
+                    const suggestionsContainer = document.getElementById('customerSuggestions');
+                    if (suggestionsContainer) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                    return;
+                }
 
-        if (customers.length === 0) {
-            container.innerHTML = '<div class="product-suggestion-item">No customers found</div>';
-            container.style.display = 'block';
-            return;
+                customerSearchTimeout = setTimeout(() => {
+                    fetch(`/sales/api/customers/search?q=${encodeURIComponent(query)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            displayCustomerSuggestions(data);
+                        })
+                        .catch(error => {
+                            console.error('Customer search error:', error);
+                            const container = document.getElementById('customerSuggestions');
+                            if (container) {
+                                container.innerHTML = '<div class="product-suggestion-item text-danger">Error searching customers. Please try again.</div>';
+                                container.style.display = 'block';
+                            }
+                        });
+                }, 300);
+            });
         }
 
-        customers.forEach(customer => {
-            const item = document.createElement('div');
-            item.className = 'product-suggestion-item';
-            item.innerHTML = `
+        function displayCustomerSuggestions(customers) {
+            const container = document.getElementById('customerSuggestions');
+            container.innerHTML = '';
+
+            if (customers.length === 0) {
+                container.innerHTML = '<div class="product-suggestion-item">No customers found</div>';
+                container.style.display = 'block';
+                return;
+            }
+
+            customers.forEach(customer => {
+                const item = document.createElement('div');
+                item.className = 'product-suggestion-item';
+                item.innerHTML = `
                     <strong>${customer.name}</strong><br>
                     <small>${customer.phone || ''} ${customer.email || ''}</small>
                 `;
-            item.onclick = () => selectCustomer(customer);
-            container.appendChild(item);
-        });
+                item.onclick = () => selectCustomer(customer);
+                container.appendChild(item);
+            });
 
-        container.style.display = 'block';
-    }
-
-    function selectCustomer(customer) {
-        selectedCustomer = customer;
-        document.getElementById('customerId').value = customer.id;
-        document.getElementById('customerName').textContent = customer.name;
-        document.getElementById('customerPhone').textContent = customer.phone || '';
-        document.getElementById('customerNameInput').value = customer.name;
-        document.getElementById('customerPhoneInput').value = customer.phone || '';
-        document.getElementById('customerInfo').style.display = 'block';
-        document.getElementById('customerSuggestions').style.display = 'none';
-        document.getElementById('customerSearch').value = '';
-    }
-
-    function clearCustomer() {
-        selectedCustomer = null;
-        document.getElementById('customerId').value = '';
-        document.getElementById('customerNameInput').value = '';
-        document.getElementById('customerPhoneInput').value = '';
-        document.getElementById('customerInfo').style.display = 'none';
-    }
-
-    // Product Search - Initialize when DOM is ready
-    function initializeProductSearch() {
-        const productSearchInput = document.getElementById('productSearch');
-        if (!productSearchInput) {
-            console.error('Product search input not found');
-            return;
+            container.style.display = 'block';
         }
-        
-        productSearchInput.addEventListener('input', function (e) {
-            clearTimeout(productSearchTimeout);
-            const query = e.target.value.trim();
 
-            if (query.length < 2) {
-                const suggestionsContainer = document.getElementById('productSuggestions');
-                if (suggestionsContainer) {
-                    suggestionsContainer.style.display = 'none';
-                }
+        function selectCustomer(customer) {
+            selectedCustomer = customer;
+            document.getElementById('customerId').value = customer.id;
+            document.getElementById('customerName').textContent = customer.name;
+            document.getElementById('customerPhone').textContent = customer.phone || '';
+            document.getElementById('customerNameInput').value = customer.name;
+            document.getElementById('customerPhoneInput').value = customer.phone || '';
+            document.getElementById('customerInfo').style.display = 'block';
+            document.getElementById('customerSuggestions').style.display = 'none';
+            document.getElementById('customerSearch').value = '';
+        }
+
+        function clearCustomer() {
+            selectedCustomer = null;
+            document.getElementById('customerId').value = '';
+            document.getElementById('customerNameInput').value = '';
+            document.getElementById('customerPhoneInput').value = '';
+            document.getElementById('customerInfo').style.display = 'none';
+        }
+
+        // Product Search - Initialize when DOM is ready
+        function initializeProductSearch() {
+            const productSearchInput = document.getElementById('productSearch');
+            if (!productSearchInput) {
+                console.error('Product search input not found');
                 return;
             }
 
-            productSearchTimeout = setTimeout(() => {
-                fetch(`/sales/api/products/search?q=${encodeURIComponent(query)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        displayProductSuggestions(data);
-                    })
-                    .catch(error => {
-                        console.error('Product search error:', error);
-                        const container = document.getElementById('productSuggestions');
-                        if (container) {
-                            container.innerHTML = '<div class="product-suggestion-item text-danger">Error searching products. Please try again.</div>';
-                            container.style.display = 'block';
-                        }
-                    });
-            }, 300);
-        });
-    }
+            productSearchInput.addEventListener('input', function (e) {
+                clearTimeout(productSearchTimeout);
+                const query = e.target.value.trim();
 
-    function displayProductSuggestions(products) {
-        const container = document.getElementById('productSuggestions');
-        container.innerHTML = '';
+                if (query.length < 2) {
+                    const suggestionsContainer = document.getElementById('productSuggestions');
+                    if (suggestionsContainer) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                    return;
+                }
 
-        if (products.length === 0) {
-            container.innerHTML = '<div class="product-suggestion-item">No products found</div>';
-            container.style.display = 'block';
-            return;
+                productSearchTimeout = setTimeout(() => {
+                    fetch(`/sales/api/products/search?q=${encodeURIComponent(query)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            displayProductSuggestions(data);
+                        })
+                        .catch(error => {
+                            console.error('Product search error:', error);
+                            const container = document.getElementById('productSuggestions');
+                            if (container) {
+                                container.innerHTML = '<div class="product-suggestion-item text-danger">Error searching products. Please try again.</div>';
+                                container.style.display = 'block';
+                            }
+                        });
+                }, 300);
+            });
         }
 
-        products.forEach(product => {
-            const item = document.createElement('div');
-            item.className = 'product-suggestion-item';
-            const stockBadge = product.availableQuantity > 0
-                ? `<span class="badge bg-success inventory-badge">Stock: ${product.availableQuantity}</span>`
-                : `<span class="badge bg-danger inventory-badge">Out of Stock</span>`;
-            item.innerHTML = `
+        function displayProductSuggestions(products) {
+            const container = document.getElementById('productSuggestions');
+            container.innerHTML = '';
+
+            if (products.length === 0) {
+                container.innerHTML = '<div class="product-suggestion-item">No products found</div>';
+                container.style.display = 'block';
+                return;
+            }
+
+            products.forEach(product => {
+                const item = document.createElement('div');
+                item.className = 'product-suggestion-item';
+                const stockBadge = product.availableQuantity > 0
+                    ? `<span class="badge bg-success inventory-badge">Stock: ${product.availableQuantity}</span>`
+                    : `<span class="badge bg-danger inventory-badge">Out of Stock</span>`;
+                item.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <strong>${product.name}</strong><br>
@@ -562,60 +558,60 @@
                         ${stockBadge}
                     </div>
                 `;
-            item.onclick = () => addProductToSale(product);
-            container.appendChild(item);
-        });
+                item.onclick = () => addProductToSale(product);
+                container.appendChild(item);
+            });
 
-        container.style.display = 'block';
-    }
-
-    function addProductToSale(product) {
-        // Check if product already exists
-        const existingIndex = saleItems.findIndex(item => item.productId === product.id);
-        if (existingIndex >= 0) {
-            saleItems[existingIndex].quantity += 1;
-            updateItemRow(existingIndex);
-        } else {
-            // Load packages for this product
-            fetch(`/sales/api/product-packages/${product.id}`)
-                .then(response => response.json())
-                .then(packages => {
-                    const item = {
-                        productId: product.id,
-                        productName: product.name,
-                        packageId: packages.length > 0 ? packages[0].id : null,
-                        packageDescription: packages.length > 0 ? packages[0].description : '',
-                        quantity: 1,
-                        unitPrice: packages.length > 0 ? packages[0].unitPrice : 0,
-                        discountAmount: 0,
-                        availableQuantity: product.availableQuantity,
-                        packages: packages
-                    };
-                    saleItems.push(item);
-                    renderItemsTable();
-                })
-                .catch(error => console.error('Error:', error));
+            container.style.display = 'block';
         }
 
-        document.getElementById('productSearch').value = '';
-        document.getElementById('productSuggestions').style.display = 'none';
-    }
+        function addProductToSale(product) {
+            // Check if product already exists
+            const existingIndex = saleItems.findIndex(item => item.productId === product.id);
+            if (existingIndex >= 0) {
+                saleItems[existingIndex].quantity += 1;
+                updateItemRow(existingIndex);
+            } else {
+                // Load packages for this product
+                fetch(`/sales/api/product-packages/${product.id}`)
+                    .then(response => response.json())
+                    .then(packages => {
+                        const item = {
+                            productId: product.id,
+                            productName: product.name,
+                            packageId: packages.length > 0 ? packages[0].id : null,
+                            packageDescription: packages.length > 0 ? packages[0].description : '',
+                            quantity: 1,
+                            unitPrice: packages.length > 0 ? packages[0].unitPrice : 0,
+                            discountAmount: 0,
+                            availableQuantity: product.availableQuantity,
+                            packages: packages
+                        };
+                        saleItems.push(item);
+                        renderItemsTable();
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
 
-    function renderItemsTable() {
-        const tbody = document.getElementById('itemsTableBody');
-        tbody.innerHTML = '';
+            document.getElementById('productSearch').value = '';
+            document.getElementById('productSuggestions').style.display = 'none';
+        }
 
-        saleItems.forEach((item, index) => {
-            const row = createItemRow(item, index);
-            tbody.appendChild(row);
-        });
+        function renderItemsTable() {
+            const tbody = document.getElementById('itemsTableBody');
+            tbody.innerHTML = '';
 
-        updateSummary();
-    }
+            saleItems.forEach((item, index) => {
+                const row = createItemRow(item, index);
+                tbody.appendChild(row);
+            });
 
-    function createItemRow(item, index) {
-        const row = document.createElement('tr');
-        row.innerHTML = `
+            updateSummary();
+        }
+
+        function createItemRow(item, index) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
                 <td>
                     <strong>${item.productName}</strong>
                     <br><small class="text-muted">${item.packageDescription || 'No package'}</small>
@@ -623,10 +619,10 @@
                 <td>
                     <select class="form-select form-select-sm" onchange="updateItemPackage(${index}, this.value)">
                         ${item.packages.map(pkg =>
-            `<option value="${pkg.id}" ${pkg.id === item.packageId ? 'selected' : ''}>
+                `<option value="${pkg.id}" ${pkg.id === item.packageId ? 'selected' : ''}>
                                 ${pkg.description} (${pkg.availableQuantity} avail.)
                             </option>`
-        ).join('')}
+            ).join('')}
                     </select>
                 </td>
                 <td>
@@ -653,384 +649,385 @@
                     </button>
                 </td>
             `;
-        return row;
-    }
-
-    function updateItemRow(index) {
-        const tbody = document.getElementById('itemsTableBody');
-        const row = tbody.children[index];
-        if (row) {
-            const newRow = createItemRow(saleItems[index], index);
-            row.replaceWith(newRow);
+            return row;
         }
-        updateSummary();
-    }
 
-    function updateItemQuantity(index, quantity) {
-        saleItems[index].quantity = parseInt(quantity) || 1;
-        updateItemRow(index);
-    }
+        function updateItemRow(index) {
+            const tbody = document.getElementById('itemsTableBody');
+            const row = tbody.children[index];
+            if (row) {
+                const newRow = createItemRow(saleItems[index], index);
+                row.replaceWith(newRow);
+            }
+            updateSummary();
+        }
 
-    function updateItemPrice(index, price) {
-        saleItems[index].unitPrice = parseFloat(price) || 0;
-        updateItemRow(index);
-    }
-
-    function updateItemDiscount(index, discount) {
-        saleItems[index].discountAmount = parseFloat(discount) || 0;
-        updateItemRow(index);
-    }
-
-    function updateItemPackage(index, packageId) {
-        const item = saleItems[index];
-        const packageObj = item.packages.find(p => p.id == packageId);
-        if (packageObj) {
-            item.packageId = packageObj.id;
-            item.packageDescription = packageObj.description;
-            item.unitPrice = packageObj.unitPrice;
-            item.availableQuantity = packageObj.availableQuantity;
+        function updateItemQuantity(index, quantity) {
+            saleItems[index].quantity = parseInt(quantity) || 1;
             updateItemRow(index);
         }
-    }
 
-    function removeItem(index) {
-        saleItems.splice(index, 1);
-        renderItemsTable();
-    }
-
-    function calculateItemTotal(item) {
-        const subtotal = item.unitPrice * item.quantity;
-        return subtotal - (item.discountAmount || 0);
-    }
-
-    function updateSummary() {
-        // Calculate subtotal from items (item discounts are already in item totals)
-        let subtotal = 0;
-
-        saleItems.forEach(item => {
-            const itemTotal = calculateItemTotal(item);
-            subtotal += itemTotal;
-        });
-
-        // Calculate overall discount (separate from item discounts)
-        const discountType = document.querySelector('input[name="discountType"]:checked').value;
-        const discountInput = parseFloat(document.getElementById('discountInput').value) || 0;
-        let overallDiscount = 0;
-        let discountPercent = 0;
-
-        if (discountType === 'percent') {
-            discountPercent = Math.min(100, Math.max(0, discountInput));
-            overallDiscount = (subtotal * discountPercent) / 100;
-            document.getElementById('discountPercentage').value = discountPercent;
-            document.getElementById('discountAmount').value = 0; // Service will calculate from percentage
-        } else {
-            overallDiscount = Math.max(0, discountInput);
-            document.getElementById('discountPercentage').value = 0;
-            document.getElementById('discountAmount').value = overallDiscount;
+        function updateItemPrice(index, price) {
+            saleItems[index].unitPrice = parseFloat(price) || 0;
+            updateItemRow(index);
         }
 
-        const tax = parseFloat(document.getElementById('taxAmount').value) || 0;
-        const total = subtotal - overallDiscount + tax;
-
-        document.getElementById('summarySubtotal').textContent = `৳${subtotal.toFixed(2)}`;
-        document.getElementById('summaryDiscount').textContent = `৳${overallDiscount.toFixed(2)}`;
-
-        // Show discount percentage if applicable
-        if (discountPercent > 0) {
-            document.getElementById('summaryDiscountPercent').textContent = `(${discountPercent.toFixed(2)}%)`;
-        } else {
-            document.getElementById('summaryDiscountPercent').textContent = '';
+        function updateItemDiscount(index, discount) {
+            saleItems[index].discountAmount = parseFloat(discount) || 0;
+            updateItemRow(index);
         }
 
-        document.getElementById('summaryTax').textContent = `৳${tax.toFixed(2)}`;
-        document.getElementById('summaryTotal').textContent = `৳${total.toFixed(2)}`;
-
-        document.getElementById('subtotal').value = subtotal;
-        document.getElementById('totalAmount').value = total;
-
-        // Update payment fields based on payment status
-        handlePaymentStatusChange();
-    }
-
-
-    function updateDiscount() {
-        const discountType = document.querySelector('input[name="discountType"]:checked').value;
-        const discountInput = document.getElementById('discountInput');
-        const discountUnit = document.getElementById('discountUnit');
-        const discountHelper = document.getElementById('discountHelper');
-
-        if (discountType === 'percent') {
-            discountUnit.textContent = '%';
-            discountHelper.textContent = 'Enter discount percentage (0-100)';
-            discountInput.max = 100;
-            discountInput.min = 0;
-            discountInput.step = '0.01';
-        } else {
-            discountUnit.textContent = '৳';
-            discountHelper.textContent = 'Enter discount amount';
-            discountInput.max = null;
-            discountInput.min = 0;
-            discountInput.step = '0.01';
-        }
-
-        // Reset input value when switching types
-        if (discountInput.value && parseFloat(discountInput.value) > 0) {
-            // Keep the value but update summary
-        }
-
-        updateSummary();
-    }
-
-    // Listen for discount type changes
-    document.querySelectorAll('input[name="discountType"]').forEach(radio => {
-        radio.addEventListener('change', function () {
-            updateDiscount();
-        });
-    });
-
-    function handlePaymentStatusChange() {
-        const paymentStatus = document.getElementById('paymentStatus').value;
-        const paidAmountContainer = document.getElementById('paidAmountContainer');
-        const receivableAmountContainer = document.getElementById('receivableAmountContainer');
-        const paidAmountInput = document.getElementById('paidAmount');
-        
-        if (paymentStatus === 'PARTIAL') {
-            paidAmountContainer.style.display = 'block';
-            receivableAmountContainer.style.display = 'block';
-            calculateReceivable();
-        } else {
-            paidAmountContainer.style.display = 'none';
-            receivableAmountContainer.style.display = 'none';
-            // Set paid amount equal to total for PAID status, 0 for PENDING
-            const total = parseFloat(document.getElementById('totalAmount').value) || 0;
-            if (paymentStatus === 'PAID') {
-                paidAmountInput.value = total.toFixed(2);
-            } else {
-                paidAmountInput.value = '0';
+        function updateItemPackage(index, packageId) {
+            const item = saleItems[index];
+            const packageObj = item.packages.find(p => p.id == packageId);
+            if (packageObj) {
+                item.packageId = packageObj.id;
+                item.packageDescription = packageObj.description;
+                item.unitPrice = packageObj.unitPrice;
+                item.availableQuantity = packageObj.availableQuantity;
+                updateItemRow(index);
             }
+        }
+
+        function removeItem(index) {
+            saleItems.splice(index, 1);
+            renderItemsTable();
+        }
+
+        function calculateItemTotal(item) {
+            const subtotal = item.unitPrice * item.quantity;
+            return subtotal - (item.discountAmount || 0);
+        }
+
+        function updateSummary() {
+            // Calculate subtotal from items (item discounts are already in item totals)
+            let subtotal = 0;
+
+            saleItems.forEach(item => {
+                const itemTotal = calculateItemTotal(item);
+                subtotal += itemTotal;
+            });
+
+            // Calculate overall discount (separate from item discounts)
+            const discountType = document.querySelector('input[name="discountType"]:checked').value;
+            const discountInput = parseFloat(document.getElementById('discountInput').value) || 0;
+            let overallDiscount = 0;
+            let discountPercent = 0;
+
+            if (discountType === 'percent') {
+                discountPercent = Math.min(100, Math.max(0, discountInput));
+                overallDiscount = (subtotal * discountPercent) / 100;
+                document.getElementById('discountPercentage').value = discountPercent;
+                document.getElementById('discountAmount').value = 0; // Service will calculate from percentage
+            } else {
+                overallDiscount = Math.max(0, discountInput);
+                document.getElementById('discountPercentage').value = 0;
+                document.getElementById('discountAmount').value = overallDiscount;
+            }
+
+            const tax = parseFloat(document.getElementById('taxAmount').value) || 0;
+            const total = subtotal - overallDiscount + tax;
+
+            document.getElementById('summarySubtotal').textContent = `৳${subtotal.toFixed(2)}`;
+            document.getElementById('summaryDiscount').textContent = `৳${overallDiscount.toFixed(2)}`;
+
+            // Show discount percentage if applicable
+            if (discountPercent > 0) {
+                document.getElementById('summaryDiscountPercent').textContent = `(${discountPercent.toFixed(2)}%)`;
+            } else {
+                document.getElementById('summaryDiscountPercent').textContent = '';
+            }
+
+            document.getElementById('summaryTax').textContent = `৳${tax.toFixed(2)}`;
+            document.getElementById('summaryTotal').textContent = `৳${total.toFixed(2)}`;
+
+            document.getElementById('subtotal').value = subtotal;
+            document.getElementById('totalAmount').value = total;
+
+            // Update payment fields based on payment status
+            handlePaymentStatusChange();
+        }
+
+
+        function updateDiscount() {
+            const discountType = document.querySelector('input[name="discountType"]:checked').value;
+            const discountInput = document.getElementById('discountInput');
+            const discountUnit = document.getElementById('discountUnit');
+            const discountHelper = document.getElementById('discountHelper');
+
+            if (discountType === 'percent') {
+                discountUnit.textContent = '%';
+                discountHelper.textContent = 'Enter discount percentage (0-100)';
+                discountInput.max = 100;
+                discountInput.min = 0;
+                discountInput.step = '0.01';
+            } else {
+                discountUnit.textContent = '৳';
+                discountHelper.textContent = 'Enter discount amount';
+                discountInput.max = null;
+                discountInput.min = 0;
+                discountInput.step = '0.01';
+            }
+
+            // Reset input value when switching types
+            if (discountInput.value && parseFloat(discountInput.value) > 0) {
+                // Keep the value but update summary
+            }
+
+            updateSummary();
+        }
+
+        // Listen for discount type changes
+        document.querySelectorAll('input[name="discountType"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                updateDiscount();
+            });
+        });
+
+        function handlePaymentStatusChange() {
+            const paymentStatus = document.getElementById('paymentStatus').value;
+            const paidAmountContainer = document.getElementById('paidAmountContainer');
+            const receivableAmountContainer = document.getElementById('receivableAmountContainer');
+            const paidAmountInput = document.getElementById('paidAmount');
+
+            if (paymentStatus === 'PARTIAL') {
+                paidAmountContainer.style.display = 'block';
+                receivableAmountContainer.style.display = 'block';
+                calculateReceivable();
+            } else {
+                paidAmountContainer.style.display = 'none';
+                receivableAmountContainer.style.display = 'none';
+                // Set paid amount equal to total for PAID status, 0 for PENDING
+                const total = parseFloat(document.getElementById('totalAmount').value) || 0;
+                if (paymentStatus === 'PAID') {
+                    paidAmountInput.value = total.toFixed(2);
+                } else {
+                    paidAmountInput.value = '0';
+                }
+                document.getElementById('changeAmount').value = '0';
+            }
+        }
+
+        function calculateReceivable() {
+            const total = parseFloat(document.getElementById('totalAmount').value) || 0;
+            const paid = parseFloat(document.getElementById('paidAmount').value) || 0;
+            const receivable = Math.max(0, total - paid);
+            document.getElementById('receivableAmount').value = `৳${receivable.toFixed(2)}`;
             document.getElementById('changeAmount').value = '0';
         }
-    }
-    
-    function calculateReceivable() {
-        const total = parseFloat(document.getElementById('totalAmount').value) || 0;
-        const paid = parseFloat(document.getElementById('paidAmount').value) || 0;
-        const receivable = Math.max(0, total - paid);
-        document.getElementById('receivableAmount').value = `৳${receivable.toFixed(2)}`;
-        document.getElementById('changeAmount').value = '0';
-    }
-    
-    function calculateChange() {
-        // This function is kept for backward compatibility but not used for change calculation
-        // Change is no longer displayed, only receivable for partial payments
-        handlePaymentStatusChange();
-    }
 
-    // Handle form submission
-    document.getElementById('saleForm').addEventListener('submit', function (e) {
-        // Set paid amount based on payment status before submission
-        const paymentStatus = document.getElementById('paymentStatus').value;
-        const total = parseFloat(document.getElementById('totalAmount').value) || 0;
-        const paidAmountInput = document.getElementById('paidAmount');
-        
-        if (paymentStatus === 'PAID') {
-            paidAmountInput.value = total.toFixed(2);
-        } else if (paymentStatus === 'PENDING') {
-            paidAmountInput.value = '0';
+        function calculateChange() {
+            // This function is kept for backward compatibility but not used for change calculation
+            // Change is no longer displayed, only receivable for partial payments
+            handlePaymentStatusChange();
         }
-        // For PARTIAL, use the value already entered by user
-        
-        // Add hidden inputs for items
-        saleItems.forEach((item, index) => {
-            const productInput = document.createElement('input');
-            productInput.type = 'hidden';
-            productInput.name = 'productIds';
-            productInput.value = item.productId;
-            this.appendChild(productInput);
 
-            const packageInput = document.createElement('input');
-            packageInput.type = 'hidden';
-            packageInput.name = 'packageIds';
-            packageInput.value = item.packageId || '';
-            this.appendChild(packageInput);
+        // Handle form submission
+        document.getElementById('saleForm').addEventListener('submit', function (e) {
+            // Set paid amount based on payment status before submission
+            const paymentStatus = document.getElementById('paymentStatus').value;
+            const total = parseFloat(document.getElementById('totalAmount').value) || 0;
+            const paidAmountInput = document.getElementById('paidAmount');
 
-            const quantityInput = document.createElement('input');
-            quantityInput.type = 'hidden';
-            quantityInput.name = 'quantities';
-            quantityInput.value = item.quantity;
-            this.appendChild(quantityInput);
+            if (paymentStatus === 'PAID') {
+                paidAmountInput.value = total.toFixed(2);
+            } else if (paymentStatus === 'PENDING') {
+                paidAmountInput.value = '0';
+            }
+            // For PARTIAL, use the value already entered by user
 
-            const priceInput = document.createElement('input');
-            priceInput.type = 'hidden';
-            priceInput.name = 'unitPrices';
-            priceInput.value = item.unitPrice;
-            this.appendChild(priceInput);
+            // Add hidden inputs for items
+            saleItems.forEach((item, index) => {
+                const productInput = document.createElement('input');
+                productInput.type = 'hidden';
+                productInput.name = 'productIds';
+                productInput.value = item.productId;
+                this.appendChild(productInput);
 
-            const discountInput = document.createElement('input');
-            discountInput.type = 'hidden';
-            discountInput.name = 'discountAmounts';
-            discountInput.value = item.discountAmount || 0;
-            this.appendChild(discountInput);
+                const packageInput = document.createElement('input');
+                packageInput.type = 'hidden';
+                packageInput.name = 'packageIds';
+                packageInput.value = item.packageId || '';
+                this.appendChild(packageInput);
+
+                const quantityInput = document.createElement('input');
+                quantityInput.type = 'hidden';
+                quantityInput.name = 'quantities';
+                quantityInput.value = item.quantity;
+                this.appendChild(quantityInput);
+
+                const priceInput = document.createElement('input');
+                priceInput.type = 'hidden';
+                priceInput.name = 'unitPrices';
+                priceInput.value = item.unitPrice;
+                this.appendChild(priceInput);
+
+                const discountInput = document.createElement('input');
+                discountInput.type = 'hidden';
+                discountInput.name = 'discountAmounts';
+                discountInput.value = item.discountAmount || 0;
+                this.appendChild(discountInput);
+            });
         });
-    });
 
-    // Close suggestions when clicking outside
-    document.addEventListener('click', function (e) {
-        if (!e.target.closest('.product-search-container')) {
-            document.getElementById('productSuggestions').style.display = 'none';
-        }
-        if (!e.target.closest('#customerSearch') && !e.target.closest('#customerSuggestions')) {
-            document.getElementById('customerSuggestions').style.display = 'none';
-        }
-    });
-
-    // Initialize tax amount listener
-    document.getElementById('taxAmount').addEventListener('input', function () {
-        updateSummary();
-    });
-
-
-    // Initialize discount on page load
-    function initializePage() {
-        // Initialize customer search
-        initializeCustomerSearch();
-        
-        // Initialize product search
-        initializeProductSearch();
-    }
-    
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializePage);
-    } else {
-        // DOM is already loaded
-        initializePage();
-    }
-    
-    document.addEventListener('DOMContentLoaded', function () {
-        // Initialize discount fields
-        const discountPercent = document.getElementById('discountPercentage');
-        const discountAmount = document.getElementById('discountAmount');
-        const discountInput = document.getElementById('discountInput');
-        const form = document.getElementById('saleForm');
-        
-        if (isEditMode) {
-            // Get discount values from form data attributes
-            const existingDiscountAmount = parseFloat(form.getAttribute('data-discount-amount')) || 0;
-            const existingDiscountPercent = parseFloat(form.getAttribute('data-discount-percentage')) || 0;
-            
-            // Set discount type and value based on what exists
-            if (existingDiscountPercent > 0) {
-                document.getElementById('discountTypePercent').checked = true;
-                discountInput.value = existingDiscountPercent;
-                discountPercent.value = existingDiscountPercent;
-                discountAmount.value = 0;
-            } else if (existingDiscountAmount > 0) {
-                document.getElementById('discountTypeAmount').checked = true;
-                discountInput.value = existingDiscountAmount;
-                discountAmount.value = existingDiscountAmount;
-                discountPercent.value = 0;
-            } else {
-                document.getElementById('discountTypeAmount').checked = true;
-                discountInput.value = 0;
-                discountPercent.value = 0;
-                discountAmount.value = 0;
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.product-search-container')) {
+                document.getElementById('productSuggestions').style.display = 'none';
             }
+            if (!e.target.closest('#customerSearch') && !e.target.closest('#customerSuggestions')) {
+                document.getElementById('customerSuggestions').style.display = 'none';
+            }
+        });
+
+        // Initialize tax amount listener
+        document.getElementById('taxAmount').addEventListener('input', function () {
+            updateSummary();
+        });
+
+
+        // Initialize discount on page load
+        function initializePage() {
+            // Initialize customer search
+            initializeCustomerSearch();
+
+            // Initialize product search
+            initializeProductSearch();
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializePage);
         } else {
-            // Set default discount type to amount for new sales
-            document.getElementById('discountTypeAmount').checked = true;
-            if (!discountPercent.value) {
-                discountPercent.value = '0';
-            }
-            discountInput.value = '0';
+            // DOM is already loaded
+            initializePage();
         }
-        
-        updateDiscount();
 
-        // Pre-populate customer information if editing
-        if (isEditMode) {
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize discount fields
+            const discountPercent = document.getElementById('discountPercentage');
+            const discountAmount = document.getElementById('discountAmount');
+            const discountInput = document.getElementById('discountInput');
             const form = document.getElementById('saleForm');
-            const customerId = form.getAttribute('data-customer-id');
-            const customerName = form.getAttribute('data-customer-name') || '';
-            const customerPhone = form.getAttribute('data-customer-phone') || '';
-            
-            if (customerId) {
-                selectedCustomer = {
-                    id: parseInt(customerId),
-                    name: customerName,
-                    phone: customerPhone,
-                    email: '',
-                    address: ''
-                };
-                document.getElementById('customerId').value = customerId;
-                document.getElementById('customerName').textContent = customerName;
-                document.getElementById('customerPhone').textContent = customerPhone;
-                document.getElementById('customerInfo').style.display = 'block';
-                document.getElementById('customerNameInput').value = customerName;
-                document.getElementById('customerPhoneInput').value = customerPhone;
-            } else if (customerName) {
-                document.getElementById('customerNameInput').value = customerName;
-                document.getElementById('customerPhoneInput').value = customerPhone;
-            }
-        }
 
-        // Pre-populate sale items if editing
-        if (isEditMode) {
-            const itemsContainer = document.getElementById('saleItemsDataContainer');
-            if (itemsContainer) {
-                const itemDivs = itemsContainer.querySelectorAll('.sale-item-data');
-                const itemsData = Array.from(itemDivs).map(function(div) {
-                    return {
-                        productId: div.getAttribute('data-product-id') || null,
-                        productName: div.getAttribute('data-product-name') || '',
-                        packageId: div.getAttribute('data-package-id') || null,
-                        packageDescription: div.getAttribute('data-package-description') || '',
-                        quantity: parseInt(div.getAttribute('data-quantity')) || 1,
-                        unitPrice: parseFloat(div.getAttribute('data-unit-price')) || 0,
-                        discountAmount: parseFloat(div.getAttribute('data-discount-amount')) || 0,
-                        batchNumber: div.getAttribute('data-batch-number') || '',
-                        expiryDate: div.getAttribute('data-expiry-date') || null,
-                        inventoryId: div.getAttribute('data-inventory-id') || null,
-                        packages: []
+            if (isEditMode) {
+                // Get discount values from form data attributes
+                const existingDiscountAmount = parseFloat(form.getAttribute('data-discount-amount')) || 0;
+                const existingDiscountPercent = parseFloat(form.getAttribute('data-discount-percentage')) || 0;
+
+                // Set discount type and value based on what exists
+                if (existingDiscountPercent > 0) {
+                    document.getElementById('discountTypePercent').checked = true;
+                    discountInput.value = existingDiscountPercent;
+                    discountPercent.value = existingDiscountPercent;
+                    discountAmount.value = 0;
+                } else if (existingDiscountAmount > 0) {
+                    document.getElementById('discountTypeAmount').checked = true;
+                    discountInput.value = existingDiscountAmount;
+                    discountAmount.value = existingDiscountAmount;
+                    discountPercent.value = 0;
+                } else {
+                    document.getElementById('discountTypeAmount').checked = true;
+                    discountInput.value = 0;
+                    discountPercent.value = 0;
+                    discountAmount.value = 0;
+                }
+            } else {
+                // Set default discount type to amount for new sales
+                document.getElementById('discountTypeAmount').checked = true;
+                if (!discountPercent.value) {
+                    discountPercent.value = '0';
+                }
+                discountInput.value = '0';
+            }
+
+            updateDiscount();
+
+            // Pre-populate customer information if editing
+            if (isEditMode) {
+                const form = document.getElementById('saleForm');
+                const customerId = form.getAttribute('data-customer-id');
+                const customerName = form.getAttribute('data-customer-name') || '';
+                const customerPhone = form.getAttribute('data-customer-phone') || '';
+
+                if (customerId) {
+                    selectedCustomer = {
+                        id: parseInt(customerId),
+                        name: customerName,
+                        phone: customerPhone,
+                        email: '',
+                        address: ''
                     };
-                });
-                
-                if (itemsData.length > 0) {
-                    // Load packages for each product and then render
-                    const itemPromises = itemsData.map(function(itemData) {
-                        if (itemData.productId) {
-                            return fetch('/sales/api/product-packages/' + itemData.productId)
-                                .then(response => response.json())
-                                .then(function(packages) {
-                                    itemData.packages = packages;
-                                    return itemData;
-                                })
-                                .catch(function(error) {
-                                    console.error('Error loading packages:', error);
-                                    itemData.packages = [];
-                                    return itemData;
-                                });
-                        } else {
-                            return Promise.resolve(itemData);
-                        }
-                    });
-                    
-                    Promise.all(itemPromises).then(function(loadedItems) {
-                        saleItems = loadedItems;
-                        renderItemsTable();
-                        updateSummary();
-                    });
+                    document.getElementById('customerId').value = customerId;
+                    document.getElementById('customerName').textContent = customerName;
+                    document.getElementById('customerPhone').textContent = customerPhone;
+                    document.getElementById('customerInfo').style.display = 'block';
+                    document.getElementById('customerNameInput').value = customerName;
+                    document.getElementById('customerPhoneInput').value = customerPhone;
+                } else if (customerName) {
+                    document.getElementById('customerNameInput').value = customerName;
+                    document.getElementById('customerPhoneInput').value = customerPhone;
                 }
             }
-        }
 
-        // Date pickers are automatically initialized by common.js
-        
-        // Initialize payment status on page load (after all data is loaded)
-        setTimeout(function() {
-            handlePaymentStatusChange();
-        }, 100);
-    });
-</script>
+            // Pre-populate sale items if editing
+            if (isEditMode) {
+                const itemsContainer = document.getElementById('saleItemsDataContainer');
+                if (itemsContainer) {
+                    const itemDivs = itemsContainer.querySelectorAll('.sale-item-data');
+                    const itemsData = Array.from(itemDivs).map(function (div) {
+                        return {
+                            productId: div.getAttribute('data-product-id') || null,
+                            productName: div.getAttribute('data-product-name') || '',
+                            packageId: div.getAttribute('data-package-id') || null,
+                            packageDescription: div.getAttribute('data-package-description') || '',
+                            quantity: parseInt(div.getAttribute('data-quantity')) || 1,
+                            unitPrice: parseFloat(div.getAttribute('data-unit-price')) || 0,
+                            discountAmount: parseFloat(div.getAttribute('data-discount-amount')) || 0,
+                            batchNumber: div.getAttribute('data-batch-number') || '',
+                            expiryDate: div.getAttribute('data-expiry-date') || null,
+                            inventoryId: div.getAttribute('data-inventory-id') || null,
+                            packages: []
+                        };
+                    });
+
+                    if (itemsData.length > 0) {
+                        // Load packages for each product and then render
+                        const itemPromises = itemsData.map(function (itemData) {
+                            if (itemData.productId) {
+                                return fetch('/sales/api/product-packages/' + itemData.productId)
+                                    .then(response => response.json())
+                                    .then(function (packages) {
+                                        itemData.packages = packages;
+                                        return itemData;
+                                    })
+                                    .catch(function (error) {
+                                        console.error('Error loading packages:', error);
+                                        itemData.packages = [];
+                                        return itemData;
+                                    });
+                            } else {
+                                return Promise.resolve(itemData);
+                            }
+                        });
+
+                        Promise.all(itemPromises).then(function (loadedItems) {
+                            saleItems = loadedItems;
+                            renderItemsTable();
+                            updateSummary();
+                        });
+                    }
+                }
+            }
+
+            // Date pickers are automatically initialized by common.js
+
+            // Initialize payment status on page load (after all data is loaded)
+            setTimeout(function () {
+                handlePaymentStatusChange();
+            }, 100);
+        });
+    </script>
 </body>
+
 </html>

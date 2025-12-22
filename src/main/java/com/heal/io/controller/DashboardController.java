@@ -30,6 +30,7 @@ public class DashboardController {
     private final ProductRepository productRepository;
     private final SaleRepository saleRepository;
     private final InventoryRepository inventoryRepository;
+    private final StockInRepository stockInRepository;
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
@@ -139,6 +140,68 @@ public class DashboardController {
         response.put("dates", dates);
         response.put("amounts", amounts);
         response.put("profits", profits);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/api/dashboard/sales-by-category")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getSalesByCategory(
+            @RequestParam(defaultValue = "30") int days) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days - 1);
+
+        List<Object[]> results = saleRepository.getSalesByCategory(startDate, endDate.plusDays(1));
+
+        List<Map<String, Object>> data = new ArrayList<>();
+
+        for (Object[] result : results) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("name", result[0]);
+            item.put("value", ((BigDecimal) result[1]).doubleValue());
+            data.add(item);
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", data);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/api/dashboard/stock-in-analysis")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getStockInAnalysis(
+            @RequestParam(defaultValue = "30") int days) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(days - 1);
+
+        List<Object[]> results = stockInRepository.getStockInAnalysis(startDate, endDate);
+
+        List<String> dates = new ArrayList<>();
+        List<Double> amounts = new ArrayList<>();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd");
+
+        // Fill dates
+        for (int i = 0; i < days; i++) {
+            LocalDate date = startDate.plusDays(i);
+            dates.add(date.format(formatter));
+            amounts.add(0.0);
+        }
+
+        for (Object[] result : results) {
+            LocalDate stockDate = ((java.sql.Date) result[0]).toLocalDate();
+            BigDecimal amount = (BigDecimal) result[1];
+
+            int index = (int) java.time.temporal.ChronoUnit.DAYS.between(startDate, stockDate);
+            if (index >= 0 && index < days) {
+                amounts.set(index, amount.doubleValue());
+            }
+        }
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("dates", dates);
+        response.put("amounts", amounts);
 
         return ResponseEntity.ok(response);
     }

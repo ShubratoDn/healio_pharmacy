@@ -51,6 +51,17 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
        List<Object[]> getSalesByDateRange(@Param("startDate") java.time.LocalDate startDate,
                      @Param("endDate") java.time.LocalDate endDate);
 
+       @Query(value = "SELECT pc.name as categoryName, COALESCE(SUM(si.total_price), 0) as totalRevenue " +
+                     "FROM sale s " +
+                     "INNER JOIN sale_item si ON s.id = si.sale_id " +
+                     "INNER JOIN product p ON si.product_id = p.id " +
+                     "INNER JOIN product_category pc ON p.product_category_id = pc.id " +
+                     "WHERE s.sale_date >= :startDate AND s.sale_date < :endDate AND s.sale_status = 'COMPLETED' " +
+                     "GROUP BY pc.id, pc.name " +
+                     "ORDER BY totalRevenue DESC", nativeQuery = true)
+       List<Object[]> getSalesByCategory(@Param("startDate") java.time.LocalDate startDate,
+                     @Param("endDate") java.time.LocalDate endDate);
+
        @Query(value = "SELECT p.name as productName, COALESCE(SUM(si.quantity), 0) as totalQuantity, " +
                      "COALESCE(SUM(si.total_price), 0) as totalRevenue " +
                      "FROM sale s " +
