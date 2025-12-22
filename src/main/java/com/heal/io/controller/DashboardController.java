@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import com.heal.io.entity.Sale;
 import java.util.stream.Collectors;
 
 @Controller
@@ -31,26 +34,27 @@ public class DashboardController {
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         model.addAttribute("totalProducts", productRepository.countByIsActiveTrue());
-        
+
         // Today's sales
         Double todaySales = saleRepository.getTodayTotalSales() != null ? saleRepository.getTodayTotalSales() : 0.0;
         model.addAttribute("todaySales", todaySales);
-        
+
         // Today's profit (sum of profit_amount from sale_items)
         Double todayProfit = saleRepository.getTodayTotalProfit() != null ? saleRepository.getTodayTotalProfit() : 0.0;
         model.addAttribute("todayProfit", todayProfit);
-        
+
         // Today's discount (sum of discount_amount from sales)
-        Double todayDiscount = saleRepository.getTodayTotalDiscount() != null ? saleRepository.getTodayTotalDiscount() : 0.0;
+        Double todayDiscount = saleRepository.getTodayTotalDiscount() != null ? saleRepository.getTodayTotalDiscount()
+                : 0.0;
         model.addAttribute("todayDiscount", todayDiscount);
-        
+
         // Total profit = Profit - Discount
         Double totalProfit = todayProfit - todayDiscount;
         model.addAttribute("totalProfit", totalProfit);
-        
+
         // Calculate low stock count (matching the logic from InventoryController)
         List<Inventory> allInventories = inventoryRepository.findAllActiveInventories();
-        
+
         // Group by product-package combination
         Map<String, List<Inventory>> groupedInventories = allInventories.stream()
                 .collect(Collectors.groupingBy(inv -> {
@@ -58,20 +62,21 @@ public class DashboardController {
                     Long packageId = inv.getProductPackage() != null ? inv.getProductPackage().getId() : 0L;
                     return productId + "_" + packageId;
                 }));
-        
+
         // Count low stock items
         long lowStockCount = groupedInventories.values().stream()
                 .filter(inventories -> {
-                    if (inventories.isEmpty()) return false;
-                    
+                    if (inventories.isEmpty())
+                        return false;
+
                     Inventory firstInv = inventories.get(0);
                     ProductPackage productPackage = firstInv.getProductPackage();
-                    
+
                     // Sum available quantities for this product-package combination
                     int totalAvailable = inventories.stream()
                             .mapToInt(Inventory::getAvailableQuantity)
                             .sum();
-                    
+
                     // Check if low stock
                     if (productPackage != null && productPackage.getLowStock() != null) {
                         return totalAvailable <= productPackage.getLowStock();
@@ -81,51 +86,58 @@ public class DashboardController {
                     }
                 })
                 .count();
-        
+
         model.addAttribute("lowStockCount", lowStockCount);
-        model.addAttribute("todaySalesCount", saleRepository.countTodaySales() != null ? saleRepository.countTodaySales() : 0L);
+        model.addAttribute("todaySalesCount",
+                saleRepository.countTodaySales() != null ? saleRepository.countTodaySales() : 0L);
+
+        // Recent sales
+        Pageable pageable = PageRequest.of(0, 5);
+        List<Sale> recentSales = saleRepository.findAllByOrderBySaleDateDesc(pageable).getContent();
+        model.addAttribute("recentSales", recentSales);
+
         return "dashboard";
     }
-    
+
     @GetMapping("/api/dashboard/sales-by-date")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getSalesByDate(
             @RequestParam(defaultValue = "7") int days) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(days - 1);
-        
+
         List<Object[]> results = saleRepository.getSalesByDateRange(startDate, endDate.plusDays(1));
-        
+
         List<String> dates = new ArrayList<>();
         List<Double> amounts = new ArrayList<>();
-        
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd");
-        
+
         // Fill in all dates in range, even if no sales
         for (int i = 0; i < days; i++) {
             LocalDate date = startDate.plusDays(i);
             dates.add(date.format(formatter));
             amounts.add(0.0);
         }
-        
+
         // Update with actual sales data
         for (Object[] result : results) {
             LocalDate saleDate = ((java.sql.Date) result[0]).toLocalDate();
             BigDecimal totalAmount = (BigDecimal) result[1];
-            
+
             int index = (int) java.time.temporal.ChronoUnit.DAYS.between(startDate, saleDate);
             if (index >= 0 && index < days) {
                 amounts.set(index, totalAmount.doubleValue());
             }
         }
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("dates", dates);
         response.put("amounts", amounts);
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     @GetMapping("/api/dashboard/top-products")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getTopProducts(
@@ -133,46 +145,52 @@ public class DashboardController {
             @RequestParam(defaultValue = "10") int limit) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(days - 1);
-        
+
         List<Object[]> results = saleRepository.getTopProductsByQuantity(startDate, endDate.plusDays(1), limit);
-        
+
         List<String> productNames = new ArrayList<>();
         List<Integer> quantities = new ArrayList<>();
         List<Double> revenues = new ArrayList<>();
-        
+
         for (Object[] result : results) {
             productNames.add((String) result[0]);
             quantities.add(((Number) result[1]).intValue());
             revenues.add(((BigDecimal) result[2]).doubleValue());
         }
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("products", productNames);
         response.put("quantities", quantities);
         response.put("revenues", revenues);
-        
+
         return ResponseEntity.ok(response);
     }
-    
+
     @GetMapping("/api/dashboard/profit-discount")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> getProfitAndDiscount(
             @RequestParam(defaultValue = "7") int days) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(days - 1);
-        
-        Object[] result = saleRepository.getProfitAndDiscountByDateRange(startDate, endDate.plusDays(1));
-        
-        BigDecimal totalProfit = result[0] != null ? (BigDecimal) result[0] : BigDecimal.ZERO;
-        BigDecimal totalDiscount = result[1] != null ? (BigDecimal) result[1] : BigDecimal.ZERO;
+
+        List<Object[]> results = saleRepository.getProfitAndDiscountByDateRange(startDate, endDate.plusDays(1));
+
+        BigDecimal totalProfit = BigDecimal.ZERO;
+        BigDecimal totalDiscount = BigDecimal.ZERO;
+
+        if (!results.isEmpty()) {
+            Object[] result = results.get(0);
+            totalProfit = result[0] != null ? (BigDecimal) result[0] : BigDecimal.ZERO;
+            totalDiscount = result[1] != null ? (BigDecimal) result[1] : BigDecimal.ZERO;
+        }
+
         BigDecimal totalNetProfit = totalProfit.subtract(totalDiscount);
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("profit", totalProfit.doubleValue());
         response.put("discount", totalDiscount.doubleValue());
         response.put("netProfit", totalNetProfit.doubleValue());
-        
+
         return ResponseEntity.ok(response);
     }
 }
-

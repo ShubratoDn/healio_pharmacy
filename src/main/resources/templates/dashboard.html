@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,23 +14,27 @@
             height: 400px;
             min-height: 400px;
         }
+
         .chart-card {
             background: white;
             border-radius: 8px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .chart-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
         }
+
         .filter-buttons {
             display: flex;
             gap: 0.5rem;
         }
+
         .filter-btn {
             padding: 0.25rem 0.75rem;
             font-size: 0.875rem;
@@ -39,9 +44,11 @@
             cursor: pointer;
             transition: all 0.2s;
         }
+
         .filter-btn:hover {
             background: #f8f9fa;
         }
+
         .filter-btn.active {
             background: #667eea;
             color: white;
@@ -49,6 +56,7 @@
         }
     </style>
 </head>
+
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='dashboard')}"></div>
     <div class="main-content">
@@ -109,7 +117,8 @@
         <!-- Profit & Discount Cards -->
         <div class="row">
             <div class="col-md-4 col-sm-6 mb-3">
-                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <div class="stat-card"
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Daily Profit</h6>
@@ -120,18 +129,21 @@
                 </div>
             </div>
             <div class="col-md-4 col-sm-6 mb-3">
-                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                <div class="stat-card"
+                    style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Daily Discount</h6>
-                            <h2 class="mb-0">৳<span th:text="${#numbers.formatDecimal(todayDiscount, 0, 0)}">0</span></h2>
+                            <h2 class="mb-0">৳<span th:text="${#numbers.formatDecimal(todayDiscount, 0, 0)}">0</span>
+                            </h2>
                         </div>
                         <i class="bi bi-tag stat-icon"></i>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 col-sm-6 mb-3">
-                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                <div class="stat-card"
+                    style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <h6 class="text-uppercase mb-2" style="opacity: 0.9;">Total Profit</h6>
@@ -151,7 +163,8 @@
                     <div class="chart-header">
                         <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Sales Trend</h5>
                         <div class="filter-buttons">
-                            <button class="filter-btn active" data-days="7" onclick="updateSalesChart(7)">7 Days</button>
+                            <button class="filter-btn active" data-days="7" onclick="updateSalesChart(7)">7
+                                Days</button>
                             <button class="filter-btn" data-days="30" onclick="updateSalesChart(30)">30 Days</button>
                             <button class="filter-btn" data-days="90" onclick="updateSalesChart(90)">90 Days</button>
                         </div>
@@ -159,7 +172,7 @@
                     <div id="salesChart" class="chart-container"></div>
                 </div>
             </div>
-            
+
             <!-- Profit & Discount Chart -->
             <div class="col-lg-4 mb-3">
                 <div class="chart-card">
@@ -175,7 +188,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Top Products Chart -->
         <div class="row mt-3">
             <div class="col-12 mb-3">
@@ -183,9 +196,12 @@
                     <div class="chart-header">
                         <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Top Selling Products</h5>
                         <div class="filter-buttons">
-                            <button class="filter-btn active" data-days="7" onclick="updateTopProductsChart(7)">7 Days</button>
-                            <button class="filter-btn" data-days="30" onclick="updateTopProductsChart(30)">30 Days</button>
-                            <button class="filter-btn" data-days="90" onclick="updateTopProductsChart(90)">90 Days</button>
+                            <button class="filter-btn active" data-days="7" onclick="updateTopProductsChart(7)">7
+                                Days</button>
+                            <button class="filter-btn" data-days="30" onclick="updateTopProductsChart(30)">30
+                                Days</button>
+                            <button class="filter-btn" data-days="90" onclick="updateTopProductsChart(90)">90
+                                Days</button>
                         </div>
                     </div>
                     <div id="topProductsChart" class="chart-container" style="height: 350px;"></div>
@@ -201,7 +217,40 @@
                         <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Sales</h5>
                         <a href="/sales" class="btn btn-sm btn-primary">View All</a>
                     </div>
-                    <p class="text-muted text-center py-4">No recent sales</p>
+                    <div class="table-responsive" th:if="${not #lists.isEmpty(recentSales)}">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Sale #</th>
+                                    <th>Customer</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="sale : ${recentSales}">
+                                    <td>
+                                        <a th:href="@{/sales/{id}(id=${sale.id})}" th:text="${sale.saleNumber}"
+                                            class="fw-bold text-decoration-none"></a>
+                                        <div class="small text-muted"
+                                            th:text="${#temporals.format(sale.saleDate, 'MMM dd, hh:mm a')}"></div>
+                                    </td>
+                                    <td th:text="${sale.customerName ?: 'Walk-in'}"></td>
+                                    <td class="fw-bold"
+                                        th:text="'৳' + ${#numbers.formatDecimal(sale.totalAmount, 0, 0)}"></td>
+                                    <td>
+                                        <span class="badge bg-success"
+                                            th:if="${sale.saleStatus == 'COMPLETED'}">Paid</span>
+                                        <span class="badge bg-warning text-dark"
+                                            th:if="${sale.saleStatus == 'PENDING'}">Pending</span>
+                                        <span class="badge bg-danger"
+                                            th:if="${sale.saleStatus == 'CANCELLED'}">Void</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted text-center py-4" th:if="${#lists.isEmpty(recentSales)}">No recent sales</p>
                 </div>
             </div>
             <div class="col-md-6 mb-3">
@@ -230,46 +279,46 @@
     <script>
         let salesChartInstance, profitChartInstance, topProductsChartInstance;
         let currentSalesDays = 7, currentProfitDays = 7, currentTopProductsDays = 7;
-        
+
         // Initialize charts when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             initializeCharts();
         });
-        
+
         function initializeCharts() {
             // Initialize Sales Trend Chart
             salesChartInstance = echarts.init(document.getElementById('salesChart'));
             updateSalesChart(7);
-            
+
             // Initialize Profit Chart
             profitChartInstance = echarts.init(document.getElementById('profitChart'));
             updateProfitChart(7);
-            
+
             // Initialize Top Products Chart
             topProductsChartInstance = echarts.init(document.getElementById('topProductsChart'));
             updateTopProductsChart(7);
-            
+
             // Handle window resize
-            window.addEventListener('resize', function() {
+            window.addEventListener('resize', function () {
                 salesChartInstance.resize();
                 profitChartInstance.resize();
                 topProductsChartInstance.resize();
             });
         }
-        
+
         function updateSalesChart(days) {
             currentSalesDays = days;
             updateFilterButtons('sales', days);
-            
+
             fetch(`/api/dashboard/sales-by-date?days=${days}`)
                 .then(response => response.json())
                 .then(data => {
                     const option = {
                         tooltip: {
                             trigger: 'axis',
-                            formatter: function(params) {
+                            formatter: function (params) {
                                 return params[0].name + '<br/>' +
-                                       'Sales: ৳' + params[0].value.toLocaleString();
+                                    'Sales: ৳' + params[0].value.toLocaleString();
                             }
                         },
                         grid: {
@@ -289,7 +338,7 @@
                         yAxis: {
                             type: 'value',
                             axisLabel: {
-                                formatter: function(value) {
+                                formatter: function (value) {
                                     return '৳' + value.toLocaleString();
                                 }
                             }
@@ -327,21 +376,21 @@
                     console.error('Error loading sales chart:', error);
                 });
         }
-        
+
         function updateProfitChart(days) {
             currentProfitDays = days;
             updateFilterButtons('profit', days);
-            
+
             fetch(`/api/dashboard/profit-discount?days=${days}`)
                 .then(response => response.json())
                 .then(data => {
                     const option = {
                         tooltip: {
                             trigger: 'item',
-                            formatter: function(params) {
+                            formatter: function (params) {
                                 return params.name + '<br/>' +
-                                       params.seriesName + ': ৳' + params.value.toLocaleString() + 
-                                       ' (' + params.percent + '%)';
+                                    params.seriesName + ': ৳' + params.value.toLocaleString() +
+                                    ' (' + params.percent + '%)';
                             }
                         },
                         legend: {
@@ -360,7 +409,7 @@
                             },
                             label: {
                                 show: true,
-                                formatter: function(params) {
+                                formatter: function (params) {
                                     return params.name + '\n৳' + params.value.toLocaleString();
                                 }
                             },
@@ -384,11 +433,11 @@
                     console.error('Error loading profit chart:', error);
                 });
         }
-        
+
         function updateTopProductsChart(days) {
             currentTopProductsDays = days;
             updateFilterButtons('topProducts', days);
-            
+
             fetch(`/api/dashboard/top-products?days=${days}&limit=10`)
                 .then(response => response.json())
                 .then(data => {
@@ -398,9 +447,9 @@
                             axisPointer: {
                                 type: 'shadow'
                             },
-                            formatter: function(params) {
+                            formatter: function (params) {
                                 let result = params[0].name + '<br/>';
-                                params.forEach(function(item) {
+                                params.forEach(function (item) {
                                     if (item.seriesName === 'Quantity') {
                                         result += item.seriesName + ': ' + item.value + ' units<br/>';
                                     } else {
@@ -429,7 +478,7 @@
                             data: data.products,
                             axisLabel: {
                                 interval: 0,
-                                formatter: function(value) {
+                                formatter: function (value) {
                                     return value.length > 20 ? value.substring(0, 20) + '...' : value;
                                 }
                             }
@@ -460,7 +509,7 @@
                     console.error('Error loading top products chart:', error);
                 });
         }
-        
+
         function updateFilterButtons(chartType, days) {
             const buttons = document.querySelectorAll(`[onclick*="${chartType === 'sales' ? 'updateSalesChart' : chartType === 'profit' ? 'updateProfitChart' : 'updateTopProductsChart'}"]`);
             buttons.forEach(btn => {
@@ -473,4 +522,5 @@
         }
     </script>
 </body>
+
 </html>
