@@ -45,13 +45,13 @@ public class SaleReportService {
             // Load the JRXML template
             ClassPathResource resource = new ClassPathResource(REPORT_TEMPLATE);
             InputStream templateStream = resource.getInputStream();
-            
+
             // Compile the report
             JasperReport jasperReport = JasperCompileManager.compileReport(templateStream);
-            
+
             // Convert Sale entity to DTO
             SaleReportDTO reportData = convertToReportDTO(sale);
-            
+
             // Load logo image
             InputStream logoStream = null;
             try {
@@ -62,7 +62,7 @@ public class SaleReportService {
             } catch (Exception e) {
                 log.warn("Could not load logo image: {}", e.getMessage());
             }
-            
+
             // Generate QR code
             InputStream qrCodeStream = null;
             try {
@@ -71,33 +71,33 @@ public class SaleReportService {
             } catch (Exception e) {
                 log.warn("Could not generate QR code: {}", e.getMessage());
             }
-            
-            // Calculate total discount amount (sum of all item discounts + sale-level discount)
+
+            // Calculate total discount amount (sum of all item discounts + sale-level
+            // discount)
             BigDecimal itemDiscounts = reportData.getItems().stream()
                     .map(item -> item.getDiscountAmount() != null ? item.getDiscountAmount() : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
-            BigDecimal saleLevelDiscount = reportData.getDiscountAmount() != null ? 
-                    reportData.getDiscountAmount() : BigDecimal.ZERO;
-            
+
+            BigDecimal saleLevelDiscount = reportData.getDiscountAmount() != null ? reportData.getDiscountAmount()
+                    : BigDecimal.ZERO;
+
             BigDecimal totalDiscountAmount = itemDiscounts.add(saleLevelDiscount);
-            
+
             // Calculate due amount for partial payments
             BigDecimal dueAmount = BigDecimal.ZERO;
-            if ("PARTIAL".equals(reportData.getPaymentStatus()) && 
-                reportData.getTotalAmount() != null && reportData.getPaidAmount() != null) {
+            if ("PARTIAL".equals(reportData.getPaymentStatus()) &&
+                    reportData.getTotalAmount() != null && reportData.getPaidAmount() != null) {
                 dueAmount = reportData.getTotalAmount().subtract(
-                    reportData.getPaidAmount() != null ? reportData.getPaidAmount() : BigDecimal.ZERO
-                );
+                        reportData.getPaidAmount() != null ? reportData.getPaidAmount() : BigDecimal.ZERO);
             }
-            
+
             // Prepare parameters
             Map<String, Object> parameters = new HashMap<>();
             parameters.put("COMPANY_NAME", "RUPGANJ PHARMACY");
             parameters.put("COMPANY_ADDRESS", "892/1, Beside Shahidbagh Mosque, Rajarbagh, Dhaka - 1217");
             parameters.put("COMPANY_PHONE", "Mobile: 01966551343");
             parameters.put("COMPANY_EMAIL", "");
-            
+
             // Add sale data as parameters
             parameters.put("SALE_NUMBER", reportData.getSaleNumber());
             parameters.put("SALE_DATE", reportData.getSaleDate());
@@ -120,7 +120,7 @@ public class SaleReportService {
             parameters.put("QR_CODE_IMAGE", qrCodeStream);
             parameters.put("TOTAL_DISCOUNT_AMOUNT", totalDiscountAmount);
             parameters.put("DUE_AMOUNT", dueAmount);
-            
+
             // Prepare items data source
             List<Map<String, Object>> itemsData = reportData.getItems().stream()
                     .map(item -> {
@@ -136,19 +136,18 @@ public class SaleReportService {
                         return itemMap;
                     })
                     .collect(Collectors.toList());
-            
+
             JRBeanCollectionDataSource itemsDS = new JRBeanCollectionDataSource(itemsData);
-            
+
             // Fill the report with data - items go in the detail band
             JasperPrint jasperPrint = JasperFillManager.fillReport(
                     jasperReport,
                     parameters,
-                    itemsDS
-            );
-            
+                    itemsDS);
+
             // Export to PDF
             return JasperExportManager.exportReportToPdf(jasperPrint);
-            
+
         } catch (Exception e) {
             log.error("Error generating sale invoice PDF", e);
             throw new RuntimeException("Failed to generate PDF report: " + e.getMessage(), e);
@@ -160,7 +159,7 @@ public class SaleReportService {
      */
     private SaleReportDTO convertToReportDTO(Sale sale) {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        
+
         List<SaleItem> saleItems = sale.getItems() != null ? sale.getItems() : java.util.Collections.emptyList();
         List<SaleReportDTO.SaleItemReportDTO> items = saleItems.stream()
                 .map(item -> SaleReportDTO.SaleItemReportDTO.builder()
@@ -174,19 +173,20 @@ public class SaleReportService {
                         .expiryDate(item.getExpiryDate() != null ? item.getExpiryDate().format(dateFormatter) : null)
                         .build())
                 .collect(Collectors.toList());
-        
+
         return SaleReportDTO.builder()
                 .saleNumber(sale.getSaleNumber())
                 .saleDate(sale.getSaleDate())
-                .customerName(sale.getCustomerName() != null ? sale.getCustomerName() : 
-                             (sale.getCustomer() != null ? sale.getCustomer().getName() : "Walk-in Customer"))
-                .customerPhone(sale.getCustomerPhone() != null ? sale.getCustomerPhone() : 
-                              (sale.getCustomer() != null ? sale.getCustomer().getPhone() : null))
+                .customerName(sale.getCustomerName() != null ? sale.getCustomerName()
+                        : (sale.getCustomer() != null ? sale.getCustomer().getName() : "Walk-in Customer"))
+                .customerPhone(sale.getCustomerPhone() != null ? sale.getCustomerPhone()
+                        : (sale.getCustomer() != null ? sale.getCustomer().getPhone() : null))
                 .customerEmail(sale.getCustomer() != null ? sale.getCustomer().getEmail() : null)
                 .customerAddress(sale.getCustomer() != null ? sale.getCustomer().getAddress() : null)
                 .subtotal(sale.getSubtotal() != null ? sale.getSubtotal() : BigDecimal.ZERO)
                 .discountAmount(sale.getDiscountAmount() != null ? sale.getDiscountAmount() : BigDecimal.ZERO)
-                .discountPercentage(sale.getDiscountPercentage() != null ? sale.getDiscountPercentage() : BigDecimal.ZERO)
+                .discountPercentage(
+                        sale.getDiscountPercentage() != null ? sale.getDiscountPercentage() : BigDecimal.ZERO)
                 .taxAmount(sale.getTaxAmount() != null ? sale.getTaxAmount() : BigDecimal.ZERO)
                 .totalAmount(sale.getTotalAmount() != null ? sale.getTotalAmount() : BigDecimal.ZERO)
                 .paidAmount(sale.getPaidAmount() != null ? sale.getPaidAmount() : BigDecimal.ZERO)
@@ -198,7 +198,7 @@ public class SaleReportService {
                 .items(items)
                 .build();
     }
-    
+
     /**
      * Build QR code content string from sale data
      */
@@ -209,8 +209,9 @@ public class SaleReportService {
             sb.append("Date: ").append(reportData.getSaleDate()
                     .format(DateTimeFormatter.ofPattern("d MMMM yyyy"))).append("\n");
         }
-        sb.append("Customer: ").append(reportData.getCustomerName() != null ? 
-                reportData.getCustomerName() : "Walk-in Customer").append("\n");
+        sb.append("Customer: ")
+                .append(reportData.getCustomerName() != null ? reportData.getCustomerName() : "Walk-in Customer")
+                .append("\n");
         if (reportData.getTotalAmount() != null) {
             sb.append("Total: ৳").append(reportData.getTotalAmount().toString()).append("\n");
         }
@@ -219,7 +220,7 @@ public class SaleReportService {
         }
         return sb.toString();
     }
-    
+
     /**
      * Generate QR code image as InputStream
      */
@@ -228,18 +229,18 @@ public class SaleReportService {
         hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
         hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
         hints.put(EncodeHintType.MARGIN, 1);
-        
+
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix = qrCodeWriter.encode(content, BarcodeFormat.QR_CODE, width, height, hints);
-        
+
         BufferedImage qrImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         qrImage.createGraphics();
-        
+
         Graphics2D graphics = (Graphics2D) qrImage.getGraphics();
         graphics.setColor(Color.WHITE);
         graphics.fillRect(0, 0, width, height);
         graphics.setColor(Color.BLACK);
-        
+
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 if (bitMatrix.get(i, j)) {
@@ -247,10 +248,186 @@ public class SaleReportService {
                 }
             }
         }
-        
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(qrImage, "PNG", baos);
         return new ByteArrayInputStream(baos.toByteArray());
     }
-}
 
+    /**
+     * Generate Excel report for sales list
+     */
+    public byte[] generateSalesExcel(List<Sale> sales, String search, String startDate, String endDate,
+            String printedBy) {
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            org.apache.poi.xssf.usermodel.XSSFSheet sheet = workbook.createSheet("Sales Report");
+
+            // Create styles
+            org.apache.poi.ss.usermodel.CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.ROYAL_BLUE.getIndex());
+            headerStyle.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setColor(org.apache.poi.ss.usermodel.IndexedColors.WHITE.getIndex());
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+            headerStyle.setVerticalAlignment(org.apache.poi.ss.usermodel.VerticalAlignment.CENTER);
+            headerStyle.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            headerStyle.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            headerStyle.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            headerStyle.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+            org.apache.poi.ss.usermodel.CellStyle titleStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 16);
+            titleStyle.setFont(titleFont);
+            titleStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+
+            org.apache.poi.ss.usermodel.CellStyle subTitleStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font subTitleFont = workbook.createFont();
+            subTitleFont.setFontHeightInPoints((short) 10);
+            subTitleFont.setColor(org.apache.poi.ss.usermodel.IndexedColors.GREY_50_PERCENT.getIndex());
+            subTitleStyle.setFont(subTitleFont);
+            subTitleStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+
+            org.apache.poi.ss.usermodel.CellStyle currencyStyle = workbook.createCellStyle();
+            currencyStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0.00"));
+
+            org.apache.poi.ss.usermodel.CellStyle dateStyle = workbook.createCellStyle();
+            dateStyle.setDataFormat(workbook.createDataFormat().getFormat("dd MMMM, yyyy h:mm AM/PM"));
+
+            // Company Info
+            int rowNum = 0;
+            org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowNum++);
+            org.apache.poi.ss.usermodel.Cell cell = row.createCell(0);
+            cell.setCellValue("RUPGANJ PHARMACY");
+            cell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 8));
+
+            row = sheet.createRow(rowNum++);
+            cell = row.createCell(0);
+            cell.setCellValue("892/1, Beside Shahidbagh Mosque, Rajarbagh, Dhaka - 1217");
+            cell.setCellStyle(subTitleStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, 8));
+
+            row = sheet.createRow(rowNum++);
+            cell = row.createCell(0);
+            cell.setCellValue("Sales Report");
+            org.apache.poi.ss.usermodel.CellStyle reportTitleStyle = workbook.createCellStyle();
+            org.apache.poi.ss.usermodel.Font reportTitleFont = workbook.createFont();
+            reportTitleFont.setBold(true);
+            reportTitleFont.setFontHeightInPoints((short) 14);
+            reportTitleFont.setUnderline(org.apache.poi.ss.usermodel.Font.U_SINGLE);
+            reportTitleStyle.setFont(reportTitleFont);
+            reportTitleStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+            cell.setCellStyle(reportTitleStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(2, 2, 0, 8));
+
+            rowNum++; // Empty row
+
+            // Filter Info
+            row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue("Generated Date:");
+            row.createCell(1).setCellValue(
+                    java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy hh:mm a")));
+
+            // Printed By
+            if (printedBy != null && !printedBy.isEmpty()) {
+                row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue("Printed By:");
+                row.createCell(1).setCellValue(printedBy);
+            }
+
+            // Date Range
+            row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue("Date Range:");
+            if (startDate != null && !startDate.isEmpty()) {
+                try {
+                    java.time.format.DateTimeFormatter inputFormatter = java.time.format.DateTimeFormatter
+                            .ofPattern("[dd-MMM-yyyy][yyyy-MM-dd]");
+                    java.time.format.DateTimeFormatter outputFormatter = java.time.format.DateTimeFormatter
+                            .ofPattern("dd MMM yyyy");
+
+                    java.time.LocalDate start = java.time.LocalDate.parse(startDate, inputFormatter);
+                    String startStr = start.format(outputFormatter);
+
+                    String endStr = "Now";
+                    if (endDate != null && !endDate.isEmpty()) {
+                        java.time.LocalDate end = java.time.LocalDate.parse(endDate, inputFormatter);
+                        endStr = end.format(outputFormatter);
+                    }
+
+                    row.createCell(1).setCellValue("From: " + startStr + "      To: " + endStr);
+                } catch (Exception e) {
+                    // Fallback if parsing fails
+                    row.createCell(1).setCellValue(startDate + " To: " + (endDate != null ? endDate : "Now"));
+                }
+            } else {
+                row.createCell(1).setCellValue("All Time");
+            }
+
+            if (search != null && !search.isEmpty()) {
+                row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue("Search By:");
+                row.createCell(1).setCellValue(search);
+            }
+
+            rowNum++; // Space before headers
+
+            // Headers
+            String[] headers = { "Sale #", "Date & Time", "Customer", "Items", "Subtotal", "Discount", "Total",
+                    "Payment", "Status" };
+            row = sheet.createRow(rowNum++);
+            for (int i = 0; i < headers.length; i++) {
+                cell = row.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Data
+            for (Sale sale : sales) {
+                row = sheet.createRow(rowNum++);
+
+                row.createCell(0).setCellValue(sale.getSaleNumber());
+
+                cell = row.createCell(1);
+                cell.setCellValue(
+                        java.time.LocalDateTime.of(sale.getSaleDate().toLocalDate(), sale.getSaleDate().toLocalTime()));
+                cell.setCellStyle(dateStyle);
+
+                row.createCell(2).setCellValue(sale.getCustomerName() != null ? sale.getCustomerName()
+                        : (sale.getCustomer() != null ? sale.getCustomer().getName() : "Walk-in"));
+
+                row.createCell(3).setCellValue(sale.getItems() != null ? sale.getItems().size() : 0);
+
+                cell = row.createCell(4);
+                cell.setCellValue(sale.getSubtotal() != null ? sale.getSubtotal().doubleValue() : 0.0);
+                cell.setCellStyle(currencyStyle);
+
+                cell = row.createCell(5);
+                cell.setCellValue(sale.getDiscountAmount() != null ? sale.getDiscountAmount().doubleValue() : 0.0);
+                cell.setCellStyle(currencyStyle);
+
+                cell = row.createCell(6);
+                cell.setCellValue(sale.getTotalAmount() != null ? sale.getTotalAmount().doubleValue() : 0.0);
+                cell.setCellStyle(currencyStyle);
+
+                row.createCell(7).setCellValue(sale.getPaymentMethod() + " (" + sale.getPaymentStatus() + ")");
+                row.createCell(8).setCellValue(sale.getSaleStatus());
+            }
+
+            // Autosize columns
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            workbook.write(baos);
+            return baos.toByteArray();
+        } catch (Exception e) {
+            log.error("Error generating Excel report", e);
+            throw new RuntimeException("Failed to generate Excel report", e);
+        }
+    }
+}

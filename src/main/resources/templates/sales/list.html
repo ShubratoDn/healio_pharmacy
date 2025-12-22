@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,23 +15,28 @@
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .stat-badge {
             font-size: 0.9em;
             padding: 5px 10px;
         }
+
         .sale-row {
             transition: background-color 0.2s;
         }
+
         .sale-row:hover {
             background-color: #f8f9fa;
         }
+
         .action-buttons {
             white-space: nowrap;
         }
     </style>
 </head>
+
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='sales')}"></div>
     <div class="main-content">
@@ -47,41 +53,33 @@
         <div class="filter-card">
             <form method="get" action="/sales" id="filterForm">
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Search</label>
-                        <input type="text" name="search" class="form-control" 
-                               th:value="${search}" placeholder="Sale number, customer name...">
+                        <input type="text" name="search" class="form-control" th:value="${search}"
+                            placeholder="Sale number, customer name...">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Start Date</label>
-                        <input type="text" 
-                               class="form-control date-picker" 
-                               id="startDate"
-                               placeholder="dd-MMM-yyyy"
-                               data-hidden-input="startDateHidden">
-                        <input type="hidden" 
-                               name="startDate" 
-                               id="startDateHidden"
-                               th:value="${startDate}">
+                        <input type="text" class="form-control date-picker" id="startDate" placeholder="dd-MMM-yyyy"
+                            data-hidden-input="startDateHidden">
+                        <input type="hidden" name="startDate" id="startDateHidden" th:value="${startDate}">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">End Date</label>
-                        <input type="text" 
-                               class="form-control date-picker" 
-                               id="endDate"
-                               placeholder="dd-MMM-yyyy"
-                               data-hidden-input="endDateHidden">
-                        <input type="hidden" 
-                               name="endDate" 
-                               id="endDateHidden"
-                               th:value="${endDate}">
+                        <input type="text" class="form-control date-picker" id="endDate" placeholder="dd-MMM-yyyy"
+                            data-hidden-input="endDateHidden">
+                        <input type="hidden" name="endDate" id="endDateHidden" th:value="${endDate}">
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label">&nbsp;</label>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
                                 <i class="bi bi-search me-2"></i>Filter
                             </button>
+                            <a th:href="@{/sales/download-excel(search=${search}, startDate=${startDate}, endDate=${endDate})}"
+                                class="btn btn-success" title="Download Excel">
+                                <i class="bi bi-file-earmark-spreadsheet"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -107,7 +105,7 @@
                             <th>Items</th>
                             <th>Subtotal</th>
                             <th>Discount</th>
-                            <th>Tax</th>
+
                             <th>Total</th>
                             <th>Payment</th>
                             <th>Status</th>
@@ -120,8 +118,9 @@
                                 <strong th:text="${sale.saleNumber}"></strong>
                             </td>
                             <td>
-                                <div th:text="${#temporals.format(sale.saleDate, 'yyyy-MM-dd')}"></div>
-                                <small class="text-muted" th:text="${#temporals.format(sale.saleDate, 'HH:mm')}"></small>
+                                <div th:text="${#temporals.format(sale.saleDate, 'dd MMMM, yyyy')}"></div>
+                                <small class="text-muted"
+                                    th:text="${#temporals.format(sale.saleDate, 'h:mm a')}"></small>
                             </td>
                             <td>
                                 <div th:text="${sale.customer?.name ?: sale.customerName ?: 'Walk-in'}"></div>
@@ -132,40 +131,35 @@
                             </td>
                             <td>৳<span th:text="${#numbers.formatDecimal(sale.subtotal, 0, 2)}"></span></td>
                             <td>
-                                <span th:if="${sale.discountAmount != null && sale.discountAmount > 0}" 
-                                      class="text-danger" th:text="'-' + ${#numbers.formatDecimal(sale.discountAmount, 0, 2)}"></span>
+                                <span th:if="${sale.discountAmount != null && sale.discountAmount > 0}"
+                                    class="text-danger"
+                                    th:text="'-' + ${#numbers.formatDecimal(sale.discountAmount, 0, 2)}"></span>
                                 <span th:unless="${sale.discountAmount != null && sale.discountAmount > 0}">-</span>
                             </td>
+
                             <td>
-                                <span th:if="${sale.taxAmount != null && sale.taxAmount > 0}" 
-                                      th:text="${#numbers.formatDecimal(sale.taxAmount, 0, 2)}"></span>
-                                <span th:unless="${sale.taxAmount != null && sale.taxAmount > 0}">-</span>
-                            </td>
-                            <td>
-                                <strong>৳<span th:text="${#numbers.formatDecimal(sale.totalAmount, 0, 2)}"></span></strong>
+                                <strong>৳<span
+                                        th:text="${#numbers.formatDecimal(sale.totalAmount, 0, 2)}"></span></strong>
                             </td>
                             <td>
                                 <div th:text="${sale.paymentMethod}"></div>
-                                <span class="badge stat-badge" 
-                                      th:classappend="${sale.paymentStatus == 'PAID'} ? 'bg-success' : 
+                                <span class="badge stat-badge"
+                                    th:classappend="${sale.paymentStatus == 'PAID'} ? 'bg-success' : 
                                                       (${sale.paymentStatus == 'PARTIAL'} ? 'bg-warning' : 'bg-danger')"
-                                      th:text="${sale.paymentStatus}"></span>
+                                    th:text="${sale.paymentStatus}"></span>
                             </td>
                             <td>
-                                <span class="badge stat-badge" 
-                                      th:classappend="${sale.saleStatus == 'COMPLETED'} ? 'bg-success' : 
+                                <span class="badge stat-badge" th:classappend="${sale.saleStatus == 'COMPLETED'} ? 'bg-success' : 
                                                       (${sale.saleStatus == 'PENDING'} ? 'bg-warning' : 'bg-danger')"
-                                      th:text="${sale.saleStatus}"></span>
+                                    th:text="${sale.saleStatus}"></span>
                             </td>
                             <td class="text-end action-buttons">
-                                <a th:href="@{/sales/{id}(id=${sale.id})}" 
-                                   class="btn btn-sm btn-info" 
-                                   title="View Details">
+                                <a th:href="@{/sales/{id}(id=${sale.id})}" class="btn btn-sm btn-info"
+                                    title="View Details">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a th:href="@{/sales/{id}/edit(id=${sale.id})}" 
-                                   class="btn btn-sm btn-warning" 
-                                   title="Edit Sale">
+                                <a th:href="@{/sales/{id}/edit(id=${sale.id})}" class="btn btn-sm btn-warning"
+                                    title="Edit Sale">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                             </td>
@@ -184,18 +178,20 @@
             <nav th:if="${sales.totalPages > 1}" class="mt-4">
                 <ul class="pagination justify-content-center">
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                        <a class="page-link" th:href="@{/sales(page=${currentPage - 1}, search=${search}, startDate=${startDate}, endDate=${endDate})}">
+                        <a class="page-link"
+                            th:href="@{/sales(page=${currentPage - 1}, search=${search}, startDate=${startDate}, endDate=${endDate})}">
                             <i class="bi bi-chevron-left"></i> Previous
                         </a>
                     </li>
-                    <li class="page-item" th:each="i : ${#numbers.sequence(0, sales.totalPages - 1)}" 
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, sales.totalPages - 1)}"
                         th:classappend="${i == currentPage} ? 'active'">
-                        <a class="page-link" 
-                           th:href="@{/sales(page=${i}, search=${search}, startDate=${startDate}, endDate=${endDate})}" 
-                           th:text="${i + 1}"></a>
+                        <a class="page-link"
+                            th:href="@{/sales(page=${i}, search=${search}, startDate=${startDate}, endDate=${endDate})}"
+                            th:text="${i + 1}"></a>
                     </li>
                     <li class="page-item" th:classappend="${currentPage == sales.totalPages - 1} ? 'disabled'">
-                        <a class="page-link" th:href="@{/sales(page=${currentPage + 1}, search=${search}, startDate=${startDate}, endDate=${endDate})}">
+                        <a class="page-link"
+                            th:href="@{/sales(page=${currentPage + 1}, search=${search}, startDate=${startDate}, endDate=${endDate})}">
                             Next <i class="bi bi-chevron-right"></i>
                         </a>
                     </li>
@@ -210,19 +206,19 @@
                             <h6 class="card-title">Page Summary</h6>
                             <div class="row">
                                 <div class="col-md-3">
-                                    <strong>Total Sales:</strong> 
+                                    <strong>Total Sales:</strong>
                                     <span th:text="${#numbers.formatDecimal(pageTotalSales, 0, 2)}"></span> ৳
                                 </div>
                                 <div class="col-md-3">
-                                    <strong>Total Items:</strong> 
+                                    <strong>Total Items:</strong>
                                     <span th:text="${pageTotalItems}"></span>
                                 </div>
                                 <div class="col-md-3">
-                                    <strong>Total Records:</strong> 
+                                    <strong>Total Records:</strong>
                                     <span th:text="${sales.totalElements}"></span>
                                 </div>
                                 <div class="col-md-3">
-                                    <strong>Page:</strong> 
+                                    <strong>Page:</strong>
                                     <span th:text="${currentPage + 1} + ' of ' + ${sales.totalPages}"></span>
                                 </div>
                             </div>
@@ -236,4 +232,5 @@
     <script src="/lib/flatpickr/flatpickr.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
 </body>
+
 </html>

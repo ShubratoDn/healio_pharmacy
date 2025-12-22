@@ -20,6 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,28 +52,29 @@ public class SaleController {
             Model model) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Sale> sales;
-        
+
         if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
             LocalDateTime start = LocalDate.parse(startDate).atStartOfDay();
             LocalDateTime end = LocalDate.parse(endDate).plusDays(1).atStartOfDay();
             sales = saleRepository.findBySaleDateBetween(start, end, pageable);
         } else if (search != null && !search.isEmpty()) {
-            // For now, just get all sales - search filtering can be added via repository query
+            // For now, just get all sales - search filtering can be added via repository
+            // query
             // TODO: Implement proper search query in SaleRepository
             sales = saleRepository.findAllByOrderBySaleDateDesc(pageable);
         } else {
             sales = saleRepository.findAllByOrderBySaleDateDesc(pageable);
         }
-        
+
         // Calculate page summary statistics
         BigDecimal pageTotalSales = sales.getContent().stream()
                 .map(sale -> sale.getTotalAmount() != null ? sale.getTotalAmount() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+
         int pageTotalItems = sales.getContent().stream()
                 .mapToInt(sale -> sale.getItems() != null ? sale.getItems().size() : 0)
                 .sum();
-        
+
         model.addAttribute("sales", sales);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", sales.getTotalPages());
@@ -99,7 +101,7 @@ public class SaleController {
         sale.setPaymentStatus("PAID");
         sale.setSaleStatus("COMPLETED");
         sale.setPaymentMethod("CASH");
-        
+
         model.addAttribute("sale", sale);
         return "sales/form";
     }
@@ -108,7 +110,7 @@ public class SaleController {
     public String viewSale(@PathVariable Long id, Model model) {
         Sale sale = saleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sale not found"));
-        
+
         // Initialize product entities to access strength
         if (sale.getItems() != null && !sale.getItems().isEmpty()) {
             sale.getItems().forEach(item -> {
@@ -118,7 +120,7 @@ public class SaleController {
                 }
             });
         }
-        
+
         model.addAttribute("sale", sale);
         return "sales/view";
     }
@@ -130,12 +132,12 @@ public class SaleController {
         try {
             Sale sale = saleRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Sale not found"));
-            
+
             byte[] pdfBytes = saleReportService.generateSaleInvoicePdf(sale);
-            
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            
+
             String filename = "invoice-" + sale.getSaleNumber() + ".pdf";
             if ("inline".equals(disposition)) {
                 headers.setContentDispositionFormData("inline", filename);
@@ -143,7 +145,7 @@ public class SaleController {
                 headers.setContentDispositionFormData("attachment", filename);
             }
             headers.setContentLength(pdfBytes.length);
-            
+
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(pdfBytes);
@@ -151,6 +153,45 @@ public class SaleController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("/download-excel")
+    public ResponseEntity<byte[]> downloadSalesExcel(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            java.security.Principal principal) {
+
+        String printedBy = principal != null ? principal.getName() : "Unknown";
+
+        List<Sale> sales;
+        if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
+            LocalDateTime start;
+            LocalDateTime end;
+            try {
+                // Try format from date picker
+                start = LocalDate.parse(startDate, DateTimeFormatter.ofPattern("dd-MMM-yyyy")).atStartOfDay();
+                end = LocalDate.parse(endDate, DateTimeFormatter.ofPattern("dd-MMM-yyyy")).plusDays(1).atStartOfDay();
+            } catch (Exception e) {
+                // Fallback to standard ISO format
+                start = LocalDate.parse(startDate).atStartOfDay();
+                end = LocalDate.parse(endDate).plusDays(1).atStartOfDay();
+            }
+            sales = saleRepository.findBySaleDateBetween(start, end, Pageable.unpaged()).getContent();
+        } else {
+            sales = saleRepository.findAllByOrderBySaleDateDesc(Pageable.unpaged()).getContent();
+        }
+
+        byte[] excelBytes = saleReportService.generateSalesExcel(sales, search, startDate, endDate, printedBy);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        String filename = "sales-report-" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".xlsx";
+        headers.setContentDispositionFormData("attachment", filename);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelBytes);
     }
 
     @GetMapping("/{id}/edit")
@@ -175,7 +216,7 @@ public class SaleController {
             @RequestParam(required = false) List<String> expiryDates,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
-        
+
         try {
             // Load existing sale if editing
             Sale existingSale = null;
@@ -192,17 +233,17 @@ public class SaleController {
                     sale.setSaleNumber(saleService.generateSaleNumber());
                 }
             }
-            
+
             // Set sale date if not provided
             if (sale.getSaleDate() == null) {
                 sale.setSaleDate(LocalDateTime.now());
             }
-            
+
             // Initialize items list if null
             if (sale.getItems() == null) {
                 sale.setItems(new ArrayList<>());
             }
-            
+
             // Load customer if provided
             if (customerId != null) {
                 Customer customer = customerRepository.findById(customerId).orElse(null);
@@ -212,49 +253,53 @@ public class SaleController {
                     sale.setCustomerPhone(customer.getPhone());
                 }
             }
-            
+
             // Set current user as sold by
             if (authentication != null) {
                 User currentUser = userRepository.findByUsername(authentication.getName())
                         .orElse(null);
                 sale.setSoldBy(currentUser);
             }
-            
+
             // Clear existing items
             sale.getItems().clear();
-            
+
             // Add sale items
             if (productIds != null && !productIds.isEmpty()) {
                 for (int idx = 0; idx < productIds.size(); idx++) {
                     final int i = idx;
-                    if (productIds.get(i) == null) continue;
-                    
+                    if (productIds.get(i) == null)
+                        continue;
+
                     Product product = productRepository.findById(productIds.get(i))
                             .orElseThrow(() -> new RuntimeException("Product not found: " + productIds.get(i)));
-                    
+
                     Integer quantity = (quantities != null && i < quantities.size()) ? quantities.get(i) : 1;
-                    BigDecimal unitPrice = (unitPrices != null && i < unitPrices.size()) ? unitPrices.get(i) : BigDecimal.ZERO;
-                    BigDecimal discountAmount = (discountAmounts != null && i < discountAmounts.size()) ? discountAmounts.get(i) : BigDecimal.ZERO;
+                    BigDecimal unitPrice = (unitPrices != null && i < unitPrices.size()) ? unitPrices.get(i)
+                            : BigDecimal.ZERO;
+                    BigDecimal discountAmount = (discountAmounts != null && i < discountAmounts.size())
+                            ? discountAmounts.get(i)
+                            : BigDecimal.ZERO;
                     String batchNumber = (batchNumbers != null && i < batchNumbers.size()) ? batchNumbers.get(i) : null;
                     String expiryDateStr = (expiryDates != null && i < expiryDates.size()) ? expiryDates.get(i) : null;
-                    
+
                     if (quantity == null || quantity <= 0) {
                         continue;
                     }
-                    
+
                     ProductPackage productPackage = null;
                     if (packageIds != null && i < packageIds.size() && packageIds.get(i) != null) {
                         productPackage = productPackageRepository.findById(packageIds.get(i)).orElse(null);
                     }
-                    
+
                     Inventory inventory = null;
                     if (inventoryIds != null && i < inventoryIds.size() && inventoryIds.get(i) != null) {
                         inventory = inventoryRepository.findById(inventoryIds.get(i)).orElse(null);
                     }
-                    
+
                     BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity))
                             .subtract(discountAmount != null ? discountAmount : BigDecimal.ZERO);
-                    
+
                     SaleItem item = SaleItem.builder()
                             .sale(sale)
                             .product(product)
@@ -266,27 +311,28 @@ public class SaleController {
                             .discountAmount(discountAmount)
                             .totalPrice(totalPrice)
                             .batchNumber(batchNumber)
-                            .expiryDate(expiryDateStr != null && !expiryDateStr.isEmpty() ? 
-                                       LocalDate.parse(expiryDateStr) : null)
+                            .expiryDate(
+                                    expiryDateStr != null && !expiryDateStr.isEmpty() ? LocalDate.parse(expiryDateStr)
+                                            : null)
                             .build();
-                    
+
                     sale.getItems().add(item);
                 }
             }
-            
+
             // Calculate totals
             saleService.calculateSaleTotals(sale);
-            
+
             // Update inventory if sale is completed
             if ("COMPLETED".equals(sale.getSaleStatus())) {
                 // If editing an existing sale, first restore the original inventory
                 if (existingSale != null && "COMPLETED".equals(existingSale.getSaleStatus())) {
                     saleService.restoreInventoryFromSale(existingSale);
                 }
-                
+
                 // Then update inventory with new quantities
                 saleService.updateInventoryForSale(sale);
-                
+
                 // Calculate profit for each item
                 for (SaleItem item : sale.getItems()) {
                     saleService.calculateProfit(item);
@@ -295,10 +341,11 @@ public class SaleController {
                 // If sale status changed from COMPLETED to something else, restore inventory
                 saleService.restoreInventoryFromSale(existingSale);
             }
-            
+
             saleRepository.save(sale);
-            redirectAttributes.addFlashAttribute("success", 
-                    sale.getId() != null && existingSale != null ? "Sale updated successfully!" : "Sale saved successfully!");
+            redirectAttributes.addFlashAttribute("success",
+                    sale.getId() != null && existingSale != null ? "Sale updated successfully!"
+                            : "Sale saved successfully!");
             return "redirect:/sales/" + sale.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error saving sale: " + e.getMessage());
@@ -308,7 +355,7 @@ public class SaleController {
     }
 
     // API Endpoints for AJAX calls
-    
+
     @GetMapping("/api/customers/search")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> searchCustomers(@RequestParam String q) {
@@ -338,16 +385,18 @@ public class SaleController {
                     Map<String, Object> map = new HashMap<>();
                     map.put("id", product.getId());
                     map.put("name", product.getName());
-                    map.put("category", product.getProductCategory() != null ? product.getProductCategory().getName() : "");
-                    map.put("manufacturer", product.getManufacturer() != null ? product.getManufacturer().getName() : "");
+                    map.put("category",
+                            product.getProductCategory() != null ? product.getProductCategory().getName() : "");
+                    map.put("manufacturer",
+                            product.getManufacturer() != null ? product.getManufacturer().getName() : "");
                     map.put("generic", product.getGeneric() != null ? product.getGeneric().getName() : "");
                     map.put("strength", product.getStrength() != null ? product.getStrength() : "");
                     map.put("requiresPrescription", product.getRequiresPrescription());
-                    
+
                     // Get available inventory
                     int availableQty = saleService.getAvailableInventory(product.getId(), null);
                     map.put("availableQuantity", availableQty);
-                    
+
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -367,11 +416,11 @@ public class SaleController {
                     map.put("unitPrice", pkg.getUnitPrice());
                     map.put("quantityPerPackage", pkg.getQuantityPerPackage());
                     map.put("unitOfMeasure", pkg.getUnitOfMeasure());
-                    
+
                     // Get available inventory for this package
                     int availableQty = saleService.getAvailableInventory(productId, pkg.getId());
                     map.put("availableQuantity", availableQty);
-                    
+
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -381,11 +430,11 @@ public class SaleController {
     @GetMapping("/api/inventory/{productId}")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> getInventory(@PathVariable Long productId,
-                                                                   @RequestParam(required = false) Long packageId) {
+            @RequestParam(required = false) Long packageId) {
         List<Inventory> inventories = inventoryRepository.findByProductId(productId);
         List<Map<String, Object>> result = inventories.stream()
-                .filter(inv -> packageId == null || 
-                              (inv.getProductPackage() != null && inv.getProductPackage().getId().equals(packageId)))
+                .filter(inv -> packageId == null ||
+                        (inv.getProductPackage() != null && inv.getProductPackage().getId().equals(packageId)))
                 .filter(inv -> inv.getAvailableQuantity() > 0)
                 .map(inventory -> {
                     Map<String, Object> map = new HashMap<>();
@@ -395,7 +444,8 @@ public class SaleController {
                     map.put("availableQuantity", inventory.getAvailableQuantity());
                     map.put("sellingPrice", inventory.getSellingPrice());
                     map.put("costPrice", inventory.getCostPrice());
-                    map.put("packageId", inventory.getProductPackage() != null ? inventory.getProductPackage().getId() : null);
+                    map.put("packageId",
+                            inventory.getProductPackage() != null ? inventory.getProductPackage().getId() : null);
                     return map;
                 })
                 .collect(Collectors.toList());
@@ -410,13 +460,12 @@ public class SaleController {
             @RequestParam Integer quantity) {
         boolean available = saleService.checkInventoryAvailability(productId, packageId, quantity);
         int availableQty = saleService.getAvailableInventory(productId, packageId);
-        
+
         Map<String, Object> result = new HashMap<>();
         result.put("available", available);
         result.put("availableQuantity", availableQty);
         result.put("requestedQuantity", quantity);
-        
+
         return ResponseEntity.ok(result);
     }
 }
-
