@@ -429,6 +429,7 @@ public class SaleController {
                     map.put("manufacturer",
                             product.getManufacturer() != null ? product.getManufacturer().getName() : "");
                     map.put("generic", product.getGeneric() != null ? product.getGeneric().getName() : "");
+                    map.put("dosageForm", product.getDosageForm() != null ? product.getDosageForm().getName() : "");
                     map.put("strength", product.getStrength() != null ? product.getStrength() : "");
                     map.put("requiresPrescription", product.getRequiresPrescription());
 

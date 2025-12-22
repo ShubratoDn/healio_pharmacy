@@ -378,6 +378,8 @@
         <div th:each="item : ${sale.items}" class="sale-item-data"
             th:data-product-id="${item.product != null ? item.product.id : ''}"
             th:data-product-name="${item.productName}"
+            th:data-strength="${item.product != null ? item.product.strength : ''}"
+            th:data-dosage-form="${item.product != null && item.product.dosageForm != null ? item.product.dosageForm.name : ''}"
             th:data-package-id="${item.productPackage != null ? item.productPackage.id : ''}"
             th:data-package-description="${item.productPackage != null ? item.productPackage.packageDescription : ''}"
             th:data-quantity="${item.quantity}" th:data-unit-price="${item.unitPrice}"
@@ -550,15 +552,15 @@
                     ? `<span class="badge bg-success inventory-badge">Stock: ${product.availableQuantity}</span>`
                     : `<span class="badge bg-danger inventory-badge">Out of Stock</span>`;
                 const details = [];
+                if (product.dosageForm) details.push(product.dosageForm);
                 if (product.manufacturer) details.push(product.manufacturer);
                 if (product.generic) details.push(product.generic);
-                if (product.strength) details.push(product.strength);
 
                 item.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <strong>${product.name}</strong><br>
-                            <small>${details.join(' | ')}</small>
+                            <strong>${product.name}</strong> <span class="text-muted fw-normal">${product.strength || ''}</span><br>
+                            <small class="text-muted">${details.join(' | ')}</small>
                         </div>
                         ${stockBadge}
                     </div>
@@ -584,6 +586,8 @@
                         const item = {
                             productId: product.id,
                             productName: product.name,
+                            strength: product.strength || '',
+                            dosageForm: product.dosageForm || '',
                             packageId: packages.length > 0 ? packages[0].id : null,
                             packageDescription: packages.length > 0 ? packages[0].description : '',
                             quantity: 1,
@@ -619,7 +623,7 @@
             row.innerHTML = `
                 <td>
                     <strong>${item.productName}</strong>
-                    <br><small class="text-muted">${item.packageDescription || 'No package'}</small>
+                    <br><small class="text-muted">${[item.strength, item.dosageForm].filter(x => x).join(' | ')}</small>
                 </td>
                 <td>
                     <select class="form-select form-select-sm" onchange="updateItemPackage(${index}, this.value)">
@@ -984,6 +988,8 @@
                         return {
                             productId: div.getAttribute('data-product-id') || null,
                             productName: div.getAttribute('data-product-name') || '',
+                            strength: div.getAttribute('data-strength') || '',
+                            dosageForm: div.getAttribute('data-dosage-form') || '',
                             packageId: div.getAttribute('data-package-id') || null,
                             packageDescription: div.getAttribute('data-package-description') || '',
                             quantity: parseInt(div.getAttribute('data-quantity')) || 1,

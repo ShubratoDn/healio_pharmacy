@@ -23,21 +23,30 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     Page<Product> findByNameContainingIgnoreCaseAndIsActiveTrue(String name, Pageable pageable);
 
-    @Query("SELECT p FROM Product p " +
-            "LEFT JOIN p.manufacturer m " +
-            "LEFT JOIN p.generic g " +
-            "LEFT JOIN p.dosageForm df " +
-            "WHERE p.isActive = true AND (" +
-            "LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(m.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(g.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "LOWER(df.name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+    @Query(value = "SELECT p.* FROM product p " +
+            "LEFT JOIN manufacturer m ON p.manufacturer_id = m.id " +
+            "LEFT JOIN generic g ON p.generic_id = g.id " +
+            "LEFT JOIN dosage_form df ON p.dosage_form_id = df.id " +
+            "WHERE p.is_active = true AND (" +
+            "  LOWER(CONCAT(p.name, ' ', COALESCE(p.strength, ''), ' ', COALESCE(df.name, ''), ' ', COALESCE(m.name, ''), ' ', COALESCE(g.name, ''))) "
+            +
+            "  LIKE ALL (SELECT '%' || LOWER(x) || '%' FROM unnest(regexp_split_to_array(trim(:search), '\\s+')) x)" +
+            ") " +
             "ORDER BY " +
             "CASE " +
-            "  WHEN LOWER(p.name) LIKE LOWER(CONCAT(:search, '%')) THEN 1 " +
-            "  WHEN LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) THEN 2 " +
+            "  WHEN LOWER(p.name) LIKE LOWER(CONCAT(split_part(trim(:search), ' ', 1), '%')) THEN 1 " +
+            "  WHEN LOWER(p.name) LIKE LOWER(CONCAT('%', split_part(trim(:search), ' ', 1), '%')) THEN 2 " +
             "  ELSE 3 " +
-            "END ASC, p.name ASC")
+            "END ASC, p.name ASC", countQuery = "SELECT count(*) FROM product p " +
+                    "LEFT JOIN manufacturer m ON p.manufacturer_id = m.id " +
+                    "LEFT JOIN generic g ON p.generic_id = g.id " +
+                    "LEFT JOIN dosage_form df ON p.dosage_form_id = df.id " +
+                    "WHERE p.is_active = true AND (" +
+                    "  LOWER(CONCAT(p.name, ' ', COALESCE(p.strength, ''), ' ', COALESCE(df.name, ''), ' ', COALESCE(m.name, ''), ' ', COALESCE(g.name, ''))) "
+                    +
+                    "  LIKE ALL (SELECT '%' || LOWER(x) || '%' FROM unnest(regexp_split_to_array(trim(:search), '\\s+')) x)"
+                    +
+                    ")", nativeQuery = true)
     Page<Product> searchProducts(@Param("search") String search, Pageable pageable);
 
     long countByIsActiveTrue();

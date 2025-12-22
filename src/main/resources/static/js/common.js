@@ -362,13 +362,10 @@ function updateTooltipPosition(toggleLink, submenu) {
                      onclick="navigateToProduct(${product.id})">
                     <div class="suggestion-item-header">
                         <i class="bi bi-capsule me-2 text-primary"></i>
-                        <strong>${escapeHtml(product.name)}</strong>
-                        ${strength ? `<span class="text-muted ms-2">[${escapeHtml(strength)}]</span>` : ''}
+                        <strong>${escapeHtml(product.name)}</strong> <span class="text-muted fw-normal ms-1">${escapeHtml(strength)}</span>
                     </div>
-                    <div class="suggestion-item-details">
-                        ${dosageForm ? `<span class="badge bg-info me-2"><i class="bi bi-capsule-pill me-1"></i>${escapeHtml(dosageForm)}</span>` : ''}
-                        ${manufacturer ? `<span class="text-muted"><i class="bi bi-building me-1"></i>${escapeHtml(manufacturer)}</span>` : ''}
-                        ${generic ? `<span class="text-muted ms-2"><i class="bi bi-pill me-1"></i>${escapeHtml(generic)}</span>` : ''}
+                    <div class="suggestion-item-details text-muted small">
+                        ${[dosageForm, manufacturer, generic].filter(x => x).join(' | ')}
                     </div>
                 </div>
             `;
