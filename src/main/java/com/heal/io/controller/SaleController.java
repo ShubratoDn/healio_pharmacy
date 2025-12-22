@@ -194,6 +194,45 @@ public class SaleController {
                 .body(excelBytes);
     }
 
+    @GetMapping("/download-pdf")
+    public ResponseEntity<byte[]> downloadSalesPdf(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            java.security.Principal principal) {
+
+        String printedBy = principal != null ? principal.getName() : "Unknown";
+
+        List<Sale> sales;
+        if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
+            LocalDateTime start;
+            LocalDateTime end;
+            try {
+                // Try format from date picker
+                start = LocalDate.parse(startDate, DateTimeFormatter.ofPattern("dd-MMM-yyyy")).atStartOfDay();
+                end = LocalDate.parse(endDate, DateTimeFormatter.ofPattern("dd-MMM-yyyy")).plusDays(1).atStartOfDay();
+            } catch (Exception e) {
+                // Fallback to standard ISO format
+                start = LocalDate.parse(startDate).atStartOfDay();
+                end = LocalDate.parse(endDate).plusDays(1).atStartOfDay();
+            }
+            sales = saleRepository.findBySaleDateBetween(start, end, Pageable.unpaged()).getContent();
+        } else {
+            sales = saleRepository.findAllByOrderBySaleDateDesc(Pageable.unpaged()).getContent();
+        }
+
+        byte[] pdfBytes = saleReportService.generateSalesListPdf(sales, startDate, endDate, printedBy);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        String filename = "sales-report-" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".pdf";
+        headers.setContentDispositionFormData("attachment", filename);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
     @GetMapping("/{id}/edit")
     public String editSale(@PathVariable Long id, Model model) {
         Sale sale = saleRepository.findById(id)

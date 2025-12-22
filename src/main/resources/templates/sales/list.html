@@ -80,6 +80,10 @@
                                 class="btn btn-success" title="Download Excel">
                                 <i class="bi bi-file-earmark-spreadsheet"></i>
                             </a>
+                            <a th:href="@{/sales/download-pdf(search=${search}, startDate=${startDate}, endDate=${endDate})}"
+                                class="btn btn-danger" title="Download PDF">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </a>
                         </div>
                     </div>
                 </div>

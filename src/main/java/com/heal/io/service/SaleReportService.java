@@ -36,6 +36,95 @@ import java.util.stream.Collectors;
 public class SaleReportService {
 
     private static final String REPORT_TEMPLATE = "reports/sale-invoice.jrxml";
+    private static final String LIST_REPORT_TEMPLATE = "reports/sales-list.jrxml";
+
+    /**
+     * Generate PDF report for sales list
+     */
+    public byte[] generateSalesListPdf(List<Sale> sales, String startDate, String endDate, String printedBy) {
+        try {
+            // Load the JRXML template
+            ClassPathResource resource = new ClassPathResource(LIST_REPORT_TEMPLATE);
+            InputStream templateStream = resource.getInputStream();
+
+            // Compile the report
+            JasperReport jasperReport = JasperCompileManager.compileReport(templateStream);
+
+            // Load logo image
+            InputStream logoStream = null;
+            try {
+                ClassPathResource logoResource = new ClassPathResource("static/logo-slogan.jpg");
+                if (logoResource.exists()) {
+                    logoStream = logoResource.getInputStream();
+                }
+            } catch (Exception e) {
+                log.warn("Could not load logo image: {}", e.getMessage());
+            }
+
+            // Prepare parameters
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("COMPANY_NAME", "RUPGANJ PHARMACY");
+            parameters.put("COMPANY_ADDRESS", "892/1, Beside Shahidbagh Mosque, Rajarbagh, Dhaka - 1217");
+            parameters.put("COMPANY_PHONE", "Mobile: 01966551343");
+            parameters.put("COMPANY_EMAIL", "");
+            parameters.put("LOGO_IMAGE", logoStream);
+            parameters.put("GENERATED_DATE",
+                    java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy hh:mm a")));
+            parameters.put("PRINTED_BY", printedBy != null ? printedBy : "Unknown");
+
+            // Format date range string similar to Excel
+            String dateRangeStr = "All Time";
+            if (startDate != null && !startDate.isEmpty()) {
+                try {
+                    DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("[dd-MMM-yyyy][yyyy-MM-dd]");
+                    DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy");
+
+                    java.time.LocalDate start = java.time.LocalDate.parse(startDate, inputFormatter);
+                    String startStr = start.format(outputFormatter);
+
+                    String endStr = "Now";
+                    if (endDate != null && !endDate.isEmpty()) {
+                        java.time.LocalDate end = java.time.LocalDate.parse(endDate, inputFormatter);
+                        endStr = end.format(outputFormatter);
+                    }
+                    dateRangeStr = "From " + startStr + " to " + endStr;
+                } catch (Exception e) {
+                    dateRangeStr = startDate + " to " + (endDate != null ? endDate : "Now");
+                }
+            }
+            parameters.put("DATE_RANGE", dateRangeStr);
+
+            // Prepare data source
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MMM-yyyy hh:mm a");
+            List<Map<String, Object>> listData = sales.stream().map(sale -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("saleNumber", sale.getSaleNumber());
+                map.put("saleDate", sale.getSaleDate().format(dateFormatter));
+                map.put("customerName", sale.getCustomerName() != null ? sale.getCustomerName()
+                        : (sale.getCustomer() != null ? sale.getCustomer().getName() : "Walk-in"));
+                map.put("itemCount", sale.getItems() != null ? sale.getItems().size() : 0);
+                map.put("subtotal", sale.getSubtotal() != null ? sale.getSubtotal() : BigDecimal.ZERO);
+                map.put("discountAmount",
+                        sale.getDiscountAmount() != null ? sale.getDiscountAmount() : BigDecimal.ZERO);
+                map.put("totalAmount", sale.getTotalAmount() != null ? sale.getTotalAmount() : BigDecimal.ZERO);
+                map.put("paymentInfo", sale.getPaymentMethod() + " (" + sale.getPaymentStatus() + ")");
+                map.put("saleStatus", sale.getSaleStatus());
+                return map;
+            }).collect(Collectors.toList());
+
+            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(listData);
+
+            // Fill the report
+            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+
+            // Export to PDF
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+
+        } catch (Exception e) {
+            log.error("Error generating sales list PDF", e);
+            throw new RuntimeException("Failed to generate sales list PDF", e);
+        }
+    }
 
     /**
      * Generate PDF report for a sale
