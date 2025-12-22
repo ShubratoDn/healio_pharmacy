@@ -39,7 +39,7 @@ public class SaleService {
      */
     public void calculateSaleTotals(Sale sale) {
         BigDecimal subtotal = BigDecimal.ZERO;
-        
+
         // Calculate subtotal from items
         if (sale.getItems() != null && !sale.getItems().isEmpty()) {
             for (SaleItem item : sale.getItems()) {
@@ -48,9 +48,9 @@ public class SaleService {
                 }
             }
         }
-        
+
         sale.setSubtotal(subtotal);
-        
+
         // Calculate discount
         BigDecimal discountAmount = sale.getDiscountAmount() != null ? sale.getDiscountAmount() : BigDecimal.ZERO;
         if (sale.getDiscountPercentage() != null && sale.getDiscountPercentage().compareTo(BigDecimal.ZERO) > 0) {
@@ -58,20 +58,21 @@ public class SaleService {
                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             sale.setDiscountAmount(discountAmount);
         }
-        
+
         // Calculate tax
         BigDecimal taxAmount = sale.getTaxAmount() != null ? sale.getTaxAmount() : BigDecimal.ZERO;
-        
+
         // Calculate total
         BigDecimal total = subtotal.subtract(discountAmount).add(taxAmount);
         sale.setTotalAmount(total);
-        
+
         // Calculate change
         BigDecimal paidAmount = sale.getPaidAmount() != null ? sale.getPaidAmount() : BigDecimal.ZERO;
         BigDecimal change = paidAmount.subtract(total);
         sale.setChangeAmount(change.compareTo(BigDecimal.ZERO) > 0 ? change : BigDecimal.ZERO);
-        
-        // Only auto-calculate payment status if it's not already set (preserve user's selection)
+
+        // Only auto-calculate payment status if it's not already set (preserve user's
+        // selection)
         if (sale.getPaymentStatus() == null || sale.getPaymentStatus().isEmpty()) {
             if (paidAmount.compareTo(BigDecimal.ZERO) == 0) {
                 sale.setPaymentStatus("PENDING");
@@ -88,26 +89,26 @@ public class SaleService {
      */
     public boolean checkInventoryAvailability(Long productId, Long packageId, Integer quantity) {
         List<Inventory> inventories = inventoryRepository.findByProductId(productId);
-        
+
         if (inventories.isEmpty()) {
             return false;
         }
-        
+
         // If package is specified, check specific inventory
         if (packageId != null) {
             Optional<Inventory> inventory = inventories.stream()
-                    .filter(inv -> inv.getProductPackage() != null && 
-                                  inv.getProductPackage().getId().equals(packageId) &&
-                                  inv.getAvailableQuantity() >= quantity)
+                    .filter(inv -> inv.getProductPackage() != null &&
+                            inv.getProductPackage().getId().equals(packageId) &&
+                            inv.getAvailableQuantity() >= quantity)
                     .findFirst();
             return inventory.isPresent();
         }
-        
+
         // Otherwise, check total available quantity across all packages
         int totalAvailable = inventories.stream()
                 .mapToInt(Inventory::getAvailableQuantity)
                 .sum();
-        
+
         return totalAvailable >= quantity;
     }
 
@@ -116,15 +117,15 @@ public class SaleService {
      */
     public int getAvailableInventory(Long productId, Long packageId) {
         List<Inventory> inventories = inventoryRepository.findByProductId(productId);
-        
+
         if (packageId != null) {
             return inventories.stream()
-                    .filter(inv -> inv.getProductPackage() != null && 
-                                  inv.getProductPackage().getId().equals(packageId))
+                    .filter(inv -> inv.getProductPackage() != null &&
+                            inv.getProductPackage().getId().equals(packageId))
                     .mapToInt(Inventory::getAvailableQuantity)
                     .sum();
         }
-        
+
         return inventories.stream()
                 .mapToInt(Inventory::getAvailableQuantity)
                 .sum();
@@ -138,63 +139,63 @@ public class SaleService {
         if (sale.getItems() == null || sale.getItems().isEmpty()) {
             return;
         }
-        
+
         for (SaleItem item : sale.getItems()) {
             if (item.getProduct() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
                 continue;
             }
-            
+
             Product product = item.getProduct();
             ProductPackage productPackage = item.getProductPackage();
             Integer quantity = item.getQuantity();
-            
+
             // Find available inventory (FIFO - First In First Out)
             List<Inventory> inventories = inventoryRepository.findByProductId(product.getId());
-            
+
             int remainingQuantity = quantity;
-            
+
             for (Inventory inventory : inventories) {
                 if (remainingQuantity <= 0) {
                     break;
                 }
-                
+
                 // Match package if specified
                 if (productPackage != null) {
-                    if (inventory.getProductPackage() == null || 
-                        !inventory.getProductPackage().getId().equals(productPackage.getId())) {
+                    if (inventory.getProductPackage() == null ||
+                            !inventory.getProductPackage().getId().equals(productPackage.getId())) {
                         continue;
                     }
                 }
-                
+
                 // Match batch and expiry if specified in sale item
                 if (item.getBatchNumber() != null && !item.getBatchNumber().isEmpty()) {
                     if (!item.getBatchNumber().equals(inventory.getBatchNumber())) {
                         continue;
                     }
                 }
-                
+
                 if (item.getExpiryDate() != null) {
                     if (!item.getExpiryDate().equals(inventory.getExpiryDate())) {
                         continue;
                     }
                 }
-                
+
                 int available = inventory.getAvailableQuantity();
                 if (available > 0) {
                     int toDeduct = Math.min(remainingQuantity, available);
                     inventory.setQuantity(inventory.getQuantity() - toDeduct);
                     inventory.setReservedQuantity(Math.max(0, inventory.getReservedQuantity() - toDeduct));
                     remainingQuantity -= toDeduct;
-                    
+
                     // Set inventory reference in sale item
                     item.setInventory(inventory);
-                    
+
                     inventoryRepository.save(inventory);
                 }
             }
-            
+
             if (remainingQuantity > 0) {
-                log.warn("Insufficient inventory for product {}: requested {}, available {}", 
+                log.warn("Insufficient inventory for product {}: requested {}, available {}",
                         product.getId(), quantity, quantity - remainingQuantity);
             }
         }
@@ -208,27 +209,29 @@ public class SaleService {
         if (originalSale == null || originalSale.getItems() == null || originalSale.getItems().isEmpty()) {
             return;
         }
-        
-        // Load the sale with items to ensure we have the original items with inventory references
+
+        // Load the sale with items to ensure we have the original items with inventory
+        // references
         Sale saleWithItems = saleRepository.findById(originalSale.getId())
                 .orElse(null);
-        
+
         if (saleWithItems == null || saleWithItems.getItems() == null) {
             return;
         }
-        
+
         for (SaleItem originalItem : saleWithItems.getItems()) {
-            if (originalItem.getInventory() == null || originalItem.getQuantity() == null || originalItem.getQuantity() <= 0) {
+            if (originalItem.getInventory() == null || originalItem.getQuantity() == null
+                    || originalItem.getQuantity() <= 0) {
                 continue;
             }
-            
+
             Inventory inventory = originalItem.getInventory();
             Integer quantity = originalItem.getQuantity();
-            
+
             // Restore the quantity that was deducted
             inventory.setQuantity(inventory.getQuantity() + quantity);
             inventory.setReservedQuantity(Math.max(0, inventory.getReservedQuantity() - quantity));
-            
+
             inventoryRepository.save(inventory);
         }
     }
@@ -240,17 +243,17 @@ public class SaleService {
         if (item.getProduct() == null || item.getInventory() == null) {
             return;
         }
-        
+
         BigDecimal costPrice = item.getInventory().getCostPrice();
         if (costPrice == null) {
             costPrice = BigDecimal.ZERO;
         }
-        
+
         BigDecimal quantity = BigDecimal.valueOf(item.getQuantity() != null ? item.getQuantity() : 0);
-        
+
         BigDecimal totalCost = costPrice.multiply(quantity);
         BigDecimal totalPrice = item.getTotalPrice() != null ? item.getTotalPrice() : BigDecimal.ZERO;
-        
+
         BigDecimal profit = totalPrice.subtract(totalCost);
         item.setCostPrice(costPrice);
         item.setProfitAmount(profit);

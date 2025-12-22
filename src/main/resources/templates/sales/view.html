@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,30 +16,36 @@
             border-radius: 10px;
             margin-bottom: 20px;
         }
+
         .info-card {
             background: white;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .summary-box {
             background: #f8f9fa;
             border-left: 4px solid #667eea;
             padding: 20px;
             border-radius: 4px;
         }
+
         .item-row {
             border-bottom: 1px solid #eee;
             padding: 15px 0;
         }
+
         .item-row:last-child {
             border-bottom: none;
         }
+
         @media print {
             .no-print {
                 display: none !important;
             }
+
             .sale-header {
                 background: #667eea !important;
                 -webkit-print-color-adjust: exact;
@@ -47,6 +54,7 @@
         }
     </style>
 </head>
+
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='sales')}"></div>
     <div class="main-content">
@@ -80,10 +88,9 @@
                         </p>
                     </div>
                     <div class="col-md-4 text-end">
-                        <span class="badge bg-light text-dark fs-6 px-3 py-2" 
-                              th:classappend="*{saleStatus == 'COMPLETED'} ? 'bg-success' : 
+                        <span class="badge bg-light text-dark fs-6 px-3 py-2" th:classappend="*{saleStatus == 'COMPLETED'} ? 'bg-success' : 
                                               (*{saleStatus == 'PENDING'} ? 'bg-warning' : 'bg-danger')"
-                              th:text="*{saleStatus}"></span>
+                            th:text="*{saleStatus}"></span>
                     </div>
                 </div>
             </div>
@@ -132,27 +139,31 @@
                                     <tbody>
                                         <tr th:each="item, iterStat : *{items}">
                                             <td class="text-center">
-                                        <span class="badge bg-secondary" th:text="${iterStat.count}"></span>
+                                                <span class="badge bg-secondary" th:text="${iterStat.count}"></span>
                                             </td>
                                             <td>
-                                        <strong th:text="${item.productName}"></strong>
-                                                <span th:if="${item.product != null && item.product.strength != null && !item.product.strength.isEmpty()}" 
-                                                      class="text-muted" th:text="' [' + ${item.product.strength} + ']'"></span>
-                                        <div class="text-muted small" th:if="${item.batchNumber}">
-                                            Batch: <span th:text="${item.batchNumber}"></span>
-                                        </div>
-                                        <div class="text-muted small" th:if="${item.expiryDate}">
-                                            Expiry: <span th:text="${#temporals.format(item.expiryDate, 'yyyy-MM-dd')}"></span>
-                                        </div>
+                                                <strong th:text="${item.productName}"></strong>
+                                                <span
+                                                    th:if="${item.product != null && item.product.strength != null && !item.product.strength.isEmpty()}"
+                                                    class="text-muted"
+                                                    th:text="' [' + ${item.product.strength} + ']'"></span>
+                                                <div class="text-muted small" th:if="${item.batchNumber}">
+                                                    Batch: <span th:text="${item.batchNumber}"></span>
+                                                </div>
+                                                <div class="text-muted small" th:if="${item.expiryDate}">
+                                                    Expiry: <span
+                                                        th:text="${#temporals.format(item.expiryDate, 'yyyy-MM-dd')}"></span>
+                                                </div>
                                             </td>
                                             <td class="text-center">
-                                        <span th:text="${item.quantity}"></span>
+                                                <span th:text="${item.quantity}"></span>
                                             </td>
                                             <td class="text-end">
-                                        ৳<span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 2)}"></span>
+                                                ৳<span th:text="${#numbers.formatDecimal(item.unitPrice, 0, 2)}"></span>
                                             </td>
                                             <td class="text-end">
-                                        <strong>৳<span th:text="${#numbers.formatDecimal(item.totalPrice, 0, 2)}"></span></strong>
+                                                <strong>৳<span
+                                                        th:text="${#numbers.formatDecimal(item.totalPrice, 0, 2)}"></span></strong>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -178,20 +189,26 @@
                         <div class="summary-box">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Subtotal:</span>
-                                <strong>৳<span th:text="${#numbers.formatDecimal(sale.subtotal, 0, 2)}"></span></strong>
+                                <strong>৳<span
+                                        th:text="${#numbers.formatDecimal(sale.getGrossSubtotal(), 0, 2)}"></span></strong>
                             </div>
-                            <div class="d-flex justify-content-between mb-2" th:if="*{discountAmount != null && discountAmount > 0}">
+                            <div class="d-flex justify-content-between mb-2"
+                                th:if="${sale.getTotalDiscount().compareTo(T(java.math.BigDecimal).ZERO) > 0}">
                                 <span class="text-danger">Discount:</span>
-                                <strong class="text-danger">-৳<span th:text="${#numbers.formatDecimal(sale.discountAmount, 0, 2)}"></span></strong>
+                                <strong class="text-danger">-৳<span
+                                        th:text="${#numbers.formatDecimal(sale.getTotalDiscount(), 0, 2)}"></span></strong>
                             </div>
-                            <div class="d-flex justify-content-between mb-2" th:if="*{taxAmount != null && taxAmount > 0}">
+                            <div class="d-flex justify-content-between mb-2"
+                                th:if="*{taxAmount != null && taxAmount > 0}">
                                 <span>Tax:</span>
-                                <strong>৳<span th:text="${#numbers.formatDecimal(sale.taxAmount, 0, 2)}"></span></strong>
+                                <strong>৳<span
+                                        th:text="${#numbers.formatDecimal(sale.taxAmount, 0, 2)}"></span></strong>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between mb-3">
                                 <span class="fs-5"><strong>Total:</strong></span>
-                                <span class="fs-5"><strong>৳<span th:text="${#numbers.formatDecimal(sale.totalAmount, 0, 2)}"></span></strong></span>
+                                <span class="fs-5"><strong>৳<span
+                                            th:text="${#numbers.formatDecimal(sale.totalAmount, 0, 2)}"></span></strong></span>
                             </div>
                         </div>
                     </div>
@@ -205,10 +222,9 @@
                         <div class="mb-2">
                             <strong>Payment Status:</strong>
                             <div>
-                                <span class="badge" 
-                                      th:classappend="*{paymentStatus == 'PAID'} ? 'bg-success' : 
+                                <span class="badge" th:classappend="*{paymentStatus == 'PAID'} ? 'bg-success' : 
                                                       (*{paymentStatus == 'PARTIAL'} ? 'bg-warning' : 'bg-danger')"
-                                      th:text="*{paymentStatus}"></span>
+                                    th:text="*{paymentStatus}"></span>
                             </div>
                         </div>
                         <div class="mb-2">
@@ -254,5 +270,5 @@
     <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
 </body>
-</html>
 
+</html>

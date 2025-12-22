@@ -84,5 +84,32 @@ public class Sale extends BaseEntity {
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<SaleItem> items = new ArrayList<>();
-}
 
+    public BigDecimal getGrossSubtotal() {
+        BigDecimal gross = BigDecimal.ZERO;
+        if (items != null) {
+            for (SaleItem item : items) {
+                if (item.getUnitPrice() != null && item.getQuantity() != null) {
+                    gross = gross.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+                }
+            }
+        }
+        return gross;
+    }
+
+    public BigDecimal getTotalItemDiscount() {
+        BigDecimal total = BigDecimal.ZERO;
+        if (items != null) {
+            for (SaleItem item : items) {
+                if (item.getDiscountAmount() != null) {
+                    total = total.add(item.getDiscountAmount());
+                }
+            }
+        }
+        return total;
+    }
+
+    public BigDecimal getTotalDiscount() {
+        return getTotalItemDiscount().add(discountAmount != null ? discountAmount : BigDecimal.ZERO);
+    }
+}

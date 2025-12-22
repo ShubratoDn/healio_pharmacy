@@ -204,13 +204,13 @@
                             <table class="table table-bordered mt-3" id="itemsTable">
                                 <thead>
                                     <tr>
-                                        <th style="width: 30%;">Product</th>
-                                        <th style="width: 10%;">Package</th>
+                                        <th style="width: 24%;">Product</th>
+                                        <th style="width: 20%;">Package</th>
                                         <th style="width: 8%;">Qty</th>
                                         <th style="width: 12%;">Unit Price</th>
                                         <th style="width: 10%;">Discount</th>
                                         <th style="width: 12%;">Total</th>
-                                        <th style="width: 8%;">Action</th>
+                                        <th style="width: 4%;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="itemsTableBody">
@@ -711,9 +711,14 @@
         function updateSummary() {
             // Calculate subtotal from items (item discounts are already in item totals)
             let subtotal = 0;
+            let totalItemDiscount = 0;
+            let grossSubtotal = 0;
 
             saleItems.forEach(item => {
+                const itemGross = item.unitPrice * item.quantity;
                 const itemTotal = calculateItemTotal(item);
+                grossSubtotal += itemGross;
+                totalItemDiscount += (item.discountAmount || 0);
                 subtotal += itemTotal;
             });
 
@@ -737,8 +742,8 @@
             const tax = parseFloat(document.getElementById('taxAmount').value) || 0;
             const total = subtotal - overallDiscount + tax;
 
-            document.getElementById('summarySubtotal').textContent = `৳${subtotal.toFixed(2)}`;
-            document.getElementById('summaryDiscount').textContent = `৳${overallDiscount.toFixed(2)}`;
+            document.getElementById('summarySubtotal').textContent = `৳${grossSubtotal.toFixed(2)}`;
+            document.getElementById('summaryDiscount').textContent = `৳${(totalItemDiscount + overallDiscount).toFixed(2)}`;
 
             // Show discount percentage if applicable
             if (discountPercent > 0) {

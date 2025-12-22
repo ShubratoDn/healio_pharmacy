@@ -103,9 +103,8 @@ public class SaleReportService {
                 map.put("customerName", sale.getCustomerName() != null ? sale.getCustomerName()
                         : (sale.getCustomer() != null ? sale.getCustomer().getName() : "Walk-in"));
                 map.put("itemCount", sale.getItems() != null ? sale.getItems().size() : 0);
-                map.put("subtotal", sale.getSubtotal() != null ? sale.getSubtotal() : BigDecimal.ZERO);
-                map.put("discountAmount",
-                        sale.getDiscountAmount() != null ? sale.getDiscountAmount() : BigDecimal.ZERO);
+                map.put("subtotal", sale.getGrossSubtotal());
+                map.put("discountAmount", sale.getTotalDiscount());
                 map.put("totalAmount", sale.getTotalAmount() != null ? sale.getTotalAmount() : BigDecimal.ZERO);
                 map.put("paymentInfo", sale.getPaymentMethod() + " (" + sale.getPaymentStatus() + ")");
                 map.put("saleStatus", sale.getSaleStatus());
@@ -272,7 +271,7 @@ public class SaleReportService {
                         : (sale.getCustomer() != null ? sale.getCustomer().getPhone() : null))
                 .customerEmail(sale.getCustomer() != null ? sale.getCustomer().getEmail() : null)
                 .customerAddress(sale.getCustomer() != null ? sale.getCustomer().getAddress() : null)
-                .subtotal(sale.getSubtotal() != null ? sale.getSubtotal() : BigDecimal.ZERO)
+                .subtotal(sale.getGrossSubtotal())
                 .discountAmount(sale.getDiscountAmount() != null ? sale.getDiscountAmount() : BigDecimal.ZERO)
                 .discountPercentage(
                         sale.getDiscountPercentage() != null ? sale.getDiscountPercentage() : BigDecimal.ZERO)
@@ -491,11 +490,11 @@ public class SaleReportService {
                 row.createCell(3).setCellValue(sale.getItems() != null ? sale.getItems().size() : 0);
 
                 cell = row.createCell(4);
-                cell.setCellValue(sale.getSubtotal() != null ? sale.getSubtotal().doubleValue() : 0.0);
+                cell.setCellValue(sale.getGrossSubtotal().doubleValue());
                 cell.setCellStyle(currencyStyle);
 
                 cell = row.createCell(5);
-                cell.setCellValue(sale.getDiscountAmount() != null ? sale.getDiscountAmount().doubleValue() : 0.0);
+                cell.setCellValue(sale.getTotalDiscount().doubleValue());
                 cell.setCellStyle(currencyStyle);
 
                 cell = row.createCell(6);
