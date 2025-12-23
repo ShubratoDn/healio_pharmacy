@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,12 +19,14 @@
             padding: 1.5rem;
             margin-top: 1rem;
         }
+
         .summary-item {
             display: flex;
             justify-content: space-between;
             padding: 0.5rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
+
         .summary-item:last-child {
             border-bottom: none;
             font-size: 1.25rem;
@@ -31,6 +34,7 @@
             margin-top: 0.5rem;
             padding-top: 1rem;
         }
+
         .add-product-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
@@ -40,18 +44,21 @@
             font-weight: 500;
             transition: transform 0.2s, box-shadow 0.2s;
         }
+
         .add-product-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
             color: white;
         }
+
         .form-section {
             background: white;
             border-radius: 8px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
+
         .section-title {
             font-size: 1.1rem;
             font-weight: 600;
@@ -60,30 +67,36 @@
             padding-bottom: 0.5rem;
             border-bottom: 2px solid #e9ecef;
         }
+
         #productsTable {
             margin-bottom: 0;
             table-layout: fixed;
         }
+
         #productsTable thead th {
             font-weight: 600;
             font-size: 0.9rem;
             white-space: nowrap;
             background-color: #f8f9fa;
         }
+
         #productsTable tbody td {
             vertical-align: middle;
         }
+
         #productsTable tbody td:first-child {
             width: 300px;
             min-width: 300px;
             max-width: 300px;
             overflow: hidden;
         }
+
         .select2-container {
             width: 100% !important;
         }
     </style>
 </head>
+
 <body>
     <div th:replace="~{fragments/sidebar :: sidebar(activePage='stock-in')}"></div>
     <div class="main-content">
@@ -97,94 +110,90 @@
         </div>
 
         <div class="content-card">
-            <form th:action="${stockIn.id != null ? '/stock-in/update/' + stockIn.id : '/stock-in/save'}" th:object="${stockIn}" method="post" id="stockInForm">
-                <input type="hidden" th:field="*{id}"/>
-                
+            <form th:action="${stockIn.id != null ? '/stock-in/update/' + stockIn.id : '/stock-in/save'}"
+                th:object="${stockIn}" method="post" id="stockInForm">
+                <input type="hidden" th:field="*{id}" />
+
                 <!-- Basic Information Section -->
                 <div class="form-section">
                     <div class="section-title">
                         <i class="bi bi-info-circle me-2"></i>Basic Information
                     </div>
-                <div class="row mb-3">
+                    <div class="row mb-3">
                         <div class="col-md-4">
-                        <label class="form-label">Stock In Number</label>
-                        <input type="text" th:field="*{stockInNumber}" class="form-control" placeholder="Auto-generated if empty">
-                    </div>
+                            <label class="form-label">Stock In Number</label>
+                            <input type="text" th:field="*{stockInNumber}" class="form-control"
+                                placeholder="Auto-generated if empty">
+                        </div>
                         <div class="col-md-4">
-                        <label class="form-label">Supplier</label>
-                        <select name="supplierId" id="supplierSelect" class="form-select">
-                            <option value="">Select Supplier</option>
-                            <option th:if="${stockIn.supplier != null}" 
-                                    th:value="${stockIn.supplier.id}" 
-                                    th:text="${stockIn.supplier.name + (stockIn.supplier.companyName != null && !stockIn.supplier.companyName.isEmpty() ? ' (' + stockIn.supplier.companyName + ')' : '') + (stockIn.supplier.phone != null ? ' - ' + stockIn.supplier.phone : '')}" 
+                            <label class="form-label">Supplier</label>
+                            <select name="supplierId" id="supplierSelect" class="form-select">
+                                <option value="">Select Supplier</option>
+                                <option th:if="${stockIn.supplier != null}" th:value="${stockIn.supplier.id}"
+                                    th:text="${stockIn.supplier.name + (stockIn.supplier.companyName != null && !stockIn.supplier.companyName.isEmpty() ? ' (' + stockIn.supplier.companyName + ')' : '') + (stockIn.supplier.phone != null ? ' - ' + stockIn.supplier.phone : '')}"
                                     selected></option>
-                        </select>
-                    </div>
+                            </select>
+                        </div>
                         <div class="col-md-4">
-                        <label class="form-label">Stock In Date <span class="text-danger">*</span></label>
-                        <input type="text" 
-                               class="form-control date-picker" 
-                               id="stockInDate"
-                               placeholder="dd-MMM-yyyy"
-                               data-required="true"
-                               data-default-today="true"
-                               data-hidden-input="stockInDateHidden"
-                               th:value="${stockIn.stockInDate != null ? #temporals.format(stockIn.stockInDate, 'dd-MMM-yyyy') : ''}">
-                        <input type="hidden" 
-                               name="stockInDate" 
-                               id="stockInDateHidden"
-                               required
-                               th:value="${stockIn.stockInDate != null ? #temporals.format(stockIn.stockInDate, 'yyyy-MM-dd') : ''}">
-                    </div>
+                            <label class="form-label">Stock In Date <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control date-picker" id="stockInDate"
+                                placeholder="dd-MMM-yyyy" data-required="true" data-default-today="true"
+                                data-hidden-input="stockInDateHidden"
+                                th:value="${stockIn.stockInDate != null ? #temporals.format(stockIn.stockInDate, 'dd-MMM-yyyy') : ''}">
+                            <input type="hidden" name="stockInDate" id="stockInDateHidden" required
+                                th:value="${stockIn.stockInDate != null ? #temporals.format(stockIn.stockInDate, 'yyyy-MM-dd') : ''}">
+                        </div>
                     </div>
                     <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Received Date</label>
-                        <input type="text" 
-                               class="form-control date-picker" 
-                               id="receivedDate"
-                               placeholder="dd-MMM-yyyy"
-                               data-hidden-input="receivedDateHidden"
-                               th:value="${stockIn.receivedDate != null ? #temporals.format(stockIn.receivedDate, 'dd-MMM-yyyy') : ''}">
-                        <input type="hidden" 
-                               name="receivedDate" 
-                               id="receivedDateHidden"
-                               th:value="${stockIn.receivedDate != null ? #temporals.format(stockIn.receivedDate, 'yyyy-MM-dd') : ''}">
+                        <div class="col-md-6">
+                            <label class="form-label">Received Date</label>
+                            <input type="text" class="form-control date-picker" id="receivedDate"
+                                placeholder="dd-MMM-yyyy" data-hidden-input="receivedDateHidden"
+                                th:value="${stockIn.receivedDate != null ? #temporals.format(stockIn.receivedDate, 'dd-MMM-yyyy') : ''}">
+                            <input type="hidden" name="receivedDate" id="receivedDateHidden"
+                                th:value="${stockIn.receivedDate != null ? #temporals.format(stockIn.receivedDate, 'yyyy-MM-dd') : ''}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Status</label>
+                            <select th:field="*{paymentStatus}" class="form-select" id="paymentStatus"
+                                onchange="togglePaidAmount()">
+                                <option value="PAID"
+                                    th:selected="${stockIn.paymentStatus == null || stockIn.paymentStatus == 'PAID'}">
+                                    Paid</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="PARTIAL">Partial</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Payment Status</label>
-                        <select th:field="*{paymentStatus}" class="form-select" id="paymentStatus" onchange="togglePaidAmount()">
-                            <option value="PAID" th:selected="${stockIn.paymentStatus == null || stockIn.paymentStatus == 'PAID'}">Paid</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="PARTIAL">Partial</option>
-                        </select>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Method</label>
+                            <select th:field="*{paymentMethod}" class="form-select">
+                                <option value="CASH"
+                                    th:selected="${stockIn.paymentMethod == null || stockIn.paymentMethod == 'CASH'}">
+                                    Cash</option>
+                                <option value="BANK_TRANSFER">Bank Transfer</option>
+                                <option value="CHEQUE">Cheque</option>
+                                <option value="CREDIT">Credit</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="paidAmountContainer" style="display: none;">
+                            <label class="form-label">Paid Amount <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" th:field="*{paidAmount}" class="form-control"
+                                id="paidAmount" name="paidAmount" min="0" placeholder="0.00">
+                        </div>
                     </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Payment Method</label>
-                        <select th:field="*{paymentMethod}" class="form-select">
-                            <option value="CASH" th:selected="${stockIn.paymentMethod == null || stockIn.paymentMethod == 'CASH'}">Cash</option>
-                            <option value="BANK_TRANSFER">Bank Transfer</option>
-                            <option value="CHEQUE">Cheque</option>
-                            <option value="CREDIT">Credit</option>
-                        </select>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Notes</label>
+                            <textarea th:field="*{notes}" class="form-control" rows="2"
+                                placeholder="Additional notes..."></textarea>
+                        </div>
                     </div>
-                    <div class="col-md-6" id="paidAmountContainer" style="display: none;">
-                        <label class="form-label">Paid Amount <span class="text-danger">*</span></label>
-                        <input type="number" step="0.01" th:field="*{paidAmount}" class="form-control" id="paidAmount" name="paidAmount" min="0" placeholder="0.00">
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label class="form-label">Notes</label>
-                        <textarea th:field="*{notes}" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
-                    </div>
-                </div>
                 </div>
 
                 <!-- Invoice Scanner Section -->
-                <div class="form-section">
+                <div class="form-section d-none">
                     <div class="section-title">
                         <i class="bi bi-camera me-2"></i>Scan Invoice
                     </div>
@@ -192,35 +201,45 @@
                         <div class="col-md-12">
                             <div class="card border-primary">
                                 <div class="card-body">
-                                    <p class="text-muted mb-3">Upload an invoice image to automatically extract products using AI.</p>
+                                    <p class="text-muted mb-3">Upload an invoice image to automatically extract products
+                                        using AI.</p>
                                     <div class="d-flex gap-2 flex-wrap">
-                                        <button type="button" class="btn btn-primary" onclick="openCamera()" id="cameraBtn">
+                                        <button type="button" class="btn btn-primary" onclick="openCamera()"
+                                            id="cameraBtn">
                                             <i class="bi bi-camera-fill me-2"></i>Use Camera
                                         </button>
-                                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                                        <button type="button" class="btn btn-secondary"
+                                            onclick="document.getElementById('fileInput').click()">
                                             <i class="bi bi-upload me-2"></i>Upload File
                                         </button>
-                                        <button type="button" class="btn btn-info" onclick="showQRCode()" id="qrCodeBtn">
+                                        <button type="button" class="btn btn-info" onclick="showQRCode()"
+                                            id="qrCodeBtn">
                                             <i class="bi bi-qr-code-scan me-2"></i>Scan with Mobile
                                         </button>
-                                        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                                        <input type="file" id="fileInput" accept="image/*" style="display: none;"
+                                            onchange="handleFileSelect(event)">
                                     </div>
                                     <div id="qrCodeSection" style="display: none; margin-top: 20px;">
                                         <div class="alert alert-info">
                                             <p><strong>Scan this QR code with your mobile device:</strong></p>
                                             <div class="text-center">
-                                                <img id="qrCodeImage" src="" alt="QR Code" style="max-width: 300px; border: 2px solid #ddd; border-radius: 8px;">
+                                                <img id="qrCodeImage" src="" alt="QR Code"
+                                                    style="max-width: 300px; border: 2px solid #ddd; border-radius: 8px;">
                                             </div>
-                                            <p class="mt-2 mb-0"><small>After scanning, your mobile camera will open to capture the invoice image.</small></p>
+                                            <p class="mt-2 mb-0"><small>After scanning, your mobile camera will open to
+                                                    capture the invoice image.</small></p>
                                         </div>
                                     </div>
                                     <div id="imagePreview" style="display: none; margin-top: 20px;">
-                                        <img id="previewImage" src="" alt="Preview" style="max-width: 100%; max-height: 300px; border: 2px solid #ddd; border-radius: 8px;">
+                                        <img id="previewImage" src="" alt="Preview"
+                                            style="max-width: 100%; max-height: 300px; border: 2px solid #ddd; border-radius: 8px;">
                                         <div class="mt-2">
-                                            <button type="button" class="btn btn-success btn-sm" onclick="processImage()" id="processBtn">
+                                            <button type="button" class="btn btn-success btn-sm"
+                                                onclick="processImage()" id="processBtn">
                                                 <i class="bi bi-magic me-2"></i>Process with AI
                                             </button>
-                                            <button type="button" class="btn btn-secondary btn-sm" onclick="clearImage()">
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                onclick="clearImage()">
                                                 <i class="bi bi-x-circle me-2"></i>Clear
                                             </button>
                                         </div>
@@ -244,15 +263,17 @@
                             <i class="bi bi-box-seam me-2"></i>Products
                         </div>
                     </div>
-                    
+
                     <div class="table-responsive">
                         <table class="table table-bordered" id="productsTable">
                             <thead>
                                 <tr>
-                                    <th style="width: 300px; min-width: 300px; max-width: 300px;">Product <span class="text-danger">*</span></th>
+                                    <th style="width: 300px; min-width: 300px; max-width: 300px;">Product <span
+                                            class="text-danger">*</span></th>
                                     <th style="width: 15%;">Package</th>
                                     <th style="width: 10%;">Unit Price</th>
-                                    <th style="width: 12%;">Purchasing Unit Price <span class="text-danger">*</span></th>
+                                    <th style="width: 12%;">Purchasing Unit Price <span class="text-danger">*</span>
+                                    </th>
                                     <th style="width: 8%;">Quantity <span class="text-danger">*</span></th>
                                     <th style="width: 12%;">Total</th>
                                     <th style="width: 8%;">Action</th>
@@ -291,11 +312,13 @@
                         <div class="row mt-3">
                             <div class="col-md-6">
                                 <label class="form-label text-white">Discount Amount</label>
-                                <input type="number" step="0.01" th:field="*{discountAmount}" class="form-control" value="0" id="discountAmount" oninput="calculateTotals()">
+                                <input type="number" step="0.01" th:field="*{discountAmount}" class="form-control"
+                                    value="0" id="discountAmount" oninput="calculateTotals()">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-white">Tax Amount</label>
-                                <input type="number" step="0.01" th:field="*{taxAmount}" class="form-control" value="0" id="taxAmount" oninput="calculateTotals()">
+                                <input type="number" step="0.01" th:field="*{taxAmount}" class="form-control" value="0"
+                                    id="taxAmount" oninput="calculateTotals()">
                             </div>
                         </div>
                         <div class="summary-item">
@@ -320,10 +343,10 @@
             </form>
         </div>
     </div>
-<script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
-<script src="/lib/jquery/jquery-3.7.1.min.js"></script>
-<script src="/lib/select2/select2.min.js"></script>
-<script src="/lib/flatpickr/flatpickr.min.js"></script>
+    <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
+    <script src="/lib/jquery/jquery-3.7.1.min.js"></script>
+    <script src="/lib/select2/select2.min.js"></script>
+    <script src="/lib/flatpickr/flatpickr.min.js"></script>
     <script th:src="@{/js/common.js}"></script>
     <script>
         let rowCounter = 0;
@@ -382,26 +405,26 @@
         function addProductRow() {
             const tbody = document.getElementById('productsTableBody');
             const emptyStateRow = document.getElementById('emptyStateRow');
-            
+
             if (emptyStateRow) {
                 emptyStateRow.remove();
             }
-            
+
             const rowHtml = getProductRowTemplate(rowCounter);
             tbody.insertAdjacentHTML('beforeend', rowHtml);
-            
+
             // Initialize Select2 for the new row
             const select = tbody.querySelector(`[data-row-index="${rowCounter}"].product-select`);
             initializeProductSelect2(select, rowCounter, false);
-            
+
             // Re-initialize date pickers for the new row
             if (window.reinitializeDatePickers) {
                 window.reinitializeDatePickers();
             }
-            
+
             // Initialize row total
             calculateRowTotalFromPrice(rowCounter);
-            
+
             rowCounter++;
         }
 
@@ -425,22 +448,22 @@
                         return {
                             results: data.map(product => {
                                 let text = product.name;
-                                
+
                                 // Add strength if available
                                 if (product.strength) {
                                     text += ' [' + product.strength + ']';
                                 }
-                                
+
                                 // Add dosage form if available
                                 if (product.dosageForm) {
                                     text += ' (' + product.dosageForm + ')';
                                 }
-                                
+
                                 // Add manufacturer (company name) if available
                                 if (product.manufacturer) {
                                     text += ' - ' + product.manufacturer;
                                 }
-                                
+
                                 return {
                                     id: product.id,
                                     text: text,
@@ -456,7 +479,7 @@
                 },
                 minimumInputLength: 1
             });
-            
+
             // Only attach the select event if not skipping auto load
             if (!skipAutoLoad) {
                 $(selectElement).on('select2:select', function (e) {
@@ -467,7 +490,7 @@
                     loadProductPackages(productId, rowIndex);
                 });
             }
-            
+
             $(selectElement).on('select2:clear', function (e) {
                 const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
                 const packageSelect = row.querySelector('.product-package-select');
@@ -492,7 +515,7 @@
                 }
                 row.remove();
                 calculateTotals();
-                
+
                 // Show empty state if no rows
                 const tbody = document.getElementById('productsTableBody');
                 if (tbody.children.length === 0) {
@@ -514,14 +537,14 @@
                 .then(packages => {
                     const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
                     if (!row) return;
-                    
+
                     const select = row.querySelector('.product-package-select');
                     if (!select) return;
-                    
+
                     select.innerHTML = '<option value="">No Package</option>';
-                    
+
                     let selectedPackageId = preselectedPackageId;
-                    
+
                     packages.forEach(pkg => {
                         const option = document.createElement('option');
                         option.value = pkg.id;
@@ -529,7 +552,7 @@
                         option.dataset.unitPrice = (pkg.unitPrice != null && pkg.unitPrice !== '') ? pkg.unitPrice : '';
                         // Show only package name (description) in the select
                         option.textContent = pkg.description || 'Package';
-                        
+
                         // Select if it's the preselected package, or select first package if no preselected
                         if (preselectedPackageId && pkg.id == preselectedPackageId) {
                             option.selected = true;
@@ -539,10 +562,10 @@
                             option.selected = true;
                             selectedPackageId = pkg.id;
                         }
-                        
+
                         select.appendChild(option);
                     });
-                    
+
                     // If no preselected package and no default, select first package if available
                     if (!preselectedPackageId && packages.length > 0 && !selectedPackageId) {
                         selectedPackageId = packages[0].id;
@@ -551,13 +574,13 @@
                         // Ensure the select value is set
                         select.value = selectedPackageId;
                     }
-                    
+
                     // Update display after all options are added and selection is set
                     updatePackageDisplay(rowIndex);
-                    
+
                     // Trigger a custom event to notify that packages are loaded
-                    const event = new CustomEvent('packagesLoaded', { 
-                        detail: { rowIndex: rowIndex, packageId: selectedPackageId } 
+                    const event = new CustomEvent('packagesLoaded', {
+                        detail: { rowIndex: rowIndex, packageId: selectedPackageId }
                     });
                     select.dispatchEvent(event);
                 })
@@ -569,22 +592,22 @@
         function updatePackageDisplay(rowIndex) {
             const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
             if (!row) return;
-            
+
             const packageSelect = row.querySelector('.product-package-select');
             const unitPriceInput = row.querySelector('.unit-price-input[data-row-index="' + rowIndex + '"]');
-            
+
             if (packageSelect && packageSelect.value) {
                 const packageId = packageSelect.value;
-                
+
                 // Find the selected option by value (more reliable than selectedIndex)
                 const selectedOption = Array.from(packageSelect.options).find(opt => opt.value === packageId);
-                
+
                 if (selectedOption && unitPriceInput) {
                     const unitPrice = selectedOption.dataset.unitPrice;
-                    
+
                     // Store package ID in data attribute
                     unitPriceInput.setAttribute('data-package-id', packageId);
-                    
+
                     if (unitPrice && unitPrice !== '') {
                         const priceValue = parseFloat(unitPrice);
                         if (!isNaN(priceValue)) {
@@ -601,30 +624,30 @@
                 unitPriceInput.setAttribute('data-package-id', '');
             }
         }
-        
+
         function updatePackageUnitPrice(rowIndex) {
             const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
             if (!row) return;
-            
+
             const unitPriceInput = row.querySelector('.unit-price-input[data-row-index="' + rowIndex + '"]');
             if (!unitPriceInput) return;
-            
+
             const packageId = unitPriceInput.getAttribute('data-package-id');
             const unitPriceValue = unitPriceInput.value.trim();
-            
+
             // Don't update if no package selected or empty value
             if (!packageId || !unitPriceValue) {
                 return;
             }
-            
+
             const unitPrice = parseFloat(unitPriceValue);
-            
+
             // Validate unit price
             if (isNaN(unitPrice) || unitPrice < 0) {
                 alert('Please enter a valid unit price (must be a positive number)');
                 return;
             }
-            
+
             // Update package unit price via API
             fetch(`/stock-in/api/package/${packageId}/unit-price?unitPrice=${unitPrice}`, {
                 method: 'PUT',
@@ -632,53 +655,53 @@
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.message || 'Failed to update package unit price');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    // Update the option's dataset to reflect the new price
-                    const packageSelect = row.querySelector('.product-package-select');
-                    if (packageSelect && packageSelect.value === packageId) {
-                        const selectedOption = packageSelect.options[packageSelect.selectedIndex];
-                        if (selectedOption) {
-                            selectedOption.dataset.unitPrice = unitPrice;
-                        }
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || 'Failed to update package unit price');
+                        });
                     }
-                    console.log('Package unit price updated successfully');
-                } else {
-                    throw new Error(data.message || 'Failed to update package unit price');
-                }
-            })
-            .catch(error => {
-                console.error('Error updating package unit price:', error);
-                alert('Error updating package unit price: ' + error.message);
-            });
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Update the option's dataset to reflect the new price
+                        const packageSelect = row.querySelector('.product-package-select');
+                        if (packageSelect && packageSelect.value === packageId) {
+                            const selectedOption = packageSelect.options[packageSelect.selectedIndex];
+                            if (selectedOption) {
+                                selectedOption.dataset.unitPrice = unitPrice;
+                            }
+                        }
+                        console.log('Package unit price updated successfully');
+                    } else {
+                        throw new Error(data.message || 'Failed to update package unit price');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating package unit price:', error);
+                    alert('Error updating package unit price: ' + error.message);
+                });
         }
 
         // Calculate total from quantity and purchasing unit price
         function calculateRowTotalFromPrice(rowIndex) {
             const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
             if (!row) return;
-            
+
             const quantityInput = row.querySelector('[name="quantities"]');
             const purchasingUnitPriceInput = row.querySelector('[name="unitCosts"][data-row-index="' + rowIndex + '"]');
             const totalInput = row.querySelector('.row-total-input[data-row-index="' + rowIndex + '"]');
-            
+
             const quantity = parseFloat(quantityInput ? quantityInput.value : 0) || 0;
             const purchasingUnitPrice = parseFloat(purchasingUnitPriceInput ? purchasingUnitPriceInput.value : 0) || 0;
-            
+
             // Calculate row total: quantity × purchasing unit price
             const rowTotal = quantity * purchasingUnitPrice;
             if (totalInput) {
                 totalInput.value = rowTotal.toFixed(2);
             }
-            
+
             calculateTotals();
         }
 
@@ -686,26 +709,26 @@
         function calculatePurchasingPriceFromTotal(rowIndex) {
             const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
             if (!row) return;
-            
+
             const quantityInput = row.querySelector('[name="quantities"]');
             const totalInput = row.querySelector('.row-total-input[data-row-index="' + rowIndex + '"]');
             const purchasingUnitPriceInput = row.querySelector('[name="unitCosts"][data-row-index="' + rowIndex + '"]');
-            
+
             const quantity = parseFloat(quantityInput ? quantityInput.value : 0) || 0;
-            
+
             if (totalInput && purchasingUnitPriceInput && quantity > 0) {
                 const total = parseFloat(totalInput.value) || 0;
                 // Calculate purchasing unit price: total / quantity
                 const purchasingUnitPrice = total / quantity;
                 purchasingUnitPriceInput.value = purchasingUnitPrice.toFixed(2);
             }
-            
+
             calculateTotals();
         }
 
         function calculateTotals() {
             let subtotal = 0;
-            
+
             document.querySelectorAll('tr.product-row').forEach(row => {
                 const totalInput = row.querySelector('.row-total-input');
                 if (totalInput) {
@@ -713,16 +736,16 @@
                     subtotal += rowTotal;
                 }
             });
-            
+
             const discount = parseFloat(document.getElementById('discountAmount').value) || 0;
             const tax = parseFloat(document.getElementById('taxAmount').value) || 0;
             const total = subtotal;
             const final = total - discount + tax;
-            
+
             document.getElementById('subtotal').textContent = '৳' + subtotal.toFixed(2);
             document.getElementById('totalAmount').textContent = '৳' + total.toFixed(2);
             document.getElementById('finalAmount').textContent = '৳' + final.toFixed(2);
-            
+
             document.getElementById('totalAmountInput').value = total;
             document.getElementById('finalAmountInput').value = final;
         }
@@ -731,7 +754,7 @@
             const paymentStatus = document.getElementById('paymentStatus');
             const paidAmountContainer = document.getElementById('paidAmountContainer');
             const paidAmountInput = document.getElementById('paidAmount');
-            
+
             if (paymentStatus && paidAmountContainer) {
                 if (paymentStatus.value === 'PARTIAL') {
                     paidAmountContainer.style.display = 'block';
@@ -749,9 +772,9 @@
         }
 
         // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Date pickers are automatically initialized by common.js
-            
+
             // Initialize Select2 for supplier
             const existingSupplier = $('#supplierSelect option[selected]');
             const existingData = [];
@@ -761,7 +784,7 @@
                     text: existingSupplier.text()
                 });
             }
-            
+
             $('#supplierSelect').select2({
                 theme: 'bootstrap-5',
                 placeholder: 'Search and select supplier...',
@@ -778,7 +801,7 @@
                     },
                     processResults: function (data) {
                         return {
-                            results: data.map(function(item) {
+                            results: data.map(function (item) {
                                 // Format: Name - Phone (Manufacturers)
                                 return {
                                     id: item.id,
@@ -791,7 +814,7 @@
                 },
                 minimumInputLength: 0
             });
-            
+
             // Load existing items if editing
             const stockInId = document.querySelector('input[name="id"]')?.value;
             if (stockInId && stockInId !== '') {
@@ -799,11 +822,11 @@
             } else {
                 addProductRow();
             }
-            
+
             // Initialize paid amount field visibility on page load
             togglePaidAmount();
         });
-        
+
         function loadExistingItems(stockInId) {
             fetch(`/stock-in/api/items/${stockInId}`)
                 .then(response => response.json())
@@ -814,30 +837,30 @@
                             return new Promise((resolve) => {
                                 addProductRow();
                                 const rowIndex = rowCounter - 1;
-                                
+
                                 // Wait for row to be added and Select2 initialized
                                 setTimeout(() => {
                                     const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
-                                    
+
                                     if (row && item.productId) {
                                         const productSelect = row.querySelector('.product-select');
                                         const packageSelect = row.querySelector('.product-package-select');
-                                        
+
                                         if (productSelect && packageSelect) {
                                             // Re-initialize Select2 without auto-load to prevent duplicate package loading
                                             if ($(productSelect).hasClass('select2-hidden-accessible')) {
                                                 $(productSelect).select2('destroy');
                                             }
                                             initializeProductSelect2(productSelect, rowIndex, true);
-                                            
+
                                             // Listen for packages loaded event
-                                            const onPackagesLoaded = function(e) {
+                                            const onPackagesLoaded = function (e) {
                                                 // Set other values after packages are loaded
                                                 const quantityInput = row.querySelector('[name="quantities"]');
                                                 const unitCostInput = row.querySelector('[name="unitCosts"]');
                                                 const totalInput = row.querySelector('.row-total-input');
                                                 const unitPriceInput = row.querySelector('.unit-price-input');
-                                                
+
                                                 if (quantityInput && item.quantity) {
                                                     quantityInput.value = item.quantity;
                                                 }
@@ -847,7 +870,7 @@
                                                 if (totalInput && item.totalCost) {
                                                     totalInput.value = parseFloat(item.totalCost).toFixed(2);
                                                 }
-                                                
+
                                                 // Set unit price from package if available
                                                 if (unitPriceInput && item.packageUnitPrice) {
                                                     unitPriceInput.value = parseFloat(item.packageUnitPrice).toFixed(2);
@@ -855,19 +878,19 @@
                                                         unitPriceInput.setAttribute('data-package-id', item.packageId);
                                                     }
                                                 }
-                                                
+
                                                 calculateRowTotalFromPrice(rowIndex);
                                                 packageSelect.removeEventListener('packagesLoaded', onPackagesLoaded);
                                                 resolve();
                                             };
-                                            
+
                                             packageSelect.addEventListener('packagesLoaded', onPackagesLoaded, { once: true });
-                                            
+
                                             // Use Select2's data API to add and select the option properly
                                             const option = new Option(item.productName || 'Product', item.productId, true, true);
                                             $(productSelect).append(option);
                                             $(productSelect).val(item.productId).trigger('change.select2');
-                                            
+
                                             // Load packages with preselected package ID (don't wait for auto-load)
                                             setTimeout(() => {
                                                 loadProductPackages(item.productId, rowIndex, item.packageId);
@@ -881,7 +904,7 @@
                                 }, 200);
                             });
                         });
-                        
+
                         Promise.all(loadPromises).then(() => {
                             calculateTotals();
                         });
@@ -907,7 +930,7 @@
                 input.type = 'file';
                 input.accept = 'image/*';
                 input.capture = 'environment'; // Use back camera on mobile
-                input.onchange = function(e) {
+                input.onchange = function (e) {
                     handleFileSelect(e);
                 };
                 input.click();
@@ -922,7 +945,7 @@
             if (file) {
                 currentImageFile = file;
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     document.getElementById('previewImage').src = e.target.result;
                     document.getElementById('imagePreview').style.display = 'block';
                     document.getElementById('qrCodeSection').style.display = 'none';
@@ -951,13 +974,13 @@
                     document.getElementById('qrCodeImage').src = data.qrCode;
                     document.getElementById('qrCodeSection').style.display = 'block';
                     document.getElementById('imagePreview').style.display = 'none';
-                    
+
                     // Store session ID for reference
                     console.log('QR code generated. Session ID: ' + data.sessionId);
                     if (data.mobileUrl) {
                         console.log('Mobile URL: ' + data.mobileUrl);
                     }
-                    
+
                     // Start polling for processed products
                     startPollingForProducts(data.sessionId);
                 })
@@ -986,26 +1009,26 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('processingStatus').style.display = 'none';
-                document.getElementById('processBtn').disabled = false;
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('processingStatus').style.display = 'none';
+                    document.getElementById('processBtn').disabled = false;
 
-                if (data.success && data.products) {
-                    // Add extracted products to the form
-                    addExtractedProducts(data.products);
-                    clearImage();
-                    alert('Successfully extracted ' + data.products.length + ' product(s) from invoice!');
-                } else {
-                    alert('Error processing invoice: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                document.getElementById('processingStatus').style.display = 'none';
-                document.getElementById('processBtn').disabled = false;
-                console.error('Error:', error);
-                alert('Error processing invoice: ' + error.message);
-            });
+                    if (data.success && data.products) {
+                        // Add extracted products to the form
+                        addExtractedProducts(data.products);
+                        clearImage();
+                        alert('Successfully extracted ' + data.products.length + ' product(s) from invoice!');
+                    } else {
+                        alert('Error processing invoice: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('processingStatus').style.display = 'none';
+                    document.getElementById('processBtn').disabled = false;
+                    console.error('Error:', error);
+                    alert('Error processing invoice: ' + error.message);
+                });
         }
 
         function addExtractedProducts(products) {
@@ -1015,28 +1038,28 @@
                 // Handle both nested (extracted) and flat structure
                 const extracted = productData.extracted || productData;
                 console.log('Extracted data:', extracted);
-                
+
                 // Add a new product row
                 addProductRow();
                 const rowIndex = rowCounter - 1;
                 const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
-                
+
                 if (row) {
                     // Wait for Select2 to initialize
                     setTimeout(() => {
                         const quantityInput = row.querySelector('[name="quantities"]');
                         const unitCostInput = row.querySelector('[name="unitCosts"]');
-                        
+
                         // Set quantity
                         if (quantityInput && extracted.quantity) {
                             quantityInput.value = extracted.quantity;
                         }
-                        
+
                         // Set unit cost
                         if (unitCostInput && extracted.unitPrice) {
                             unitCostInput.value = parseFloat(extracted.unitPrice).toFixed(2);
                         }
-                        
+
                         // If product is matched, select it
                         if (productData.matched && productData.productId) {
                             const productSelect = row.querySelector('.product-select');
@@ -1050,7 +1073,7 @@
                                 );
                                 $(productSelect).append(option);
                                 $(productSelect).val(productData.productId).trigger('change');
-                                
+
                                 // Wait for packages to load, then select first package if available
                                 setTimeout(() => {
                                     if (productData.packages && productData.packages.length > 0) {
@@ -1067,7 +1090,7 @@
                             // If not matched, still set quantity and price
                             calculateRowTotalFromPrice(rowIndex);
                         }
-                        
+
                         calculateTotals();
                     }, 200);
                 }
@@ -1077,20 +1100,20 @@
         // Poll for processed products from mobile upload
         function startPollingForProducts(sessionId) {
             console.log('Starting polling for session:', sessionId);
-            
+
             // Clear any existing polling
             if (pollingInterval) {
                 clearInterval(pollingInterval);
             }
-            
+
             let pollCount = 0;
             const maxPolls = 150; // 5 minutes max (150 * 2 seconds)
-            
+
             // Poll every 2 seconds
-            pollingInterval = setInterval(function() {
+            pollingInterval = setInterval(function () {
                 pollCount++;
                 console.log('Polling attempt #' + pollCount + ' for session:', sessionId);
-                
+
                 fetch('/stock-in/api/session-products/' + sessionId)
                     .then(response => {
                         if (!response.ok) {
@@ -1100,20 +1123,20 @@
                     })
                     .then(data => {
                         console.log('Poll response:', data);
-                        
+
                         if (data.success && data.products && data.products.length > 0) {
                             console.log('Products found! Adding to form...', data.products);
-                            
+
                             // Stop polling
                             clearInterval(pollingInterval);
                             pollingInterval = null;
-                            
+
                             // Hide QR code section
                             document.getElementById('qrCodeSection').style.display = 'none';
-                            
+
                             // Add products to form
                             addExtractedProducts(data.products);
-                            
+
                             // Show success message
                             alert('Successfully extracted ' + data.products.length + ' product(s) from invoice!');
                         } else if (data.message) {
@@ -1124,7 +1147,7 @@
                         console.error('Error polling for products:', error);
                         // Continue polling even on error
                     });
-                
+
                 // Stop polling after max attempts
                 if (pollCount >= maxPolls) {
                     console.log('Max polling attempts reached, stopping...');
@@ -1135,17 +1158,17 @@
         }
 
         // Check camera availability on page load
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Check if camera is available
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 document.getElementById('cameraBtn').textContent = 'Select File';
-                document.getElementById('cameraBtn').onclick = function() {
+                document.getElementById('cameraBtn').onclick = function () {
                     document.getElementById('fileInput').click();
                 };
             }
-            
+
             // Clean up polling on page unload
-            window.addEventListener('beforeunload', function() {
+            window.addEventListener('beforeunload', function () {
                 if (pollingInterval) {
                     clearInterval(pollingInterval);
                 }
@@ -1153,4 +1176,5 @@
         });
     </script>
 </body>
+
 </html>
