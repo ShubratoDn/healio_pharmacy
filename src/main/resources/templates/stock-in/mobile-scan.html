@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scan Invoice - Healio</title>
+    <link href="/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .scan-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #667eea;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        .camera-preview {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: none;
+        }
+        .preview-container {
+            position: relative;
+            margin: 20px 0;
+        }
+        .btn-scan {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-primary-scan {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-secondary-scan {
+            background: #f8f9fa;
+            color: #495057;
+        }
+        .btn-success-scan {
+            background: #28a745;
+            color: white;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .status-message {
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+            border-width: 0.15em;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .image-preview {
+            max-width: 100%;
+            border-radius: 12px;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="scan-container">
+        <div class="header">
+            <h1><i class="bi bi-camera-fill"></i> Scan Invoice</h1>
+            <p>Capture or upload an invoice image to extract products</p>
+        </div>
+
+        <div id="statusMessage"></div>
+
+        <div class="preview-container">
+            <img id="imagePreview" class="image-preview" alt="Preview">
+            <video id="cameraPreview" class="camera-preview" autoplay playsinline></video>
+        </div>
+
+        <input type="file" id="fileInput" accept="image/*" capture="environment">
+        <input type="hidden" id="sessionId" th:value="${sessionId}">
+
+        <button class="btn btn-scan btn-primary-scan" onclick="startCamera()" id="cameraBtn">
+            <i class="bi bi-camera-fill"></i> Open Camera
+        </button>
+
+        <button class="btn btn-scan btn-secondary-scan" onclick="selectFile()" id="fileBtn">
+            <i class="bi bi-upload"></i> Choose from Gallery
+        </button>
+
+        <button class="btn btn-scan btn-success-scan" onclick="captureImage()" id="captureBtn" style="display: none;">
+            <i class="bi bi-camera"></i> Capture Photo
+        </button>
+
+        <button class="btn btn-scan btn-success-scan" onclick="uploadImage()" id="uploadBtn" style="display: none;">
+            <i class="bi bi-cloud-upload"></i> Process Image
+        </button>
+
+        <button class="btn btn-scan btn-secondary-scan" onclick="cancelCapture()" id="cancelBtn" style="display: none;">
+            <i class="bi bi-x-circle"></i> Cancel
+        </button>
+    </div>
+
+    <script>
+        let stream = null;
+        let capturedImage = null;
+        
+        // Get sessionId from URL if not in hidden input
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlSessionId = urlParams.get('sessionId');
+            const hiddenInput = document.getElementById('sessionId');
+            
+            if (urlSessionId && (!hiddenInput.value || hiddenInput.value === '')) {
+                hiddenInput.value = urlSessionId;
+                console.log('SessionId set from URL:', urlSessionId);
+            } else {
+                console.log('SessionId from hidden input:', hiddenInput.value);
+            }
+        });
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.className = 'status-message status-' + type;
+            statusDiv.innerHTML = message;
+            statusDiv.style.display = 'block';
+        }
+
+        function hideStatus() {
+            document.getElementById('statusMessage').style.display = 'none';
+        }
+
+        function startCamera() {
+            hideStatus();
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                })
+                .then(function(mediaStream) {
+                    stream = mediaStream;
+                    const video = document.getElementById('cameraPreview');
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    document.getElementById('imagePreview').style.display = 'none';
+                    document.getElementById('cameraBtn').style.display = 'none';
+                    document.getElementById('fileBtn').style.display = 'none';
+                    document.getElementById('captureBtn').style.display = 'block';
+                    document.getElementById('cancelBtn').style.display = 'block';
+                })
+                .catch(function(error) {
+                    console.error('Error accessing camera:', error);
+                    showStatus('Error accessing camera. Please use "Choose from Gallery" instead.', 'error');
+                    selectFile();
+                });
+            } else {
+                showStatus('Camera not supported. Please use "Choose from Gallery" instead.', 'error');
+                selectFile();
+            }
+        }
+
+        function selectFile() {
+            hideStatus();
+            document.getElementById('fileInput').click();
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    capturedImage = file;
+                    document.getElementById('imagePreview').src = event.target.result;
+                    document.getElementById('imagePreview').style.display = 'block';
+                    document.getElementById('cameraPreview').style.display = 'none';
+                    stopCamera();
+                    document.getElementById('uploadBtn').style.display = 'block';
+                    document.getElementById('cancelBtn').style.display = 'block';
+                    document.getElementById('cameraBtn').style.display = 'none';
+                    document.getElementById('fileBtn').style.display = 'none';
+                    document.getElementById('captureBtn').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function captureImage() {
+            const video = document.getElementById('cameraPreview');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            canvas.toBlob(function(blob) {
+                capturedImage = new File([blob], 'captured-image.jpg', { type: 'image/jpeg' });
+                document.getElementById('imagePreview').src = canvas.toDataURL();
+                document.getElementById('imagePreview').style.display = 'block';
+                video.style.display = 'none';
+                stopCamera();
+                document.getElementById('uploadBtn').style.display = 'block';
+                document.getElementById('captureBtn').style.display = 'none';
+            }, 'image/jpeg', 0.9);
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }
+
+        function cancelCapture() {
+            stopCamera();
+            capturedImage = null;
+            document.getElementById('cameraPreview').style.display = 'none';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('cameraPreview').srcObject = null;
+            document.getElementById('cameraBtn').style.display = 'block';
+            document.getElementById('fileBtn').style.display = 'block';
+            document.getElementById('captureBtn').style.display = 'none';
+            document.getElementById('uploadBtn').style.display = 'none';
+            document.getElementById('cancelBtn').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+            hideStatus();
+        }
+
+        function uploadImage() {
+            if (!capturedImage) {
+                showStatus('No image selected', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', capturedImage);
+            const sessionId = document.getElementById('sessionId').value;
+            console.log('Mobile upload - sessionId from input:', sessionId);
+            if (sessionId) {
+                formData.append('sessionId', sessionId);
+                console.log('Mobile upload - sessionId added to formData');
+            } else {
+                console.warn('Mobile upload - No sessionId found!');
+            }
+
+            document.getElementById('uploadBtn').disabled = true;
+            showStatus('<div class="spinner-border spinner-border-sm me-2"></div>Processing image with AI... This may take a few seconds.', 'info');
+
+            fetch('/stock-in/api/mobile-upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('uploadBtn').disabled = false;
+                
+                if (data.success) {
+                    showStatus('<i class="bi bi-check-circle-fill me-2"></i>Image processed successfully! You can close this page and return to your computer.', 'success');
+                    document.getElementById('uploadBtn').style.display = 'none';
+                    document.getElementById('cancelBtn').style.display = 'none';
+                } else {
+                    showStatus('<i class="bi bi-exclamation-triangle-fill me-2"></i>Error: ' + (data.error || 'Unknown error'), 'error');
+                }
+            })
+            .catch(error => {
+                document.getElementById('uploadBtn').disabled = false;
+                console.error('Error:', error);
+                showStatus('<i class="bi bi-exclamation-triangle-fill me-2"></i>Error uploading image: ' + error.message, 'error');
+            });
+        }
+
+        // Clean up camera on page unload
+        window.addEventListener('beforeunload', function() {
+            stopCamera();
+        });
+    </script>
+</body>
+</html>
+

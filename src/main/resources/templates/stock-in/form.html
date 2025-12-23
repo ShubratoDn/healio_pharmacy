@@ -183,6 +183,60 @@
                 </div>
                 </div>
 
+                <!-- Invoice Scanner Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="bi bi-camera me-2"></i>Scan Invoice
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <p class="text-muted mb-3">Upload an invoice image to automatically extract products using AI.</p>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button type="button" class="btn btn-primary" onclick="openCamera()" id="cameraBtn">
+                                            <i class="bi bi-camera-fill me-2"></i>Use Camera
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                                            <i class="bi bi-upload me-2"></i>Upload File
+                                        </button>
+                                        <button type="button" class="btn btn-info" onclick="showQRCode()" id="qrCodeBtn">
+                                            <i class="bi bi-qr-code-scan me-2"></i>Scan with Mobile
+                                        </button>
+                                        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                                    </div>
+                                    <div id="qrCodeSection" style="display: none; margin-top: 20px;">
+                                        <div class="alert alert-info">
+                                            <p><strong>Scan this QR code with your mobile device:</strong></p>
+                                            <div class="text-center">
+                                                <img id="qrCodeImage" src="" alt="QR Code" style="max-width: 300px; border: 2px solid #ddd; border-radius: 8px;">
+                                            </div>
+                                            <p class="mt-2 mb-0"><small>After scanning, your mobile camera will open to capture the invoice image.</small></p>
+                                        </div>
+                                    </div>
+                                    <div id="imagePreview" style="display: none; margin-top: 20px;">
+                                        <img id="previewImage" src="" alt="Preview" style="max-width: 100%; max-height: 300px; border: 2px solid #ddd; border-radius: 8px;">
+                                        <div class="mt-2">
+                                            <button type="button" class="btn btn-success btn-sm" onclick="processImage()" id="processBtn">
+                                                <i class="bi bi-magic me-2"></i>Process with AI
+                                            </button>
+                                            <button type="button" class="btn btn-secondary btn-sm" onclick="clearImage()">
+                                                <i class="bi bi-x-circle me-2"></i>Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="processingStatus" style="display: none; margin-top: 20px;">
+                                        <div class="alert alert-info">
+                                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                            Processing image with AI... This may take a few seconds.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Products Section -->
                 <div class="form-section">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -840,6 +894,263 @@
                     addProductRow();
                 });
         }
+
+        // Invoice scanning functionality
+        let currentImageFile = null;
+        let currentSessionId = null;
+        let pollingInterval = null;
+
+        function openCamera() {
+            // Check if camera is available
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.capture = 'environment'; // Use back camera on mobile
+                input.onchange = function(e) {
+                    handleFileSelect(e);
+                };
+                input.click();
+            } else {
+                // Fallback to file input
+                document.getElementById('fileInput').click();
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                currentImageFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewImage').src = e.target.result;
+                    document.getElementById('imagePreview').style.display = 'block';
+                    document.getElementById('qrCodeSection').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearImage() {
+            currentImageFile = null;
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('previewImage').src = '';
+            document.getElementById('fileInput').value = '';
+        }
+
+        function showQRCode() {
+            // Generate QR code
+            fetch('/stock-in/api/qr-code')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error generating QR code: ' + data.error);
+                        return;
+                    }
+                    currentSessionId = data.sessionId;
+                    document.getElementById('qrCodeImage').src = data.qrCode;
+                    document.getElementById('qrCodeSection').style.display = 'block';
+                    document.getElementById('imagePreview').style.display = 'none';
+                    
+                    // Store session ID for reference
+                    console.log('QR code generated. Session ID: ' + data.sessionId);
+                    if (data.mobileUrl) {
+                        console.log('Mobile URL: ' + data.mobileUrl);
+                    }
+                    
+                    // Start polling for processed products
+                    startPollingForProducts(data.sessionId);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error generating QR code: ' + error.message);
+                });
+        }
+
+        function processImage() {
+            if (!currentImageFile) {
+                alert('Please select an image first');
+                return;
+            }
+
+            document.getElementById('processingStatus').style.display = 'block';
+            document.getElementById('processBtn').disabled = true;
+
+            const formData = new FormData();
+            formData.append('image', currentImageFile);
+            if (currentSessionId) {
+                formData.append('sessionId', currentSessionId);
+            }
+
+            fetch('/stock-in/api/process-invoice', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('processingStatus').style.display = 'none';
+                document.getElementById('processBtn').disabled = false;
+
+                if (data.success && data.products) {
+                    // Add extracted products to the form
+                    addExtractedProducts(data.products);
+                    clearImage();
+                    alert('Successfully extracted ' + data.products.length + ' product(s) from invoice!');
+                } else {
+                    alert('Error processing invoice: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                document.getElementById('processingStatus').style.display = 'none';
+                document.getElementById('processBtn').disabled = false;
+                console.error('Error:', error);
+                alert('Error processing invoice: ' + error.message);
+            });
+        }
+
+        function addExtractedProducts(products) {
+            console.log('Adding extracted products:', products);
+            products.forEach(productData => {
+                console.log('Processing product:', productData);
+                // Handle both nested (extracted) and flat structure
+                const extracted = productData.extracted || productData;
+                console.log('Extracted data:', extracted);
+                
+                // Add a new product row
+                addProductRow();
+                const rowIndex = rowCounter - 1;
+                const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+                
+                if (row) {
+                    // Wait for Select2 to initialize
+                    setTimeout(() => {
+                        const quantityInput = row.querySelector('[name="quantities"]');
+                        const unitCostInput = row.querySelector('[name="unitCosts"]');
+                        
+                        // Set quantity
+                        if (quantityInput && extracted.quantity) {
+                            quantityInput.value = extracted.quantity;
+                        }
+                        
+                        // Set unit cost
+                        if (unitCostInput && extracted.unitPrice) {
+                            unitCostInput.value = parseFloat(extracted.unitPrice).toFixed(2);
+                        }
+                        
+                        // If product is matched, select it
+                        if (productData.matched && productData.productId) {
+                            const productSelect = row.querySelector('.product-select');
+                            if (productSelect) {
+                                // Use Select2 to set the product
+                                const option = new Option(
+                                    extracted.productName || 'Product',
+                                    productData.productId,
+                                    true,
+                                    true
+                                );
+                                $(productSelect).append(option);
+                                $(productSelect).val(productData.productId).trigger('change');
+                                
+                                // Wait for packages to load, then select first package if available
+                                setTimeout(() => {
+                                    if (productData.packages && productData.packages.length > 0) {
+                                        const packageSelect = row.querySelector('.product-package-select');
+                                        if (packageSelect) {
+                                            packageSelect.value = productData.packages[0].id;
+                                            updatePackageDisplay(rowIndex);
+                                        }
+                                    }
+                                    calculateRowTotalFromPrice(rowIndex);
+                                }, 500);
+                            }
+                        } else {
+                            // If not matched, still set quantity and price
+                            calculateRowTotalFromPrice(rowIndex);
+                        }
+                        
+                        calculateTotals();
+                    }, 200);
+                }
+            });
+        }
+
+        // Poll for processed products from mobile upload
+        function startPollingForProducts(sessionId) {
+            console.log('Starting polling for session:', sessionId);
+            
+            // Clear any existing polling
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+            
+            let pollCount = 0;
+            const maxPolls = 150; // 5 minutes max (150 * 2 seconds)
+            
+            // Poll every 2 seconds
+            pollingInterval = setInterval(function() {
+                pollCount++;
+                console.log('Polling attempt #' + pollCount + ' for session:', sessionId);
+                
+                fetch('/stock-in/api/session-products/' + sessionId)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('HTTP error! status: ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Poll response:', data);
+                        
+                        if (data.success && data.products && data.products.length > 0) {
+                            console.log('Products found! Adding to form...', data.products);
+                            
+                            // Stop polling
+                            clearInterval(pollingInterval);
+                            pollingInterval = null;
+                            
+                            // Hide QR code section
+                            document.getElementById('qrCodeSection').style.display = 'none';
+                            
+                            // Add products to form
+                            addExtractedProducts(data.products);
+                            
+                            // Show success message
+                            alert('Successfully extracted ' + data.products.length + ' product(s) from invoice!');
+                        } else if (data.message) {
+                            console.log('Poll message:', data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error polling for products:', error);
+                        // Continue polling even on error
+                    });
+                
+                // Stop polling after max attempts
+                if (pollCount >= maxPolls) {
+                    console.log('Max polling attempts reached, stopping...');
+                    clearInterval(pollingInterval);
+                    pollingInterval = null;
+                }
+            }, 2000); // Poll every 2 seconds
+        }
+
+        // Check camera availability on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if camera is available
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                document.getElementById('cameraBtn').textContent = 'Select File';
+                document.getElementById('cameraBtn').onclick = function() {
+                    document.getElementById('fileInput').click();
+                };
+            }
+            
+            // Clean up polling on page unload
+            window.addEventListener('beforeunload', function() {
+                if (pollingInterval) {
+                    clearInterval(pollingInterval);
+                }
+            });
+        });
     </script>
 </body>
 </html>

@@ -67,7 +67,10 @@ public class SecurityConfig {
                                 "/*.gif",
                                 "/*.ico",
                                 "/*.svg",
-                                "/*.webp"
+                                "/*.webp",
+                                "/stock-in/mobile-scan",
+                                "/stock-in/api/mobile-upload",
+                                "/stock-in/api/session-products/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

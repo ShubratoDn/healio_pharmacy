@@ -1,9 +1,16 @@
 package com.heal.io.controller;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.heal.io.entity.*;
 import com.heal.io.repository.*;
 import lombok.RequiredArgsConstructor;
+import com.heal.io.service.InvoiceProcessingService;
 import com.heal.io.service.StockInVoucherService;
+import com.heal.io.util.NetworkUtil;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,16 +21,26 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
+
+import javax.imageio.ImageIO;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Controller
@@ -38,6 +55,10 @@ public class StockInController {
     private final ProductPackageRepository productPackageRepository;
     private final InventoryRepository inventoryRepository;
     private final StockInVoucherService stockInVoucherService;
+    private final InvoiceProcessingService invoiceProcessingService;
+    
+    // Temporary storage for processed products by session ID
+    private final Map<String, List<Map<String, Object>>> sessionProductsCache = new HashMap<>();
 
     @GetMapping
     public String listStockIns(
@@ -606,6 +627,239 @@ public class StockInController {
         }
         
         inventoryRepository.save(inventory);
+    }
+
+    /**
+     * Generate QR code for mobile scanning
+     */
+    @GetMapping("/api/qr-code")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> generateQRCode(
+            @RequestHeader(value = "Host", required = false) String host,
+            HttpServletRequest request) {
+        try {
+            // Generate a unique session ID for this scan
+            String sessionId = UUID.randomUUID().toString();
+            
+            // Build the full URL for mobile scanning - use local IP instead of localhost
+            String scheme = request.getScheme(); // http or https
+            int serverPort = request.getServerPort();
+            String contextPath = request.getContextPath();
+            
+            // Get local IP address instead of localhost
+            String localIp = NetworkUtil.getLocalIpAddress();
+            
+            String baseUrl;
+            if (serverPort == 80 || serverPort == 443) {
+                baseUrl = scheme + "://" + localIp;
+            } else {
+                baseUrl = scheme + "://" + localIp + ":" + serverPort;
+            }
+            if (!contextPath.isEmpty() && !contextPath.equals("/")) {
+                baseUrl += contextPath;
+            }
+            
+            String mobileUrl = baseUrl + "/stock-in/mobile-scan?sessionId=" + sessionId;
+            String qrContent = mobileUrl;
+            
+            // Generate QR code image
+            Map<EncodeHintType, Object> hints = new HashMap<>();
+            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
+            hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+            hints.put(EncodeHintType.MARGIN, 1);
+
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            BitMatrix bitMatrix = qrCodeWriter.encode(qrContent, BarcodeFormat.QR_CODE, 300, 300, hints);
+
+            BufferedImage qrImage = new BufferedImage(300, 300, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = (Graphics2D) qrImage.getGraphics();
+            graphics.setColor(Color.WHITE);
+            graphics.fillRect(0, 0, 300, 300);
+            graphics.setColor(Color.BLACK);
+
+            for (int i = 0; i < 300; i++) {
+                for (int j = 0; j < 300; j++) {
+                    if (bitMatrix.get(i, j)) {
+                        graphics.fillRect(i, j, 1, 1);
+                    }
+                }
+            }
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(qrImage, "PNG", baos);
+            byte[] imageBytes = baos.toByteArray();
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("qrCode", "data:image/png;base64," + base64Image);
+            response.put("sessionId", sessionId);
+            response.put("mobileUrl", mobileUrl);
+            response.put("uploadUrl", "/stock-in/api/mobile-upload?sessionId=" + sessionId);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Error generating QR code: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
+     * Process invoice image uploaded from mobile or desktop
+     */
+    @PostMapping("/api/process-invoice")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> processInvoice(
+            @RequestParam("image") MultipartFile image,
+            @RequestParam(required = false) String sessionId) {
+        try {
+            if (image.isEmpty()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("error", "No image provided");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // Convert image to base64
+            byte[] imageBytes = image.getBytes();
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+
+            // Process image with AI
+            List<InvoiceProcessingService.ExtractedProduct> extractedProducts = 
+                    invoiceProcessingService.processInvoiceImage(base64Image);
+
+            // Try to match products with database
+            List<Map<String, Object>> matchedProducts = new ArrayList<>();
+            for (InvoiceProcessingService.ExtractedProduct extracted : extractedProducts) {
+                Map<String, Object> productInfo = matchProduct(extracted);
+                matchedProducts.add(productInfo);
+            }
+
+            // Store processed products in cache for this session
+            if (sessionId != null && !sessionId.isEmpty()) {
+                System.out.println("Storing " + matchedProducts.size() + " products for sessionId: " + sessionId);
+                sessionProductsCache.put(sessionId, matchedProducts);
+                System.out.println("Cache now contains sessions: " + sessionProductsCache.keySet());
+                // Clean up old sessions after 1 hour (in a real app, use a proper cache with TTL)
+            } else {
+                System.out.println("WARNING: sessionId is null or empty, products not cached! sessionId=" + sessionId);
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("products", matchedProducts);
+            response.put("sessionId", sessionId);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("error", "Error processing invoice: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    /**
+     * Mobile endpoint for uploading images
+     */
+    @GetMapping("/mobile-scan")
+    public String mobileScanPage(@RequestParam(required = false) String sessionId, Model model) {
+        model.addAttribute("sessionId", sessionId);
+        return "stock-in/mobile-scan";
+    }
+
+    /**
+     * Mobile upload endpoint (same as process-invoice but returns mobile-friendly response)
+     */
+    @PostMapping("/api/mobile-upload")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> mobileUpload(
+            @RequestParam("image") MultipartFile image,
+            @RequestParam(required = false) String sessionId) {
+        System.out.println("Mobile upload received - sessionId: " + sessionId);
+        ResponseEntity<Map<String, Object>> result = processInvoice(image, sessionId);
+        
+        // Add mobile-specific response data
+        if (result.getBody() != null && (Boolean) result.getBody().get("success")) {
+            result.getBody().put("message", "Image processed successfully! Products have been added to your stock-in form. You can close this page.");
+        }
+        
+        return result;
+    }
+
+    /**
+     * Get processed products for a session (used for polling from desktop)
+     */
+    @GetMapping("/api/session-products/{sessionId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getSessionProducts(@PathVariable String sessionId) {
+        Map<String, Object> response = new HashMap<>();
+        
+        System.out.println("Checking session products for sessionId: " + sessionId);
+        System.out.println("Cache keys: " + sessionProductsCache.keySet());
+        
+        List<Map<String, Object>> products = sessionProductsCache.get(sessionId);
+        if (products != null && !products.isEmpty()) {
+            System.out.println("Found " + products.size() + " products for session: " + sessionId);
+            response.put("success", true);
+            response.put("products", products);
+            // Remove from cache after retrieving (one-time use)
+            sessionProductsCache.remove(sessionId);
+        } else {
+            System.out.println("No products found for session: " + sessionId);
+            response.put("success", false);
+            response.put("message", "No products found for this session");
+        }
+        
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Match extracted product with database product
+     */
+    private Map<String, Object> matchProduct(InvoiceProcessingService.ExtractedProduct extracted) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("extracted", extracted);
+        result.put("matched", false);
+        result.put("productId", null);
+        result.put("productName", extracted.getProductName());
+        result.put("strength", extracted.getStrength());
+        result.put("dosageForm", extracted.getDosageForm());
+        result.put("manufacturer", extracted.getManufacturer());
+        result.put("quantity", extracted.getQuantity());
+        result.put("unitPrice", extracted.getUnitPrice());
+        result.put("totalPrice", extracted.getTotalPrice());
+        result.put("packageDescription", extracted.getPackageDescription());
+
+        // Try to find matching product in database
+        if (extracted.getProductName() != null && !extracted.getProductName().trim().isEmpty()) {
+            String searchTerm = extracted.getProductName().trim();
+            
+            // Search for products
+            Page<Product> products = productRepository.searchProducts(searchTerm, PageRequest.of(0, 5));
+            
+            if (products.hasContent()) {
+                Product matchedProduct = products.getContent().get(0);
+                result.put("matched", true);
+                result.put("productId", matchedProduct.getId());
+                
+                // Get packages for this product
+                List<ProductPackage> packages = productPackageRepository.findByProductId(matchedProduct.getId());
+                List<Map<String, Object>> packageList = packages.stream()
+                        .map(pkg -> {
+                            Map<String, Object> pkgMap = new HashMap<>();
+                            pkgMap.put("id", pkg.getId());
+                            pkgMap.put("description", pkg.getPackageDescription());
+                            pkgMap.put("unitPrice", pkg.getUnitPrice());
+                            return pkgMap;
+                        })
+                        .collect(Collectors.toList());
+                result.put("packages", packageList);
+            }
+        }
+
+        return result;
     }
 }
 
