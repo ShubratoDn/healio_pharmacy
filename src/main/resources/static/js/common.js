@@ -386,7 +386,7 @@ function updateTooltipPosition(toggleLink, submenu) {
     }
 
     window.navigateToProduct = function (productId) {
-        window.location.href = `/products/${productId}`;
+        window.open(`/products/${productId}`, '_blank');
     };
 
     window.clearSearch = function () {

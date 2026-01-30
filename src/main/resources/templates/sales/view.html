@@ -10,11 +10,26 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .sale-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
             border-radius: 10px;
             margin-bottom: 20px;
+        }
+        
+        .sale-header.paid {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .sale-header.partial {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        }
+        
+        .sale-header.pending {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        
+        .sale-header.default {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .info-card {
@@ -47,9 +62,24 @@
             }
 
             .sale-header {
-                background: #667eea !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+            }
+            
+            .sale-header.paid {
+                background: #28a745 !important;
+            }
+            
+            .sale-header.partial {
+                background: #ffc107 !important;
+            }
+            
+            .sale-header.pending {
+                background: #dc3545 !important;
+            }
+            
+            .sale-header.default {
+                background: #667eea !important;
             }
         }
     </style>
@@ -77,7 +107,10 @@
 
         <div th:object="${sale}">
             <!-- Sale Header -->
-            <div class="sale-header">
+            <div class="sale-header" 
+                 th:classappend="${sale.paymentStatus == 'PAID'} ? 'paid' : 
+                                 (${sale.paymentStatus == 'PARTIAL'} ? 'partial' : 
+                                 (${sale.paymentStatus == 'PENDING'} ? 'pending' : 'default'))">
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <h3 class="mb-2">Sale #<span th:text="*{saleNumber}"></span></h3>
@@ -88,9 +121,9 @@
                         </p>
                     </div>
                     <div class="col-md-4 text-end">
-                        <span class="badge bg-light text-dark fs-6 px-3 py-2" th:classappend="*{saleStatus == 'COMPLETED'} ? 'bg-success' : 
-                                              (*{saleStatus == 'PENDING'} ? 'bg-warning' : 'bg-danger')"
-                            th:text="*{saleStatus}"></span>
+                        <span class="badge bg-light text-dark fs-6 px-3 py-2" th:classappend="*{paymentStatus == 'PAID'} ? 'bg-success' : 
+                                              (*{paymentStatus == 'PARTIAL'} ? 'bg-warning' : 'bg-danger')"
+                            th:text="*{paymentStatus}"></span>
                     </div>
                 </div>
             </div>
@@ -264,6 +297,12 @@
                         <div class="mb-2">
                             <strong>Paid Amount:</strong>
                             <div>৳<span th:text="${#numbers.formatDecimal(sale.paidAmount, 0, 2)}"></span></div>
+                        </div>
+                        <div class="mb-2" th:if="*{paymentStatus == 'PARTIAL'}">
+                            <strong>Receivable Amount:</strong>
+                            <div class="text-danger">
+                                <strong>৳<span th:text="${#numbers.formatDecimal(sale.totalAmount - sale.paidAmount, 0, 2)}"></span></strong>
+                            </div>
                         </div>
                         <div class="mb-2" th:if="*{changeAmount != null && changeAmount > 0}">
                             <strong>Change:</strong>

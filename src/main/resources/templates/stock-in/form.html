@@ -94,6 +94,19 @@
         .select2-container {
             width: 100% !important;
         }
+
+        /* Hide number input arrows */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
     </style>
 </head>
 
@@ -390,7 +403,7 @@
                                data-row-index="${index}"
                                min="0"
                                style="font-weight: 500; text-align: right;"
-                               value="0.00"
+                               placeholder=""
                                oninput="calculatePurchasingPriceFromTotal(${index})">
                     </td>
                     <td class="text-center">
@@ -476,6 +489,46 @@
                         };
                     },
                     cache: true
+                },
+                templateResult: function(product) {
+                    if (product.loading) {
+                        return product.text;
+                    }
+                    
+                    if (!product.product) {
+                        return product.text;
+                    }
+                    
+                    let html = '<div class="d-flex justify-content-between align-items-start">';
+                    html += '<div>';
+                    html += '<strong>' + (product.product.name || '') + '</strong>';
+                    
+                    if (product.product.strength) {
+                        html += ' <span class="text-muted">[' + product.product.strength + ']</span>';
+                    }
+                    
+                    html += '<br><small class="text-muted">';
+                    const details = [];
+                    if (product.product.dosageForm) details.push(product.product.dosageForm);
+                    if (product.product.manufacturer) details.push(product.product.manufacturer);
+                    if (details.length > 0) {
+                        html += details.join(' | ');
+                    }
+                    html += '</small>';
+                    html += '</div>';
+                    
+                    // Add stock information
+                    const stock = product.product.availableQuantity !== undefined ? product.product.availableQuantity : 0;
+                    const stockBadge = stock > 0 
+                        ? '<span class="badge bg-success ms-2">Stock: ' + stock + '</span>'
+                        : '<span class="badge bg-danger ms-2">Out of Stock</span>';
+                    html += '<div>' + stockBadge + '</div>';
+                    
+                    html += '</div>';
+                    return $(html);
+                },
+                templateSelection: function(product) {
+                    return product.text || product.product.name;
                 },
                 minimumInputLength: 1
             });
@@ -699,7 +752,11 @@
             // Calculate row total: quantity × purchasing unit price
             const rowTotal = quantity * purchasingUnitPrice;
             if (totalInput) {
-                totalInput.value = rowTotal.toFixed(2);
+                if (rowTotal === 0) {
+                    totalInput.value = '';
+                } else {
+                    totalInput.value = rowTotal.toFixed(2);
+                }
             }
 
             calculateTotals();

@@ -256,7 +256,7 @@
                                     </div>
                                     <div class="input-group">
                                         <input type="number" step="0.01" class="form-control" id="discountInput"
-                                            value="0" placeholder="Enter discount" onchange="updateDiscount()"
+                                            placeholder="Enter discount" onchange="updateDiscount()"
                                             oninput="updateDiscount()">
                                         <span class="input-group-text" id="discountUnit">৳</span>
                                     </div>
@@ -692,7 +692,7 @@
                             packageDescription: packages.length > 0 ? packages[0].description : '',
                             quantity: 1,
                             unitPrice: packages.length > 0 ? packages[0].unitPrice : 0,
-                            discountAmount: 0,
+                            discountAmount: null,
                             availableQuantity: product.availableQuantity,
                             packages: packages
                         };
@@ -746,7 +746,7 @@
                 </td>
                 <td>
                     <input type="number" step="0.01" class="form-control form-control-sm" 
-                           value="${item.discountAmount}" 
+                           value="${item.discountAmount && item.discountAmount > 0 ? item.discountAmount : ''}" 
                            onchange="updateItemDiscount(${index}, this.value)">
                 </td>
                 <td>
@@ -782,7 +782,8 @@
         }
 
         function updateItemDiscount(index, discount) {
-            saleItems[index].discountAmount = parseFloat(discount) || 0;
+            const discountValue = discount === '' || discount === null ? null : parseFloat(discount);
+            saleItems[index].discountAmount = discountValue !== null && !isNaN(discountValue) ? discountValue : null;
             updateItemRow(index);
         }
 
@@ -1069,7 +1070,7 @@
                     discountPercent.value = 0;
                 } else {
                     document.getElementById('discountTypeAmount').checked = true;
-                    discountInput.value = 0;
+                    discountInput.value = '';
                     discountPercent.value = 0;
                     discountAmount.value = 0;
                 }
@@ -1079,7 +1080,7 @@
                 if (!discountPercent.value) {
                     discountPercent.value = '0';
                 }
-                discountInput.value = '0';
+                discountInput.value = '';
             }
 
             updateDiscount();
@@ -1126,7 +1127,11 @@
                             packageDescription: div.getAttribute('data-package-description') || '',
                             quantity: parseInt(div.getAttribute('data-quantity')) || 1,
                             unitPrice: parseFloat(div.getAttribute('data-unit-price')) || 0,
-                            discountAmount: parseFloat(div.getAttribute('data-discount-amount')) || 0,
+                            discountAmount: (() => {
+                                const discount = div.getAttribute('data-discount-amount');
+                                const parsed = discount ? parseFloat(discount) : null;
+                                return (parsed !== null && !isNaN(parsed) && parsed > 0) ? parsed : null;
+                            })(),
                             batchNumber: div.getAttribute('data-batch-number') || '',
                             expiryDate: div.getAttribute('data-expiry-date') || null,
                             inventoryId: div.getAttribute('data-inventory-id') || null,

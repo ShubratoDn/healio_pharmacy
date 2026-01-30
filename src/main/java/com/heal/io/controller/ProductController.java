@@ -353,6 +353,15 @@ public class ProductController {
                     result.put("generic", product.getGeneric() != null ? product.getGeneric().getName() : "");
                     result.put("dosageForm", product.getDosageForm() != null ? product.getDosageForm().getName() : "");
                     result.put("strength", product.getStrength() != null ? product.getStrength() : "");
+                    
+                    // Calculate current stock amount
+                    List<Inventory> inventories = inventoryRepository.findByProductId(product.getId());
+                    int availableQuantity = inventories.stream()
+                            .filter(inv -> inv.getIsActive() != null && inv.getIsActive())
+                            .mapToInt(Inventory::getAvailableQuantity)
+                            .sum();
+                    result.put("availableQuantity", availableQuantity);
+                    
                     return result;
                 })
                 .collect(Collectors.toList());
