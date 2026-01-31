@@ -107,6 +107,21 @@
             -moz-appearance: textfield;
             appearance: textfield;
         }
+
+        .box-price-input,
+        .box-qty-input,
+        .discount-percent-input {
+            border: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+
+        .box-price-input:focus,
+        .box-qty-input:focus,
+        .discount-percent-input:focus {
+            border-color: #86b7fe;
+            background-color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
     </style>
 </head>
 
@@ -387,10 +402,37 @@
                                min="0"
                                placeholder="0.00"
                                onchange="updatePackageUnitPrice(${index})"
+                               oninput="handleUnitPriceChange(${index})"
                                style="font-weight: 500;">
+                        <div class="d-flex gap-1 mt-1" style="font-size: 0.75rem;">
+                            <input type="number" 
+                                   step="0.01" 
+                                   class="form-control form-control-sm box-price-input" 
+                                   data-row-index="${index}" 
+                                   min="0"
+                                   placeholder="Box Price"
+                                   style="width: 45%; font-size: 0.7rem;"
+                                   oninput="calculateUnitPriceFromBox(${index})">
+                            <input type="number" 
+                                   class="form-control form-control-sm box-qty-input" 
+                                   data-row-index="${index}" 
+                                   min="1"
+                                   placeholder="Box Qty"
+                                   style="width: 45%; font-size: 0.7rem;"
+                                   oninput="calculateUnitPriceFromBox(${index})">
+                        </div>
                     </td>
                     <td>
-                        <input type="number" step="0.01" name="unitCosts" class="form-control form-control-sm purchasing-unit-price" min="0" required data-row-index="${index}" oninput="calculateRowTotalFromPrice(${index})" placeholder="0.00">
+                        <input type="number" step="0.01" name="unitCosts" class="form-control form-control-sm purchasing-unit-price" min="0" required data-row-index="${index}" oninput="handlePurchasingPriceChange(${index})" placeholder="0.00">
+                        <input type="number" 
+                               step="0.01" 
+                               class="form-control form-control-sm discount-percent-input mt-1" 
+                               data-row-index="${index}" 
+                               min="0"
+                               max="100"
+                               placeholder="Discount %"
+                               style="font-size: 0.7rem;"
+                               oninput="calculatePurchasingPriceFromDiscount(${index})">
                     </td>
                     <td>
                         <input type="number" name="quantities" class="form-control form-control-sm" min="1" required data-row-index="${index}" oninput="calculateRowTotalFromPrice(${index})" placeholder="0">
@@ -665,6 +707,8 @@
                         const priceValue = parseFloat(unitPrice);
                         if (!isNaN(priceValue)) {
                             unitPriceInput.value = priceValue.toFixed(2);
+                            // Recalculate purchasing price if discount is set
+                            calculatePurchasingPriceFromDiscount(rowIndex);
                         } else {
                             unitPriceInput.value = '';
                         }
@@ -735,6 +779,112 @@
                     console.error('Error updating package unit price:', error);
                     alert('Error updating package unit price: ' + error.message);
                 });
+        }
+
+        // Calculate unit price from box price and box quantity
+        function calculateUnitPriceFromBox(rowIndex) {
+            const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+            if (!row) return;
+
+            const boxPriceInput = row.querySelector('.box-price-input[data-row-index="' + rowIndex + '"]');
+            const boxQtyInput = row.querySelector('.box-qty-input[data-row-index="' + rowIndex + '"]');
+            const unitPriceInput = row.querySelector('.unit-price-input[data-row-index="' + rowIndex + '"]');
+
+            if (!boxPriceInput || !boxQtyInput || !unitPriceInput) return;
+
+            const boxPrice = parseFloat(boxPriceInput.value) || 0;
+            const boxQty = parseFloat(boxQtyInput.value) || 0;
+
+            if (boxPrice > 0 && boxQty > 0) {
+                const unitPrice = boxPrice / boxQty;
+                unitPriceInput.value = unitPrice.toFixed(2);
+                
+                // Update package unit price if package is selected
+                const packageId = unitPriceInput.getAttribute('data-package-id');
+                if (packageId) {
+                    updatePackageUnitPrice(rowIndex);
+                }
+                
+                // Recalculate purchasing price if discount is set
+                calculatePurchasingPriceFromDiscount(rowIndex);
+            }
+        }
+
+        // Calculate purchasing price from unit price and discount percentage
+        function calculatePurchasingPriceFromDiscount(rowIndex) {
+            const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+            if (!row) return;
+
+            const unitPriceInput = row.querySelector('.unit-price-input[data-row-index="' + rowIndex + '"]');
+            const discountPercentInput = row.querySelector('.discount-percent-input[data-row-index="' + rowIndex + '"]');
+            const purchasingUnitPriceInput = row.querySelector('[name="unitCosts"][data-row-index="' + rowIndex + '"]');
+
+            if (!unitPriceInput || !discountPercentInput || !purchasingUnitPriceInput) return;
+
+            const unitPrice = parseFloat(unitPriceInput.value) || 0;
+            const discountPercent = parseFloat(discountPercentInput.value) || 0;
+
+            if (unitPrice > 0 && discountPercent >= 0 && discountPercent <= 100) {
+                const purchasingPrice = unitPrice * (1 - discountPercent / 100);
+                purchasingUnitPriceInput.value = purchasingPrice.toFixed(2);
+                
+                // Recalculate row total
+                calculateRowTotalFromPrice(rowIndex);
+            }
+        }
+
+        // Handle manual unit price change - clear box inputs and recalculate purchasing price
+        function handleUnitPriceChange(rowIndex) {
+            const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+            if (!row) return;
+
+            // Clear box price and box qty when unit price is manually changed
+            const boxPriceInput = row.querySelector('.box-price-input[data-row-index="' + rowIndex + '"]');
+            const boxQtyInput = row.querySelector('.box-qty-input[data-row-index="' + rowIndex + '"]');
+            
+            if (boxPriceInput) boxPriceInput.value = '';
+            if (boxQtyInput) boxQtyInput.value = '';
+
+            // Recalculate purchasing price if discount is set
+            calculatePurchasingPriceFromDiscount(rowIndex);
+        }
+
+        // Handle manual purchasing price change - calculate discount percentage
+        function handlePurchasingPriceChange(rowIndex) {
+            const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+            if (!row) return;
+
+            const unitPriceInput = row.querySelector('.unit-price-input[data-row-index="' + rowIndex + '"]');
+            const discountPercentInput = row.querySelector('.discount-percent-input[data-row-index="' + rowIndex + '"]');
+            const purchasingUnitPriceInput = row.querySelector('[name="unitCosts"][data-row-index="' + rowIndex + '"]');
+
+            if (!unitPriceInput || !discountPercentInput || !purchasingUnitPriceInput) {
+                // If helper inputs don't exist, just calculate row total
+                calculateRowTotalFromPrice(rowIndex);
+                return;
+            }
+
+            const unitPrice = parseFloat(unitPriceInput.value) || 0;
+            const purchasingPrice = parseFloat(purchasingUnitPriceInput.value) || 0;
+
+            // Calculate discount percentage from unit price and purchasing price
+            if (unitPrice > 0 && purchasingPrice >= 0) {
+                const discountPercent = ((unitPrice - purchasingPrice) / unitPrice) * 100;
+                
+                // Only update discount if it's a valid percentage (0-100)
+                if (discountPercent >= 0 && discountPercent <= 100) {
+                    discountPercentInput.value = discountPercent.toFixed(2);
+                } else if (purchasingPrice === 0) {
+                    // If purchasing price is cleared, clear discount
+                    discountPercentInput.value = '';
+                }
+            } else if (purchasingPrice === 0) {
+                // Clear discount if purchasing price is cleared
+                discountPercentInput.value = '';
+            }
+
+            // Recalculate row total
+            calculateRowTotalFromPrice(rowIndex);
         }
 
         // Calculate total from quantity and purchasing unit price

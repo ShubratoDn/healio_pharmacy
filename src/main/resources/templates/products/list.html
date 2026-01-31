@@ -33,7 +33,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Name</th>
-                            <th>Category</th>
+                            <th>Dosage Form</th>
                             <th>Manufacturer</th>
                             <th>Generic</th>
                             <th>Strength</th>
@@ -50,7 +50,7 @@
                                           class="text-muted" th:text="${' [' + product.strength + ']'}"></span>
                                 </a>
                             </td>
-                            <td th:text="${product.productCategory?.name}"></td>
+                            <td th:text="${product.dosageForm?.name}"></td>
                             <td th:text="${product.manufacturer?.name}"></td>
                             <td th:text="${product.generic?.name}"></td>
                             <td th:text="${product.strength}"></td>

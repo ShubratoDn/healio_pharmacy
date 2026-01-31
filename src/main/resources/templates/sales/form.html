@@ -737,20 +737,30 @@
                 <td>
                     <input type="number" class="form-control form-control-sm" 
                            value="${item.quantity}" min="1" 
+                           id="quantity_${index}"
+                           oninput="updateItemQuantityInput(${index}, this.value)"
                            onchange="updateItemQuantity(${index}, this.value)">
                 </td>
                 <td>
                     <input type="number" step="0.01" class="form-control form-control-sm" 
                            value="${item.unitPrice}" 
+                           id="unitPrice_${index}"
+                           oninput="updateItemPriceInput(${index}, this.value)"
                            onchange="updateItemPrice(${index}, this.value)">
                 </td>
                 <td>
                     <input type="number" step="0.01" class="form-control form-control-sm" 
                            value="${item.discountAmount && item.discountAmount > 0 ? item.discountAmount : ''}" 
+                           id="discount_${index}"
+                           oninput="updateItemDiscountInput(${index}, this.value)"
                            onchange="updateItemDiscount(${index}, this.value)">
                 </td>
                 <td>
-                    <strong>৳${calculateItemTotal(item).toFixed(2)}</strong>
+                    <input type="number" step="0.01" class="form-control form-control-sm" 
+                           value="${calculateItemTotal(item).toFixed(2)}" 
+                           id="total_${index}"
+                           oninput="updateItemTotalInput(${index}, this.value)"
+                           onchange="updateItemTotal(${index}, this.value)">
                 </td>
                 <td>
                     <button type="button" class="btn btn-sm remove-item-btn" onclick="removeItem(${index})">
@@ -771,19 +781,111 @@
             updateSummary();
         }
 
+        // Real-time update functions (oninput) - update values in place without recreating row
+        function updateItemQuantityInput(index, quantity) {
+            const item = saleItems[index];
+            const quantityValue = parseInt(quantity) || 1;
+            item.quantity = quantityValue;
+            
+            // Recalculate total based on current discount
+            const subtotal = item.unitPrice * item.quantity;
+            const newTotal = subtotal - (item.discountAmount || 0);
+            
+            // Update total field
+            document.getElementById(`total_${index}`).value = newTotal.toFixed(2);
+            
+            // Update summary
+            updateSummary();
+        }
+
         function updateItemQuantity(index, quantity) {
             saleItems[index].quantity = parseInt(quantity) || 1;
             updateItemRow(index);
         }
 
+        function updateItemPriceInput(index, price) {
+            const item = saleItems[index];
+            const priceValue = parseFloat(price) || 0;
+            item.unitPrice = priceValue;
+            
+            // Recalculate total and update discount if needed
+            const subtotal = item.unitPrice * item.quantity;
+            const currentTotal = parseFloat(document.getElementById(`total_${index}`).value) || 0;
+            const currentDiscount = parseFloat(document.getElementById(`discount_${index}`).value) || 0;
+            
+            // Calculate new total based on current discount
+            const newTotal = subtotal - (item.discountAmount || 0);
+            
+            // Update total field
+            document.getElementById(`total_${index}`).value = newTotal.toFixed(2);
+            
+            // Update summary
+            updateSummary();
+        }
+
+        function updateItemDiscountInput(index, discount) {
+            const item = saleItems[index];
+            const discountValue = discount === '' || discount === null ? null : parseFloat(discount);
+            item.discountAmount = discountValue !== null && !isNaN(discountValue) && discountValue > 0 ? discountValue : null;
+            
+            // Recalculate total
+            const subtotal = item.unitPrice * item.quantity;
+            const newTotal = subtotal - (item.discountAmount || 0);
+            
+            // Update total field
+            document.getElementById(`total_${index}`).value = newTotal.toFixed(2);
+            
+            // Update summary
+            updateSummary();
+        }
+
+        function updateItemTotalInput(index, total) {
+            const item = saleItems[index];
+            const totalValue = parseFloat(total) || 0;
+            const subtotal = item.unitPrice * item.quantity;
+            
+            // Calculate discount based on the new total
+            const calculatedDiscount = Math.max(0, subtotal - totalValue);
+            
+            // Update the discount amount in the model
+            item.discountAmount = calculatedDiscount > 0 ? calculatedDiscount : null;
+            
+            // Update discount field
+            const discountInput = document.getElementById(`discount_${index}`);
+            if (calculatedDiscount > 0) {
+                discountInput.value = calculatedDiscount.toFixed(2);
+            } else {
+                discountInput.value = '';
+            }
+            
+            // Update summary
+            updateSummary();
+        }
+
+        // Final update functions (onchange) - validate and recreate row if needed
         function updateItemPrice(index, price) {
-            saleItems[index].unitPrice = parseFloat(price) || 0;
+            const item = saleItems[index];
+            const priceValue = parseFloat(price) || 0;
+            item.unitPrice = priceValue;
             updateItemRow(index);
         }
 
         function updateItemDiscount(index, discount) {
             const discountValue = discount === '' || discount === null ? null : parseFloat(discount);
             saleItems[index].discountAmount = discountValue !== null && !isNaN(discountValue) ? discountValue : null;
+            updateItemRow(index);
+        }
+
+        function updateItemTotal(index, total) {
+            const item = saleItems[index];
+            const totalValue = parseFloat(total) || 0;
+            const subtotal = item.unitPrice * item.quantity;
+            
+            // Calculate discount based on the new total
+            const calculatedDiscount = Math.max(0, subtotal - totalValue);
+            
+            // Update the discount amount
+            item.discountAmount = calculatedDiscount > 0 ? calculatedDiscount : null;
             updateItemRow(index);
         }
 

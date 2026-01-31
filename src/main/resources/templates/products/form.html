@@ -10,6 +10,40 @@
     <link href="/lib/select2/select2.min.css" rel="stylesheet">
     <link href="/lib/select2/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        #productNameSuggestions {
+            margin-top: 2px;
+            border-radius: 0.375rem;
+            border: 1px solid #dee2e6;
+        }
+        
+        #productNameSuggestions .list-group-item {
+            border-left: none;
+            border-right: none;
+            cursor: pointer;
+        }
+        
+        #productNameSuggestions .list-group-item:first-child {
+            border-top-left-radius: 0.375rem;
+            border-top-right-radius: 0.375rem;
+        }
+        
+        #productNameSuggestions .list-group-item:last-child {
+            border-bottom-left-radius: 0.375rem;
+            border-bottom-right-radius: 0.375rem;
+        }
+        
+        #productNameSuggestions .list-group-item:hover,
+        #productNameSuggestions .list-group-item.active {
+            background-color: #f8f9fa;
+            color: #0d6efd;
+        }
+        
+        #productNameSuggestions .list-group-item small {
+            display: block;
+            margin-top: 2px;
+        }
+    </style>
 </head>
 
 <body>
@@ -26,17 +60,42 @@
         </div>
 
         <div class="content-card">
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                <i class="bi bi-exclamation-circle-fill me-2"></i><span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
             <form th:action="@{/products/save}" th:object="${product}" method="post">
                 <input type="hidden" th:field="*{id}" />
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label class="form-label">Product Name <span class="text-danger">*</span></label>
-                        <input type="text" th:field="*{name}" class="form-control" required>
+                        <label class="form-label">Product Name</label>
+                        <div class="position-relative">
+                            <input type="text" th:field="*{name}" id="productNameInput" class="form-control" autocomplete="off">
+                            <div id="productNameSuggestions" class="list-group position-absolute w-100" style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Strength</label>
                         <input type="text" th:field="*{strength}" class="form-control" placeholder="e.g., 500 mg">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Dosage Form</label>
+                        <select th:field="*{dosageForm.id}" id="dosageFormSelect" class="form-select select2">
+                            <option value="">Select Dosage Form</option>
+                            <option th:each="form : ${dosageForms}" th:value="${form.id}" th:text="${form.name}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Generic</label>
+                        <select th:field="*{generic.id}" class="form-select select2">
+                            <option value="">Select Generic</option>
+                            <option th:each="gen : ${generics}" th:value="${gen.id}" th:text="${gen.name}"></option>
+                        </select>
                     </div>
                 </div>
 
@@ -61,34 +120,11 @@
 
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label class="form-label">Dosage Form</label>
-                        <select th:field="*{dosageForm.id}" class="form-select select2">
-                            <option value="">Select Dosage Form</option>
-                            <option th:each="form : ${dosageForms}" th:value="${form.id}" th:text="${form.name}">
-                            </option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Generic</label>
-                        <select th:field="*{generic.id}" class="form-select select2">
-                            <option value="">Select Generic</option>
-                            <option th:each="gen : ${generics}" th:value="${gen.id}" th:text="${gen.name}"></option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-6">
                         <label class="form-label">Requires Prescription</label>
                         <div class="form-check form-switch mt-2">
                             <input class="form-check-input" type="checkbox" th:field="*{requiresPrescription}">
                         </div>
                     </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Description</label>
-                    <textarea th:field="*{description}" class="form-control" rows="3"></textarea>
                 </div>
 
                 <!-- Pricing Information Section -->
@@ -119,8 +155,7 @@
                                     <input type="hidden" th:name="packageIds" th:value="${pkg.id}" />
                                     <td>
                                         <input type="text" th:name="packageDescriptions"
-                                            th:value="${pkg.packageDescription}" class="form-control form-control-sm"
-                                            required>
+                                            th:value="${pkg.packageDescription}" class="form-control form-control-sm package-description">
                                     </td>
                                     <td>
                                         <input type="number" th:name="unitPrices" th:value="${pkg.unitPrice}"
@@ -193,11 +228,11 @@
             const tbody = document.getElementById('packagesTableBody');
             const row = document.createElement('tr');
             row.className = 'package-row';
-            row.innerHTML = `
-                <input type="hidden" name="packageIds" value=""/>
-                <td>
-                    <input type="text" name="packageDescriptions" class="form-control form-control-sm" required>
-                </td>
+                row.innerHTML = `
+                    <input type="hidden" name="packageIds" value=""/>
+                    <td>
+                        <input type="text" name="packageDescriptions" class="form-control form-control-sm package-description">
+                    </td>
                 <td>
                     <input type="number" name="unitPrices" step="0.01" min="0" 
                            class="form-control form-control-sm package-unit-price">
@@ -249,7 +284,316 @@
                 placeholder: $(this).data('placeholder'),
                 width: '100%'
             });
+
+            // Product name autocomplete
+            initializeProductNameAutocomplete();
         });
+
+        function initializeProductNameAutocomplete() {
+            const productNameInput = document.getElementById('productNameInput');
+            const suggestionsContainer = document.getElementById('productNameSuggestions');
+            let searchTimeout;
+            let currentSuggestions = [];
+
+            if (!productNameInput || !suggestionsContainer) return;
+
+            productNameInput.addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+
+                if (query.length < 1) {
+                    suggestionsContainer.style.display = 'none';
+                    currentSuggestions = [];
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    fetch(`/products/api/search?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            currentSuggestions = data;
+                            displayProductNameSuggestions(data, query);
+                        })
+                        .catch(error => {
+                            console.error('Product name search error:', error);
+                            suggestionsContainer.style.display = 'none';
+                        });
+                }, 300);
+            });
+
+            productNameInput.addEventListener('blur', function(e) {
+                // Delay hiding to allow click on suggestion
+                setTimeout(() => {
+                    suggestionsContainer.style.display = 'none';
+                }, 200);
+            });
+
+            productNameInput.addEventListener('focus', function(e) {
+                if (currentSuggestions.length > 0) {
+                    suggestionsContainer.style.display = 'block';
+                }
+            });
+
+            // Handle keyboard navigation
+            productNameInput.addEventListener('keydown', function(e) {
+                const visibleSuggestions = suggestionsContainer.querySelectorAll('.list-group-item');
+                const activeSuggestion = suggestionsContainer.querySelector('.list-group-item.active');
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (activeSuggestion) {
+                        activeSuggestion.classList.remove('active');
+                        const next = activeSuggestion.nextElementSibling;
+                        if (next) {
+                            next.classList.add('active');
+                        } else if (visibleSuggestions.length > 0) {
+                            visibleSuggestions[0].classList.add('active');
+                        }
+                    } else if (visibleSuggestions.length > 0) {
+                        visibleSuggestions[0].classList.add('active');
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (activeSuggestion) {
+                        activeSuggestion.classList.remove('active');
+                        const prev = activeSuggestion.previousElementSibling;
+                        if (prev) {
+                            prev.classList.add('active');
+                        } else if (visibleSuggestions.length > 0) {
+                            visibleSuggestions[visibleSuggestions.length - 1].classList.add('active');
+                        }
+                    }
+                } else if (e.key === 'Enter' && activeSuggestion) {
+                    e.preventDefault();
+                    const index = parseInt(activeSuggestion.getAttribute('data-index'));
+                    const products = suggestionsContainer._currentProducts || currentSuggestions;
+                    if (products && products[index] && products[index].id) {
+                        loadProductDetails(products[index].id);
+                    } else {
+                        activeSuggestion.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    suggestionsContainer.style.display = 'none';
+                }
+            });
+        }
+
+        function displayProductNameSuggestions(products, query) {
+            const suggestionsContainer = document.getElementById('productNameSuggestions');
+            if (!suggestionsContainer) return;
+
+            if (!products || products.length === 0) {
+                suggestionsContainer.innerHTML = `
+                    <div class="list-group-item text-muted">
+                        <i class="bi bi-search me-2"></i>No products found
+                    </div>
+                `;
+                suggestionsContainer.style.display = 'block';
+                return;
+            }
+
+            let html = '';
+            products.forEach((product, index) => {
+                const productName = product.name || '';
+                const strength = product.strength ? ` [${product.strength}]` : '';
+                const dosageForm = product.dosageForm ? ` (${product.dosageForm})` : '';
+                const manufacturer = product.manufacturer ? ` - ${product.manufacturer}` : '';
+                
+                html += `
+                    <a href="#" class="list-group-item list-group-item-action product-name-suggestion ${index === 0 ? 'active' : ''}" 
+                       data-index="${index}">
+                        <div class="fw-bold">${escapeHtml(productName)}${escapeHtml(strength)}</div>
+                        <small class="text-muted">${escapeHtml(dosageForm + manufacturer)}</small>
+                    </a>
+                `;
+            });
+
+            suggestionsContainer.innerHTML = html;
+            suggestionsContainer.style.display = 'block';
+
+            // Store current suggestions in a way we can access them
+            suggestionsContainer._currentProducts = products;
+            currentSuggestions = products;
+
+            // Add click and hover effects
+            suggestionsContainer.querySelectorAll('.product-name-suggestion').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const index = parseInt(this.getAttribute('data-index'));
+                    const product = products[index];
+                    if (product && product.id) {
+                        loadProductDetails(product.id);
+                    }
+                });
+                
+                item.addEventListener('mouseenter', function() {
+                    suggestionsContainer.querySelectorAll('.product-name-suggestion').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        function loadProductDetails(productId) {
+            fetch(`/products/api/${productId}`)
+                .then(response => response.json())
+                .then(product => {
+                    populateProductForm(product);
+                    const suggestionsContainer = document.getElementById('productNameSuggestions');
+                    if (suggestionsContainer) {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading product details:', error);
+                    alert('Error loading product details. Please try again.');
+                });
+        }
+
+        function populateProductForm(product) {
+            // Populate basic fields
+            const productNameInput = document.getElementById('productNameInput');
+            if (productNameInput && product.name) {
+                productNameInput.value = product.name;
+            }
+
+            const strengthInput = document.querySelector('input[name="strength"]');
+            if (strengthInput && product.strength) {
+                strengthInput.value = product.strength;
+            }
+
+            // Populate select fields
+            if (product.manufacturerId) {
+                const manufacturerSelect = document.querySelector('select[name*="manufacturer"]');
+                if (manufacturerSelect) {
+                    manufacturerSelect.value = product.manufacturerId;
+                    $(manufacturerSelect).trigger('change');
+                }
+            }
+
+            if (product.genericId) {
+                const genericSelect = document.querySelector('select[name*="generic"]');
+                if (genericSelect) {
+                    genericSelect.value = product.genericId;
+                    $(genericSelect).trigger('change');
+                }
+            }
+
+            if (product.dosageFormId) {
+                const dosageFormSelect = document.querySelector('select[name*="dosageForm"]');
+                if (dosageFormSelect) {
+                    dosageFormSelect.value = product.dosageFormId;
+                    $(dosageFormSelect).trigger('change');
+                }
+            }
+
+            if (product.medicineTypeId) {
+                const medicineTypeSelect = document.querySelector('select[name*="medicineType"]');
+                if (medicineTypeSelect) {
+                    medicineTypeSelect.value = product.medicineTypeId;
+                    $(medicineTypeSelect).trigger('change');
+                }
+            }
+
+            // Populate requires prescription checkbox
+            const requiresPrescriptionCheckbox = document.querySelector('input[name*="requiresPrescription"]');
+            if (requiresPrescriptionCheckbox) {
+                requiresPrescriptionCheckbox.checked = product.requiresPrescription || false;
+            }
+
+            // Populate packages
+            if (product.packages && product.packages.length > 0) {
+                populatePackages(product.packages);
+            }
+        }
+
+        function populatePackages(packages) {
+            const tbody = document.getElementById('packagesTableBody');
+            if (!tbody) return;
+
+            // Get existing package IDs to avoid duplicates
+            const existingPackageIds = new Set();
+            tbody.querySelectorAll('tr.package-row').forEach(row => {
+                const hiddenInput = row.querySelector('input[name="packageIds"]');
+                if (hiddenInput && hiddenInput.value) {
+                    existingPackageIds.add(hiddenInput.value);
+                }
+            });
+
+            // Clear only dynamically added packages (those without packageIds)
+            tbody.querySelectorAll('tr.package-row').forEach(row => {
+                const hiddenInput = row.querySelector('input[name="packageIds"]');
+                if (!hiddenInput || !hiddenInput.value) {
+                    row.remove();
+                }
+            });
+
+            // Add packages (skip if already exists)
+            packages.forEach(pkg => {
+                // Skip if package already exists
+                if (pkg.id && existingPackageIds.has(pkg.id.toString())) {
+                    return;
+                }
+                const pkgId = pkg.id || '';
+                const pkgDesc = escapeHtml((pkg.packageDescription || '').toString());
+                const unitPrice = pkg.unitPrice ? parseFloat(pkg.unitPrice).toFixed(2) : '';
+                const quantity = pkg.quantityPerPackage || 1;
+                const unitOfMeasure = pkg.unitOfMeasure || '';
+                const lowStock = pkg.lowStock || 0;
+                const purchasePrice = pkg.purchasePrice ? parseFloat(pkg.purchasePrice).toFixed(2) : null;
+                
+                const row = document.createElement('tr');
+                row.className = 'package-row';
+                row.innerHTML = `
+                    <input type="hidden" name="packageIds" value="${pkgId}"/>
+                    <td>
+                        <input type="text" name="packageDescriptions" value="${pkgDesc}" class="form-control form-control-sm" required>
+                    </td>
+                    <td>
+                        <input type="number" name="unitPrices" step="0.01" min="0" 
+                               value="${unitPrice}" class="form-control form-control-sm package-unit-price">
+                    </td>
+                    <td>
+                        <span class="text-muted">${purchasePrice ? '৳' + purchasePrice : '-'}</span>
+                    </td>
+                    <td>
+                        <input type="number" name="quantities" min="1" 
+                               value="${quantity}" class="form-control form-control-sm package-quantity">
+                    </td>
+                    <td>
+                        <select name="units" class="form-select form-select-sm">
+                            <option value="">Select Unit</option>
+                            <option value="pieces" ${unitOfMeasure === 'pieces' ? 'selected' : ''}>pieces</option>
+                            <option value="pack" ${unitOfMeasure === 'pack' ? 'selected' : ''}>pack</option>
+                            <option value="ml" ${unitOfMeasure === 'ml' ? 'selected' : ''}>ml</option>
+                            <option value="gm" ${unitOfMeasure === 'gm' ? 'selected' : ''}>gm</option>
+                            <option value="mg" ${unitOfMeasure === 'mg' ? 'selected' : ''}>mg</option>
+                            <option value="tablets" ${unitOfMeasure === 'tablets' ? 'selected' : ''}>tablets</option>
+                            <option value="capsules" ${unitOfMeasure === 'capsules' ? 'selected' : ''}>capsules</option>
+                            <option value="vial" ${unitOfMeasure === 'vial' ? 'selected' : ''}>vial</option>
+                            <option value="bottle" ${unitOfMeasure === 'bottle' ? 'selected' : ''}>bottle</option>
+                            <option value="container" ${unitOfMeasure === 'container' ? 'selected' : ''}>container</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" name="lowStocks" min="0" 
+                               value="${lowStock}" class="form-control form-control-sm" placeholder="0">
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="removePackageRow(this)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
     </script>
 </body>
 

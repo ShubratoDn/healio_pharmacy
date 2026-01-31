@@ -63,7 +63,7 @@ public class StockInController {
     @GetMapping
     public String listStockIns(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "100") int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
@@ -514,6 +514,26 @@ public class StockInController {
                 existingStockIn.setPaidAmount(null);
             }
             
+            // Save old items before clearing to subtract from inventory
+            // Initialize items collection to ensure it's loaded
+            List<StockInItem> oldItems = new ArrayList<>(existingStockIn.getItems());
+            
+            // Subtract old quantities from inventory
+            for (StockInItem oldItem : oldItems) {
+                // Initialize lazy-loaded relationships
+                Product product = oldItem.getProduct();
+                ProductPackage productPackage = oldItem.getProductPackage();
+                
+                // Access product name to ensure it's loaded
+                if (product != null) {
+                    product.getName();
+                }
+                
+                subtractFromInventory(product, productPackage, 
+                                     oldItem.getQuantity(), oldItem.getBatchNumber(), 
+                                     oldItem.getExpiryDate());
+            }
+            
             // Clear existing items
             existingStockIn.getItems().clear();
             
@@ -627,6 +647,35 @@ public class StockInController {
         }
         
         inventoryRepository.save(inventory);
+    }
+    
+    private void subtractFromInventory(Product product, ProductPackage productPackage, Integer quantity,
+                                      String batchNumber, LocalDate expiryDate) {
+        // Try to find existing inventory with same product, package, batch, and expiry
+        Optional<Inventory> existingInventory = inventoryRepository.findByProductAndPackageAndBatchAndExpiry(
+                product.getId(),
+                productPackage != null ? productPackage.getId() : null,
+                batchNumber,
+                expiryDate
+        );
+        
+        if (existingInventory.isPresent()) {
+            Inventory inventory = existingInventory.get();
+            int newQuantity = inventory.getQuantity() - quantity;
+            
+            // Ensure quantity doesn't go negative
+            if (newQuantity < 0) {
+                newQuantity = 0;
+            }
+            
+            inventory.setQuantity(newQuantity);
+            // Recalculate available quantity: available = total - reserved
+            inventory.setAvailableQuantity(Math.max(0, newQuantity - inventory.getReservedQuantity()));
+            inventory.setLastRestockedAt(LocalDateTime.now());
+            
+            inventoryRepository.save(inventory);
+        }
+        // If inventory doesn't exist, there's nothing to subtract (shouldn't happen in normal flow)
     }
 
     /**

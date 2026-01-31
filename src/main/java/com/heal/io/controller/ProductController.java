@@ -35,7 +35,7 @@ public class ProductController {
     @GetMapping
     public String listProducts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "100") int size,
             @RequestParam(required = false) String search,
             Model model) {
         Pageable pageable = PageRequest.of(page, size);
@@ -79,6 +79,60 @@ public class ProductController {
             @RequestParam(value = "lowStocks", required = false) List<String> lowStocks,
             RedirectAttributes redirectAttributes) {
 
+        // Validate Product Name
+        if (product.getName() == null || product.getName().trim().isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Product Name is required.");
+            if (product.getId() != null) {
+                redirectAttributes.addFlashAttribute("product", product);
+                return "redirect:/products/edit/" + product.getId();
+            }
+            redirectAttributes.addFlashAttribute("product", product);
+            return "redirect:/products/new";
+        }
+
+        // Validate Dosage Form
+        if (product.getDosageForm() == null || product.getDosageForm().getId() == null) {
+            redirectAttributes.addFlashAttribute("error", "Dosage Form is required.");
+            if (product.getId() != null) {
+                redirectAttributes.addFlashAttribute("product", product);
+                return "redirect:/products/edit/" + product.getId();
+            }
+            redirectAttributes.addFlashAttribute("product", product);
+            return "redirect:/products/new";
+        }
+
+        // Validate at least one package with description and unit price
+        boolean hasValidPackage = false;
+        if (packageDescriptions != null && unitPrices != null) {
+            for (int i = 0; i < packageDescriptions.size(); i++) {
+                String description = packageDescriptions.get(i);
+                String unitPrice = (i < unitPrices.size()) ? unitPrices.get(i) : null;
+                
+                if (description != null && !description.trim().isEmpty() &&
+                    unitPrice != null && !unitPrice.trim().isEmpty()) {
+                    try {
+                        BigDecimal price = new BigDecimal(unitPrice.trim());
+                        if (price.compareTo(BigDecimal.ZERO) > 0) {
+                            hasValidPackage = true;
+                            break;
+                        }
+                    } catch (NumberFormatException e) {
+                        // Invalid price format, skip
+                    }
+                }
+            }
+        }
+
+        if (!hasValidPackage) {
+            redirectAttributes.addFlashAttribute("error", "At least one package with description and unit price is required.");
+            if (product.getId() != null) {
+                redirectAttributes.addFlashAttribute("product", product);
+                return "redirect:/products/edit/" + product.getId();
+            }
+            redirectAttributes.addFlashAttribute("product", product);
+            return "redirect:/products/new";
+        }
+
         Product savedProduct;
         if (product.getId() != null) {
             Product existing = productRepository.findById(product.getId())
@@ -98,7 +152,6 @@ public class ProductController {
                     : null);
             existing.setName(product.getName());
             existing.setStrength(product.getStrength());
-            existing.setDescription(product.getDescription());
             existing.setRequiresPrescription(product.getRequiresPrescription());
             savedProduct = productRepository.save(existing);
 
@@ -350,9 +403,15 @@ public class ProductController {
                     result.put("name", product.getName());
                     result.put("manufacturer",
                             product.getManufacturer() != null ? product.getManufacturer().getName() : "");
+                    result.put("manufacturerId", product.getManufacturer() != null ? product.getManufacturer().getId() : null);
                     result.put("generic", product.getGeneric() != null ? product.getGeneric().getName() : "");
+                    result.put("genericId", product.getGeneric() != null ? product.getGeneric().getId() : null);
                     result.put("dosageForm", product.getDosageForm() != null ? product.getDosageForm().getName() : "");
+                    result.put("dosageFormId", product.getDosageForm() != null ? product.getDosageForm().getId() : null);
                     result.put("strength", product.getStrength() != null ? product.getStrength() : "");
+                    result.put("medicineTypeId", product.getMedicineType() != null ? product.getMedicineType().getId() : null);
+                    result.put("requiresPrescription", product.getRequiresPrescription() != null ? product.getRequiresPrescription() : false);
+                    result.put("description", product.getDescription() != null ? product.getDescription() : "");
                     
                     // Calculate current stock amount
                     List<Inventory> inventories = inventoryRepository.findByProductId(product.getId());
@@ -367,5 +426,50 @@ public class ProductController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(results);
+    }
+    
+    @GetMapping("/api/{id}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getProductDetails(@PathVariable Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", product.getId());
+        result.put("name", product.getName());
+        result.put("strength", product.getStrength());
+        result.put("manufacturerId", product.getManufacturer() != null ? product.getManufacturer().getId() : null);
+        result.put("genericId", product.getGeneric() != null ? product.getGeneric().getId() : null);
+        result.put("dosageFormId", product.getDosageForm() != null ? product.getDosageForm().getId() : null);
+        result.put("medicineTypeId", product.getMedicineType() != null ? product.getMedicineType().getId() : null);
+        result.put("requiresPrescription", product.getRequiresPrescription() != null ? product.getRequiresPrescription() : false);
+        result.put("description", product.getDescription());
+        
+        // Load packages
+        List<ProductPackage> packages = productPackageRepository.findByProductId(id);
+        List<Map<String, Object>> packagesList = packages.stream()
+                .map(pkg -> {
+                    Map<String, Object> pkgMap = new HashMap<>();
+                    pkgMap.put("id", pkg.getId());
+                    pkgMap.put("packageDescription", pkg.getPackageDescription());
+                    pkgMap.put("packageSize", pkg.getPackageSize());
+                    pkgMap.put("unitPrice", pkg.getUnitPrice());
+                    pkgMap.put("quantityPerPackage", pkg.getQuantityPerPackage());
+                    pkgMap.put("unitOfMeasure", pkg.getUnitOfMeasure());
+                    pkgMap.put("lowStock", pkg.getLowStock());
+                    
+                    // Get last purchase price
+                    List<BigDecimal> unitCosts = stockInItemRepository.findUnitCostsByProductAndPackageOrderByDateDesc(
+                            id, pkg.getId());
+                    if (!unitCosts.isEmpty()) {
+                        pkgMap.put("purchasePrice", unitCosts.get(0));
+                    }
+                    
+                    return pkgMap;
+                })
+                .collect(Collectors.toList());
+        result.put("packages", packagesList);
+        
+        return ResponseEntity.ok(result);
     }
 }
