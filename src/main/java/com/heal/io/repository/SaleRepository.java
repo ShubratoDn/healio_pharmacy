@@ -31,8 +31,11 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
                      "WHERE DATE(s.sale_date) = CURRENT_DATE AND s.sale_status = 'COMPLETED'", nativeQuery = true)
        Double getTodayTotalProfit();
 
-       @Query(value = "SELECT COALESCE(SUM(s.discount_amount), 0) FROM sale s " +
-                     "WHERE DATE(s.sale_date) = CURRENT_DATE AND s.sale_status = 'COMPLETED'", nativeQuery = true)
+       @Query(value = "SELECT COALESCE((SELECT SUM(s.discount_amount) FROM sale s " +
+                     "WHERE DATE(s.sale_date) = CURRENT_DATE AND s.sale_status = 'COMPLETED'), 0) + " +
+                     "COALESCE((SELECT SUM(si.discount_amount) FROM sale_item si " +
+                     "INNER JOIN sale s2 ON si.sale_id = s2.id " +
+                     "WHERE DATE(s2.sale_date) = CURRENT_DATE AND s2.sale_status = 'COMPLETED'), 0)", nativeQuery = true)
        Double getTodayTotalDiscount();
 
        @Query("SELECT s FROM Sale s WHERE s.saleDate >= :startDate AND s.saleDate < :endDate")
@@ -79,8 +82,11 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
                      " JOIN sale_item si ON s1.id = si.sale_id " +
                      " WHERE s1.sale_date >= :startDate AND s1.sale_date < :endDate AND s1.sale_status = 'COMPLETED') as totalProfit, "
                      +
-                     "(SELECT COALESCE(SUM(s2.discount_amount), 0) FROM sale s2 " +
-                     " WHERE s2.sale_date >= :startDate AND s2.sale_date < :endDate AND s2.sale_status = 'COMPLETED') as totalDiscount", nativeQuery = true)
+                     "((SELECT COALESCE(SUM(s2.discount_amount), 0) FROM sale s2 " +
+                     " WHERE s2.sale_date >= :startDate AND s2.sale_date < :endDate AND s2.sale_status = 'COMPLETED') + " +
+                     "(SELECT COALESCE(SUM(si2.discount_amount), 0) FROM sale_item si2 " +
+                     " INNER JOIN sale s3 ON si2.sale_id = s3.id " +
+                     " WHERE s3.sale_date >= :startDate AND s3.sale_date < :endDate AND s3.sale_status = 'COMPLETED')) as totalDiscount", nativeQuery = true)
        List<Object[]> getProfitAndDiscountByDateRange(@Param("startDate") java.time.LocalDate startDate,
                      @Param("endDate") java.time.LocalDate endDate);
 }
