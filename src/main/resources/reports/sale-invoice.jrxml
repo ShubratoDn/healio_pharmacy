@@ -384,12 +384,12 @@
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="Courier New" size="11" isBold="true" pdfFontName="Courier-Bold"/>
 				</textElement>
-				<text><![CDATA[Thank you for choosing our pharmacy service!]]></text>
+				<text><![CDATA[Thank you for trusting Rupganj Pharmacy — Your Health, Our Commitment.]]></text>
 			</staticText>
 		</band>
 	</pageFooter>
 	<summary>
-		<band height="180" splitType="Stretch">
+		<band height="190" splitType="Stretch">
 			<staticText>
 				<reportElement x="350" y="0" width="100" height="14" uuid="860fd340-fd31-4646-8fa9-1182616c8f7a"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
@@ -494,13 +494,31 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$P{AMOUNT_IN_WORDS}]]></textFieldExpression>
 			</textField>
+			<staticText>
+				<reportElement x="0" y="104" width="70" height="12" uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+					<printWhenExpression><![CDATA[$P{SOLD_BY_NAME} != null && !$P{SOLD_BY_NAME}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Courier New" size="9" isBold="true" pdfFontName="Courier-Bold"/>
+				</textElement>
+				<text><![CDATA[Served by:]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="72" y="104" width="268" height="12" uuid="b2c3d4e5-f6a7-8901-bcde-f12345678901">
+					<printWhenExpression><![CDATA[$P{SOLD_BY_NAME} != null && !$P{SOLD_BY_NAME}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Courier New" size="9" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{SOLD_BY_NAME}]]></textFieldExpression>
+			</textField>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement x="0" y="110" width="340" height="50" uuid="48c95816-ef47-4392-a27c-e286ed662b0f"/>
+				<reportElement x="0" y="120" width="340" height="50" uuid="48c95816-ef47-4392-a27c-e286ed662b0f"/>
 				<textElement>
 					<font fontName="Courier New" size="9" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{NOTES} != null && !$P{NOTES}.isEmpty() ? $P{NOTES} : 
-                    "Payment due 30 days after invoice issuance. All sales are final. Please retain this invoice for your records."]]></textFieldExpression>
+                    "Medicines once sold are non-returnable and non-exchangeable. Please verify your items before leaving the counter. Retain this invoice as proof of purchase."]]></textFieldExpression>
 			</textField>
 		</band>
 	</summary>
